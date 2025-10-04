@@ -3,16 +3,16 @@
 
 #include "dto/alunoDTO.hpp"
 #include "model/aluno.hpp"
-#include "service/agendamentoService.hpp"
 
 class AlunoMapper {
-   private:
-    AgendamentoService service;
-
    public:
-    Aluno map(const AlunoDTO& dto);
+    Aluno map(const AlunoDTO& dto) const;
 
-    AlunoDTO map(const Aluno& aluno);
+    AlunoDTO map(const Aluno& aluno) const;
+
+    std::string toCsvData(const AlunoDTO& aluno) const;
+
+    Aluno fromCsvLine(const std::string& line) const;
 };
 
 #endif
