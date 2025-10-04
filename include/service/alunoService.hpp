@@ -11,7 +11,7 @@ class AlunoService {
     const AlunoMapper mapper;
     const AgendamentoService service;
 
-    Aluno mapAndInjectAgendamentos(const string& csv_line) const;
+    Aluno mapAndInjectAgendamentos(const std::string& csv_line) const;
 
     std::vector<Aluno> getByEmail(const std::string& email) const;
 
@@ -26,6 +26,8 @@ class AlunoService {
     bool existsByMatriculaAndIdNot(long matricula, long id) const;
 
    public:
+    AlunoService(const AlunoMapper& mapper, const AgendamentoService& service);
+
     Aluno save(const AlunoDTO& aluno) const;
 
     std::optional<Aluno> getById(long id) const;

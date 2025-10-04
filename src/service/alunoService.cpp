@@ -113,6 +113,10 @@ bool AlunoService::existsByMatriculaAndIdNot(long matricula, long id) const {
     return false;
 }
 
+AlunoService::AlunoService(const AlunoMapper& mapper,
+                           const AgendamentoService& service)
+    : mapper(mapper), service(service) {}
+
 Aluno AlunoService::save(const AlunoDTO& aluno) const {
     if (existsByEmail(aluno.getEmail())) {
         throw invalid_argument("O email '" + aluno.getEmail() +
