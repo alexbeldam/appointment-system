@@ -19,11 +19,13 @@ vector<string> readAllLines(const string& filename) {
 
     string line;
     while (getline(file, line)) {
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
         if (!line.empty()) {
             lines.push_back(line);
         }
     }
-
     return lines;
 }
 
@@ -31,44 +33,55 @@ void writeAllLines(const string& filename, const vector<string>& lines) {
     ofstream file(filename, ios::trunc);
 
     if (!file.is_open()) {
-        cerr << "Error: Could not open file for writing: " << filename << endl;
-        return;
+        throw runtime_error("Não foi possível abrir o arquivo para escrita: '" +
+                            filename + "'.");
     }
     for (const string& line : lines) {
         file << line << "\n";
     }
 }
 
-long extractIdFromLine(const string& line) {
-    size_t comma_pos = line.find(',');
-    string id_str;
+string extractColumnFromLine(const string& line, size_t col) {
+    stringstream ss(line);
+    string segment;
+    size_t current_col = 0;
 
-    if (comma_pos != string::npos) {
-        id_str = line.substr(0, comma_pos);
-    } else {
-        id_str = line;
+    while (getline(ss, segment, ',')) {
+        if (current_col == col) {
+            return segment;
+        }
+        current_col++;
     }
 
+    throw invalid_argument("Coluna " + to_string(col) +
+                           " não existe na linha.");
+}
+
+long extractIdFromLine(const string& line) {
+    string id_str;
+
     try {
+        id_str = extractColumnFromLine(line, 0);
         return stol(id_str);
+    } catch (const invalid_argument& e) {
+        throw invalid_argument("A linha não contém um ID válido na coluna 0.");
     } catch (const exception& e) {
-        return -1;
+        throw invalid_argument("O valor do ID '" + id_str +
+                               "' não é um número válido.");
     }
 }
 
-bool insert(string filename, string data) {
+long insert(const string& filename, const string& data) {
     vector<string> lines = readAllLines(filename);
     long max_id = 0;
 
-    size_t data_start_index = 0;
-    if (!lines.empty() && extractIdFromLine(lines[0]) == -1) {
-        data_start_index = 1;
-    }
-
-    for (size_t i = data_start_index; i < lines.size(); ++i) {
-        long current_id = extractIdFromLine(lines[i]);
-        if (current_id > max_id) {
-            max_id = current_id;
+    for (size_t i = 1; i < lines.size(); ++i) {
+        try {
+            long current_id = extractIdFromLine(lines[i]);
+            if (current_id > max_id) {
+                max_id = current_id;
+            }
+        } catch (const invalid_argument& ignore) {
         }
     }
 
@@ -83,54 +96,56 @@ bool insert(string filename, string data) {
 
     ofstream file(filename, ios::app);
     if (!file.is_open()) {
-        cerr << "Error: Could not open file for appending: " << filename
-             << endl;
-        return false;
+        throw runtime_error("Não foi possível abrir o arquivo '" + filename +
+                            "' para anexar.");
     }
     file << new_record << "\n";
-
-    return true;
+    return new_id;
 }
 
-string find(string filename, long id) {
+vector<string> findByColumn(const string& filename, size_t index,
+                            const string& value) {
     vector<string> lines = readAllLines(filename);
-    string id_str = to_string(id);
+    vector<string> results;
 
-    size_t data_start_index = 0;
-    if (!lines.empty() && extractIdFromLine(lines[0]) == -1) {
-        data_start_index = 1;
-    }
-
-    for (size_t i = data_start_index; i < lines.size(); ++i) {
+    for (size_t i = 1; i < lines.size(); ++i) {
         const string& line = lines[i];
-        long current_id = extractIdFromLine(line);
 
-        if (current_id == id) {
-            return line;
+        try {
+            string col = extractColumnFromLine(line, index);
+            if (col == value) {
+                results.push_back(line);
+            }
+        } catch (const invalid_argument& ignore) {
+            continue;
         }
     }
-    return "";
+
+    return results;
 }
 
-vector<string> findAll(string filename) {
+string find(const string& filename, long id) {
+    vector<string> lines = findByColumn(filename, 0, to_string(id));
+
+    if (lines.empty())
+        throw invalid_argument("O ID " + to_string(id) + " não existe.");
+    else if (lines.size() > 1)
+        throw runtime_error("Mais de uma linha com ID " + to_string(id) +
+                            ". Integridade do arquivo comprometida.");
+
+    return lines.front();
+}
+
+vector<string> findAll(const string& filename) {
     vector<string> all_lines = readAllLines(filename);
-    if (all_lines.empty()) {
-        return {};
-    }
 
-    size_t data_start_index = 0;
-    if (extractIdFromLine(all_lines[0]) == -1) {
-        data_start_index = 1;
-    }
-
-    if (all_lines.size() > data_start_index) {
-        return vector<string>(all_lines.begin() + data_start_index,
-                              all_lines.end());
+    if (all_lines.size() > 1) {
+        return vector<string>(all_lines.begin() + 1, all_lines.end());
     }
     return {};
 }
 
-string update(string filename, long id, string data) {
+void update(const string& filename, long id, const string& data) {
     vector<string> lines = readAllLines(filename);
     string id_str = to_string(id);
     string new_record;
@@ -142,49 +157,54 @@ string update(string filename, long id, string data) {
         new_record = id_str + "," + data;
     }
 
-    size_t data_start_index = 0;
-    if (!lines.empty() && extractIdFromLine(lines[0]) == -1) {
-        data_start_index = 1;
-    }
-
-    for (size_t i = data_start_index; i < lines.size(); ++i) {
+    for (size_t i = 1; i < lines.size(); ++i) {
         string& line = lines[i];
-        long current_id = extractIdFromLine(line);
 
-        if (current_id == id) {
-            line = new_record;
-            updated = true;
-            break;
+        try {
+            long current_id = extractIdFromLine(line);
+            if (current_id == id) {
+                line = new_record;
+                updated = true;
+                break;
+            }
+        } catch (const invalid_argument& e) {
+            continue;
         }
     }
 
-    if (updated) {
-        writeAllLines(filename, lines);
-        return new_record;
+    if (!updated) {
+        throw invalid_argument("O ID " + to_string(id) +
+                               " não existe para ser atualizado.");
     }
 
-    return "";
+    writeAllLines(filename, lines);
 }
 
-bool remove(string filename, long id) {
+void remove(const string& filename, long id) {
     vector<string> lines = readAllLines(filename);
     size_t initial_size = lines.size();
 
     auto start_it = lines.begin();
-    if (!lines.empty() && extractIdFromLine(lines[0]) == -1) {
+    if (lines.size() > 0) {
         start_it++;
+    } else {
+        throw invalid_argument("O ID " + to_string(id) + " não existe.");
     }
 
     lines.erase(remove_if(start_it, lines.end(),
                           [&id](const string& line) {
-                              return extractIdFromLine(line) == id;
+                              try {
+                                  long current_id = extractIdFromLine(line);
+                                  return current_id == id;
+                              } catch (const invalid_argument& e) {
+                                  return false;
+                              }
                           }),
                 lines.end());
 
-    if (lines.size() < initial_size) {
-        writeAllLines(filename, lines);
-        return true;
+    if (lines.size() >= initial_size) {
+        throw invalid_argument("O id " + to_string(id) + " não existe.");
     }
 
-    return false;
+    writeAllLines(filename, lines);
 }
