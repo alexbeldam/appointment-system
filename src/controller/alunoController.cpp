@@ -20,8 +20,11 @@ bool is_alphanumeric(const std::string& s) {
     });
 }
 
+AlunoController::AlunoController(const AlunoService& service)
+    : service(service) {}
+
 Aluno AlunoController::create(const string& nome, const string& email,
-                              const string& senha, long matricula) {
+                              const string& senha, long matricula) const {
     try {
         if (nome.empty() || nome.length() < 3) {
             throw std::invalid_argument(
@@ -37,8 +40,7 @@ Aluno AlunoController::create(const string& nome, const string& email,
         }
         if (!is_alphanumeric(senha)) {
             throw std::invalid_argument(
-                "A senha deve conter apenas letras e números (caracteres "
-                "especiais não são permitidos).");
+                "A senha deve conter apenas letras e números.");
         }
         if (matricula <= 0) {
             throw std::invalid_argument(
@@ -60,9 +62,21 @@ Aluno AlunoController::create(const string& nome, const string& email,
     throw;
 }
 
-Aluno AlunoController::read(long id) {
+Aluno AlunoController::read(long id) const {
     try {
-        return service.getById(id);
+        optional<Aluno> aluno_opt = service.getById(id);
+
+        if (!aluno_opt.has_value()) {
+            throw std::invalid_argument("Aluno com ID " + std::to_string(id) +
+                                        " não encontrado.");
+        }
+
+        return aluno_opt.value();
+
+    } catch (const std::invalid_argument& e) {
+        handle_controller_exception(e,
+                                    "ler Aluno pelo ID " + std::to_string(id));
+
     } catch (const std::runtime_error& e) {
         handle_controller_exception(e,
                                     "ler Aluno pelo ID " + std::to_string(id));
@@ -70,7 +84,7 @@ Aluno AlunoController::read(long id) {
     throw;
 }
 
-vector<Aluno> AlunoController::list() {
+vector<Aluno> AlunoController::list() const {
     try {
         return service.listAll();
     } catch (const std::runtime_error& e) {
@@ -80,20 +94,32 @@ vector<Aluno> AlunoController::list() {
 }
 
 Aluno AlunoController::update(long id, const string& nome, const string& email,
-                              const string& senha, long matricula) {
+                              const string& senha, long matricula) const {
     try {
-        Aluno existingAluno = service.getById(id);
+        optional<Aluno> existingAluno_opt = service.getById(id);
 
-        if (nome.empty() || email.empty() || matricula <= 0) {
-            throw std::invalid_argument(
-                "Nome, email e matrícula são obrigatórios para a atualização.");
+        if (!existingAluno_opt.has_value()) {
+            throw std::invalid_argument("Aluno com ID " + std::to_string(id) +
+                                        " não encontrado para atualização.");
         }
+        Aluno existingAluno = existingAluno_opt.value();
 
         AlunoDTO dto;
         dto.setId(id);
-        dto.setEmail(email);
-        dto.setNome(nome);
-        dto.setMatricula(matricula);
+
+        string newNome = nome.empty() ? existingAluno.getNome() : nome;
+        if (newNome.length() < 3) {
+            throw std::invalid_argument(
+                "O nome deve ter pelo menos 3 caracteres.");
+        }
+        dto.setNome(newNome);
+
+        string newEmail = email.empty() ? existingAluno.getEmail() : email;
+        if (newEmail.find('@') == std::string::npos ||
+            newEmail.find('.') == std::string::npos) {
+            throw std::invalid_argument("Formato de email inválido.");
+        }
+        dto.setEmail(newEmail);
 
         if (senha.empty()) {
             dto.setSenha(existingAluno.getSenha());
@@ -104,13 +130,26 @@ Aluno AlunoController::update(long id, const string& nome, const string& email,
             }
             if (!is_alphanumeric(senha)) {
                 throw std::invalid_argument(
-                    "A nova senha deve conter apenas letras e números "
-                    "(caracteres especiais não são permitidos).");
+                    "A nova senha deve conter apenas letras e números...");
             }
             dto.setSenha(encrypt(senha));
         }
 
-        return service.updateById(id, dto);
+        long newMatricula =
+            (matricula <= 0) ? existingAluno.getMatricula() : matricula;
+
+        dto.setMatricula(newMatricula);
+
+        optional<Aluno> updatedAluno_opt = service.updateById(id, dto);
+
+        if (!updatedAluno_opt.has_value()) {
+            throw std::runtime_error(
+                "O registro foi encontrado, mas a atualização falhou de forma "
+                "inesperada.");
+        }
+
+        return updatedAluno_opt.value();
+
     } catch (const std::invalid_argument& e) {
         handle_controller_exception(
             e, "validar dados de atualização para o ID " + std::to_string(id));
@@ -121,7 +160,7 @@ Aluno AlunoController::update(long id, const string& nome, const string& email,
     throw;
 }
 
-bool AlunoController::destroy(long id) {
+bool AlunoController::destroy(long id) const {
     try {
         return service.deleteById(id);
     } catch (const std::runtime_error& e) {

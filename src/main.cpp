@@ -7,7 +7,10 @@
 using namespace std;
 
 int main() {
-    AlunoController alunoController;
+    const AlunoMapper mapper;
+    const AgendamentoService aService;
+    const AlunoService service(mapper, aService);
+    const AlunoController alunoController(service);
     int opcao = -1;
 
     do {

@@ -34,7 +34,7 @@ void imprimir_opcoes() {
     cout << "Escolha uma opcao: ";
 }
 
-void criar_aluno(AlunoController& controller) {
+void criar_aluno(const AlunoController& controller) {
     string nome, email, senha;
     long matricula;
 
