@@ -1,22 +1,40 @@
 #ifndef ALUNO_SERVICE_HPP
 #define ALUNO_SERVICE_HPP
 
+#include <optional>
+
 #include "map/alunoMapper.hpp"
+#include "service/agendamentoService.hpp"
 
 class AlunoService {
    private:
-    AlunoMapper mapper;
+    const AlunoMapper mapper;
+    const AgendamentoService service;
+
+    Aluno mapAndInjectAgendamentos(const string& csv_line) const;
+
+    std::vector<Aluno> getByEmail(const std::string& email) const;
+
+    std::vector<Aluno> getByMatricula(long matricula) const;
+
+    bool existsByEmail(std::string email) const;
+
+    bool existsByEmailAndIdNot(std::string email, long id) const;
+
+    bool existsByMatricula(long matricula) const;
+
+    bool existsByMatriculaAndIdNot(long matricula, long id) const;
 
    public:
-    Aluno save(const AlunoDTO& aluno);
+    Aluno save(const AlunoDTO& aluno) const;
 
-    Aluno getById(long id);
+    std::optional<Aluno> getById(long id) const;
 
-    std::vector<Aluno> listAll();
+    std::vector<Aluno> listAll() const;
 
-    Aluno updateById(long id, const AlunoDTO& aluno);
+    std::optional<Aluno> updateById(long id, const AlunoDTO& aluno) const;
 
-    bool deleteById(long id);
+    bool deleteById(long id) const;
 };
 
 #endif
