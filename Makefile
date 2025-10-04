@@ -1,15 +1,13 @@
-CXX         := g++
-CXXFLAGS    := -std=c++17 -Wall -Wextra -pedantic -Iinclude -MMD -MP
-LDFLAGS     :=
-BUILD_DIR   := build
-SRC_DIR     := src
-INCLUDE_DIR := include
-TARGET      := programa
-SRC_ROOT    := $(wildcard $(SRC_DIR)/*.cpp)
-SRC_HELPER  := $(wildcard $(SRC_DIR)/helper/*.cpp)
-SOURCES     := $(SRC_ROOT) $(SRC_HELPER)
-OBJECTS     := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SOURCES))
-DEPS        := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.d, $(SOURCES))
+CXX           := g++
+CXXFLAGS      := -std=c++17 -Wall -Wextra -pedantic -Iinclude -MMD -MP
+LDFLAGS       :=
+BUILD_DIR     := build
+SRC_DIR       := src
+INCLUDE_DIR   := include
+TARGET        := programa
+SOURCES       := $(shell find $(SRC_DIR) -name "*.cpp")
+OBJECTS       := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SOURCES))
+DEPS          := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.d, $(SOURCES))
 
 all: $(EXEC)
 
