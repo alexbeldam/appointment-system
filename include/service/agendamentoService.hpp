@@ -7,7 +7,7 @@
 
 class AgendamentoService {
    public:
-    std::vector<Agendamento> listByIdAluno(long id);
+    std::vector<Agendamento> listByIdAluno(long id) const;
 };
 
 #endif
