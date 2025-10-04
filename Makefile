@@ -9,7 +9,7 @@ SOURCES       := $(shell find $(SRC_DIR) -name "*.cpp")
 OBJECTS       := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SOURCES))
 DEPS          := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.d, $(SOURCES))
 
-all: $(EXEC)
+all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	@echo "🛠️  Linking $(TARGET)..."
