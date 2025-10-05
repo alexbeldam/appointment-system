@@ -5,11 +5,8 @@ Aluno::Aluno() {}
 
 Aluno::Aluno(long id, const string& nome, const string& email,
              const string& senha, long matricula,
-             const vector<Agendamento>& agendamentos) {
-    setId(id);
-    setNome(nome);
-    setEmail(email);
-    setSenha(senha);
+             const vector<Agendamento>& agendamentos)
+    : Usuario(id, nome, email, senha) {
     setMatricula(matricula);
     setAgendamentos(agendamentos);
 }
