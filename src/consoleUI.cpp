@@ -25,7 +25,8 @@ void ConsoleUI::desenhar_relogio() const {
 void ConsoleUI::imprimir_login() const {
     cout << "MENU PRINCIPAL:" << endl;
     cout << "1 - Criar Novo Aluno (Cadastro)" << endl;
-    cout << "2 - Fazer Login" << endl;
+    cout << "2 - Criar Novo Professor (Cadastro)" << endl;
+    cout << "3 - Fazer Login" << endl;
     cout << "0 - Sair do programa" << endl;
     cout << "Escolha uma opcao: ";
 }
@@ -75,6 +76,9 @@ void ConsoleUI::criar_aluno() const {
         return;  // Retorna, pois não há dados válidos para processar.
     }
 
+    // Limpa o buffer, pois a última leitura foi númerica
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
     // --- FLUXO DE PROCESSAMENTO E TRATAMENTO DE EXCEÇÕES ---
 
     try {
@@ -107,6 +111,48 @@ void ConsoleUI::criar_aluno() const {
     }
 }
 
+void ConsoleUI::criar_professor() const {
+    const ProfessorController& controller = app.getProfessorController();
+    string nome, email, senha, disciplina;
+
+    cout << "\n--- Criar Novo Professor ---" << endl;
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cout << "Nome: ";
+    getline(cin, nome);
+    cout << "E-mail: ";
+    getline(cin, email);
+    cout << "Senha: ";
+    getline(cin, senha);
+    cout << "Disciplina: ";
+    getline(cin, disciplina);
+    // Não precisa limpar o buffer, pois a última leitura foi da linha
+
+    try {
+        Professor novo_professor =
+            controller.create(nome, email, senha, disciplina);
+
+        cout << "\n==================================================" << endl;
+        cout << "✅ SUCESSO! Professor criado com ID: "
+             << novo_professor.getId() << endl;
+        cout << "    Nome: " << novo_professor.getNome() << endl;
+        cout << "    Disciplina: " << disciplina << endl;
+        cout << "==================================================" << endl;
+
+    } catch (const std::invalid_argument& e) {
+        cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
+        cout << ">> Tente novamente com dados válidos." << endl;
+    } catch (const std::runtime_error& e) {
+        cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao salvar o Professor."
+             << endl;
+        cout << ">> Detalhes do Erro: " << e.what() << endl;
+    } catch (...) {
+        cout << "\n>> ERRO DESCONHECIDO: Ocorreu uma falha inesperada durante "
+                "a criação."
+             << endl;
+    }
+}
+
 void ConsoleUI::run() const {
     int opcao = -1;
 
@@ -132,6 +178,10 @@ void ConsoleUI::run() const {
                 break;
 
             case 2:
+                criar_professor();
+                break;
+
+            case 3:
                 cout << "\n>> A funcionalidade de login será implementada em "
                         "breve."
                      << endl;
@@ -144,7 +194,6 @@ void ConsoleUI::run() const {
 
         if (opcao != 0) {
             cout << "\nPressione Enter para continuar...";
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cin.get();
         }
 

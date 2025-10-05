@@ -45,6 +45,14 @@ class ConsoleUI {
      */
     void criar_aluno() const;
 
+    /**
+     * @brief Gerencia a interação completa de I/O para a criação de um novo
+     * Professor.
+     * * Coleta os dados brutos e delega a operação de persistência ao
+     * ProfessorController.
+     */
+    void criar_professor() const;
+
    public:
     /**
      * @brief Construtor da Interface.
