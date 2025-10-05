@@ -6,28 +6,8 @@
 #include <stdexcept>
 
 #include "helper/encrypt.hpp"
+#include "util/controllerUtils.hpp"
 using namespace std;
-
-// Funções utilitárias (fora da classe)
-
-// Função que padroniza o tratamento de exceções no Controller (Captura, Loga,
-// Relança).
-void handle_controller_exception(const std::exception& e,
-                                 const std::string& acao) {
-    // Loga o erro detalhado no console para debug.
-    std::cerr << "\n[ERRO] Falha ao " << acao << ": " << e.what() << std::endl;
-    // Relança a exceção para o chamador (geralmente o loop principal da
-    // aplicação).
-    throw;
-}
-
-// Verifica se a string contém apenas caracteres alfanuméricos.
-// Esta é uma utilidade de saneamento de entrada.
-bool is_alphanumeric(const std::string& s) {
-    return !s.empty() && all_of(s.begin(), s.end(), [](char c) {
-        return ::isalnum(static_cast<unsigned char>(c));
-    });
-}
 
 // --- MÉTODOS PÚBLICOS DA CLASSE ALUNOCONTROLLER ---
 

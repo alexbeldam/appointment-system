@@ -42,7 +42,8 @@ class ProfessorController {
      * * @return O professor atualizado
      */
     Professor update(long id, const std::string& nome, const std::string& email,
-                     const std::string& senha, const string& disciplina) const;
+                     const std::string& senha,
+                     const std::string& disciplina) const;
 
     /**
      * @brief Deleta o registro de id parametro.

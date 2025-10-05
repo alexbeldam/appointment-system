@@ -6,5 +6,5 @@ const string& ProfessorDTO::getDisciplina() const {
 }
 
 void ProfessorDTO::setDisciplina(const string& disciplina) {
-    this->setDisciplina(disciplina);
+    this->disciplina = disciplina;
 }
