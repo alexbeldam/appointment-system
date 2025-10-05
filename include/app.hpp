@@ -2,13 +2,14 @@
 #define APP_COMPOSER_HPP
 
 #include "controller/alunoController.hpp"
+#include "controller/loginController.hpp"
 #include "controller/professorController.hpp"
 
 /**
  * @brief Classe responsável por centralizar a composição (criação e injeção)
  * de todas as dependências da aplicação.
  */
-class AppComposer {
+class App {
    private:
     // 1. Membros de baixo nível
     const MockConnection connection;
@@ -20,18 +21,17 @@ class AppComposer {
     const HorarioService horarioService;
     const AlunoService alunoService;
     const ProfessorService professorService;
+    SessionManager sessionManager;
 
     // 3. Membros de nível superior
     const AlunoController alunoController;
     const ProfessorController professorController;
+    const LoginController loginController;
 
    public:
-    AppComposer();
+    App();
 
-    // Métodos para expor os Controllers prontos
-    const AlunoController& getAlunoController() const;
-
-    const ProfessorController& getProfessorController() const;
+    void run();
 };
 
 #endif

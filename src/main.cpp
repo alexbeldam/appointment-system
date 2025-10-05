@@ -2,15 +2,14 @@
 #include <iostream>
 #include <limits>
 
-#include "consoleUI.hpp"
+#include "app.hpp"
 
 using namespace std;
 
 int main() {
-    const AppComposer app;
-    const ConsoleUI ui(app);
+    App app;
 
-    ui.run();
+    app.run();
 
     return 0;
 }

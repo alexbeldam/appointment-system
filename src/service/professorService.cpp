@@ -148,6 +148,24 @@ optional<Professor> ProfessorService::getById(long id) const {
     }
 }
 
+// READ BY EMAIL
+optional<Professor> ProfessorService::getOneByEmail(const string& email) const {
+    vector<Professor> results = getByEmail(email);
+    if (results.size() > 1) {
+        // ERRO CRÍTICO: Integridade violada!
+        throw runtime_error(
+            "Falha de integridade: Múltiplos registros encontrados para o "
+            "email: " +
+            email);
+    }
+
+    if (results.empty()) {
+        return nullopt;
+    }
+
+    return results.front();
+}
+
 // LIST ALL
 vector<Professor> ProfessorService::listAll() const {
     // Pega todas as linhas de dados da tabela Professores.

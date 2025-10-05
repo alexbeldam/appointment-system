@@ -120,6 +120,17 @@ class AlunoService {
     std::optional<Aluno> getById(long id) const;
 
     /**
+     * @brief Busca um Aluno pelo seu email.
+     *
+     * @param email O email do Aluno
+     * @return std::optional<Aluno> Se encontrado, retorna o objeto Aluno
+     * completo; caso contrário, retorna std::nullopt.
+     * @throws std::runtime_error Em caso de falha crítica de I/O ou de
+     * integridade dos dados.
+     */
+    std::optional<Aluno> getOneByEmail(const std::string& email) const;
+
+    /**
      * @brief Lista todos os Alunos existentes no sistema.
      * * @return Um vetor contendo todos os Alunos (pode ser vazio).
      * @throws std::runtime_error Em caso de falha crítica de I/O.

@@ -32,6 +32,11 @@ class Usuario {
             const std::string& senha);
 
     /**
+     * @brief Destrutor virtual.
+     */
+    virtual ~Usuario();
+
+    /**
      * @brief Obtém o identificador único (ID) do Usuário.
      * * @return O ID do Usuário.
      */

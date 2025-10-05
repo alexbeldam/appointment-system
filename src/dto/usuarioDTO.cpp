@@ -1,6 +1,8 @@
 #include "dto/usuarioDTO.hpp"
 using namespace std;
 
+UsuarioDTO::~UsuarioDTO() {}
+
 long UsuarioDTO::getId() const {
     return id;
 }

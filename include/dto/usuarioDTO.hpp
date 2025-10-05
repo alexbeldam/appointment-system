@@ -17,6 +17,11 @@ class UsuarioDTO {
 
    public:
     /**
+     * @brief Destrutor virtual.
+     */
+    virtual ~UsuarioDTO();
+
+    /**
      * @brief Obtém o identificador único (ID) do Usuario.
      * * @return O ID do Usuario.
      */

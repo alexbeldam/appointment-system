@@ -12,6 +12,8 @@ Usuario::Usuario(long id, const string& nome, const string& email,
     setSenha(senha);
 }
 
+Usuario::~Usuario() {}
+
 long Usuario::getId() const {
     return id;
 }

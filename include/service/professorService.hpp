@@ -97,6 +97,17 @@ class ProfessorService {
     std::optional<Professor> getById(long id) const;
 
     /**
+     * @brief Busca um Professor pelo seu email.
+     *
+     * @param email O email do Professor
+     * @return std::optional<Professor> Se encontrado, retorna o objeto
+     * Professor completo; caso contrário, retorna std::nullopt.
+     * @throws std::runtime_error Em caso de falha crítica de I/O ou de
+     * integridade dos dados.
+     */
+    std::optional<Professor> getOneByEmail(const std::string& email) const;
+
+    /**
      * @brief Lista todos os Professors existentes no sistema.
      * * @return Um vetor contendo todos os Professors (pode ser vazio).
      * @throws std::runtime_error Em caso de falha crítica de I/O.
