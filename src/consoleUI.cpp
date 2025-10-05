@@ -45,8 +45,8 @@ void imprimir_opcoes_login() {
 
 void imprimir_opcoes_aluno() {
     cout << "MENU ALUNO:" << endl;
-    cout << "0 - Sair do programa" << endl;
     cout << "1 - Logout" << endl;
+    cout << "0 - Sair do programa" << endl;
     cout << "Escolha uma opcao: ";
 }
 
