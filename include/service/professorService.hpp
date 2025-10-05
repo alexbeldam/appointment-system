@@ -15,6 +15,8 @@
  */
 class ProfessorService {
    private:
+    const MockConnection&
+        connection;                 ///< Conexão simulada com o banco de dados
     const ProfessorMapper& mapper;  ///< Referência constante para o Mapper
                                     ///< (conversão DTO<->Model).
     const HorarioService& service;  ///< Referência constante para o Serviço de
@@ -63,10 +65,12 @@ class ProfessorService {
      * @brief Construtor para injeção de dependência.
      * * Inicializa as referências constantes para o Mapper e o Serviço de
      * Horarios.
+     * @param connection Referência para a conexão com o banco de dados.
      * * @param mapper Referência para o ProfessorMapper.
      * @param service Referência para o HorarioService.
      */
-    ProfessorService(const ProfessorMapper& mapper,
+    ProfessorService(const MockConnection& connection,
+                     const ProfessorMapper& mapper,
                      const HorarioService& service);
 
     // --- Métodos Públicos (CRUD) ---

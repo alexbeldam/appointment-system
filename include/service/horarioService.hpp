@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "data/mockConnection.hpp"
 #include "model/horario.hpp"
 
 /**
@@ -16,7 +17,13 @@
  * de forma funcional.
  */
 class HorarioService {
+   private:
+    const MockConnection&
+        connection;  ///< Conexão simulada com o banco de dados
+
    public:
+    HorarioService(const MockConnection& connection);
+
     /**
      * @brief Lista todos os Horarios associados a um Professor específico, cuja
      * coluna disponivel seja true.

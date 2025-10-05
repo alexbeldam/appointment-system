@@ -15,6 +15,8 @@
  */
 class AlunoService {
    private:
+    const MockConnection&
+        connection;             ///< Conexão simulada com o banco de dados
     const AlunoMapper& mapper;  ///< Referência constante para o Mapper
                                 ///< (conversão DTO<->Model).
     const AgendamentoService&
@@ -88,10 +90,12 @@ class AlunoService {
      * @brief Construtor para injeção de dependência.
      * * Inicializa as referências constantes para o Mapper e o Serviço de
      * Agendamentos.
+     * @param connection Referência para a conexão com o banco de dados.
      * * @param mapper Referência para o AlunoMapper.
      * @param service Referência para o AgendamentoService.
      */
-    AlunoService(const AlunoMapper& mapper, const AgendamentoService& service);
+    AlunoService(const MockConnection& connection, const AlunoMapper& mapper,
+                 const AgendamentoService& service);
 
     // --- Métodos Públicos (CRUD) ---
 

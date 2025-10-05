@@ -6,69 +6,72 @@
 #include <stdexcept>
 #include <utility>
 
-#include "helper/mock.hpp"
 using namespace std;
 
-// Definições de macros
-#define ALUNO_FILE "data/alunos.csv"
+// --- CONFIGURAÇÕES DE PERSISTÊNCIA ---
+
+// Define o nome da "tabela" (arquivo CSV) gerenciada por este Service.
+#define ALUNO_TABLE "alunos"
+// Índices das colunas usados para buscas específicas.
 #define EMAIL_COL_INDEX 2
 #define MATRICULA_COL_INDEX 4
 
-// Construtor: Realiza a Injeção de Dependência das referências constantes
-AlunoService::AlunoService(const AlunoMapper& mapper,
+// Construtor: Inicializa todas as dependências de forma segura (Injeção de
+// Dependência). A ordem é crucial para membros const e referências.
+AlunoService::AlunoService(const MockConnection& connection,
+                           const AlunoMapper& mapper,
                            const AgendamentoService& service)
-    : mapper(mapper), service(service) {}
+    : connection(connection), mapper(mapper), service(service) {}
 
 // --- MÉTODOS PRIVADOS/AUXILIARES ---
 
-// Converte uma linha CSV em Model e injeta Agendamentos (Responsabilidade do
-// Service)
+// Helper: Converte CSV em Model e injeta as dependências de outras entidades.
 Aluno AlunoService::mapAndInjectAgendamentos(const string& csv_line) const {
     Aluno aluno;
 
-    // 1. Mapeamento CSV -> Model (Mapper lança invalid_argument em caso de
-    // dados malformados)
+    // 1. Mapeamento CSV -> Model (Mapper lança erro se o formato dos dados for
+    // inválido).
     try {
         aluno = mapper.fromCsvLine(csv_line);
     } catch (const invalid_argument& e) {
-        // Promove o erro de mapeamento para runtime_error (indicando falha
-        // crítica no registro)
+        // Promove o erro de mapeamento para runtime_error (falha na integridade
+        // do registro).
         throw runtime_error("Falha ao processar registro CSV: " +
                             string(e.what()));
     }
 
-    // 2. Injeção de Agendamentos (Consulta a serviço externo/outra entidade)
-    // NOTE: AgendamentoService::listByIdAluno é a dependência injetada.
+    // 2. Injeção de Agendamentos (Consulta a serviço externo para dados
+    // relacionados).
     vector<Agendamento> agendamentos = service.listByIdAluno(aluno.getId());
-    // Usa std::move para transferência eficiente do vetor de Agendamentos
+    // Usa std::move para transferência eficiente do vetor.
     aluno.setAgendamentos(move(agendamentos));
 
     return aluno;
 }
 
-// Helper: Busca todos os Alunos por Email (usa o DAL e mapeia o resultado)
+// Helper: Busca todos os Alunos por Email.
 vector<Aluno> AlunoService::getByEmail(const string& email) const {
     vector<string> csv_matches;
     vector<Aluno> alunos;
 
     try {
-        // Chamada ao DAL. findByColumn retorna vetor vazio ou lança
-        // runtime_error (I/O)
-        csv_matches = findByColumn(ALUNO_FILE, EMAIL_COL_INDEX, email);
+        // Chamada ao DAL (MockConnection) para buscar na tabela ALUNO_TABLE.
+        csv_matches =
+            connection.selectByColumn(ALUNO_TABLE, EMAIL_COL_INDEX, email);
     } catch (const invalid_argument& e) {
-        // Captura "Nenhum registro encontrado" do DAL e traduz para um vetor
-        // vazio
+        // Se o DAL lançar 'invalid_argument' por não encontrar nada, traduz
+        // para um vetor vazio.
         return {};
     } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O críticos
+        throw;  // Relança erros de I/O críticos do DAL.
     }
 
-    // Mapeia todas as linhas CSV válidas para Model
+    // Mapeia todas as linhas CSV válidas para Model.
     for (const string& csv_line : csv_matches) {
         try {
             alunos.push_back(mapAndInjectAgendamentos(csv_line));
         } catch (const runtime_error& e) {
-            // Logs e ignora registros malformados encontrados
+            // Loga e ignora registros malformados encontrados no arquivo.
             cerr << "Aviso: Pulando registro malformado durante getByEmail: "
                  << csv_line << " (" << e.what() << ")" << endl;
         }
@@ -77,16 +80,16 @@ vector<Aluno> AlunoService::getByEmail(const string& email) const {
     return alunos;
 }
 
-// Helper: Busca todos os Alunos por Matrícula (funciona de forma idêntica ao
-// getByEmail)
+// Helper: Busca todos os Alunos por Matrícula.
 vector<Aluno> AlunoService::getByMatricula(long matricula) const {
     vector<string> csv_matches;
     vector<Aluno> alunos;
     string sMatricula =
-        to_string(matricula);  // Converte matrícula para string para o DAL
+        to_string(matricula);  // Converte para string para o DAL.
 
     try {
-        csv_matches = findByColumn(ALUNO_FILE, MATRICULA_COL_INDEX, sMatricula);
+        csv_matches = connection.selectByColumn(
+            ALUNO_TABLE, MATRICULA_COL_INDEX, sMatricula);
     } catch (const invalid_argument& e) {
         return {};
     } catch (const runtime_error& e) {
@@ -106,20 +109,20 @@ vector<Aluno> AlunoService::getByMatricula(long matricula) const {
     return alunos;
 }
 
-// --- MÉTODOS DE VALIDAÇÃO DE NEGÓCIO ---
+// --- MÉTODOS DE VALIDAÇÃO DE NEGÓCIO (Unicidade) ---
 
 bool AlunoService::existsByEmail(string email) const {
-    // Verifica se a lista retornada por getByEmail não está vazia
+    // Verifica se a busca retorna algum resultado.
     return !getByEmail(email).empty();
 }
 
 bool AlunoService::existsByEmailAndIdNot(string email, long id) const {
     vector<Aluno> email_matches = getByEmail(email);
 
-    // Itera os Models e compara o ID para verificar unicidade
+    // Itera os Models para verificar se o email pertence a um ID diferente.
     for (const Aluno& aluno : email_matches) {
         if (aluno.getId() != id) {
-            return true;  // Encontrado outro aluno com o mesmo email
+            return true;
         }
     }
 
@@ -127,17 +130,17 @@ bool AlunoService::existsByEmailAndIdNot(string email, long id) const {
 }
 
 bool AlunoService::existsByMatricula(long matricula) const {
-    // Verifica se a lista retornada por getByMatricula não está vazia
+    // Verifica se a busca retorna algum resultado.
     return !getByMatricula(matricula).empty();
 }
 
 bool AlunoService::existsByMatriculaAndIdNot(long matricula, long id) const {
     vector<Aluno> matricula_matches = getByMatricula(matricula);
 
-    // Itera os Models e compara o ID para verificar unicidade
+    // Itera os Models para verificar se a matrícula pertence a um ID diferente.
     for (const Aluno& aluno : matricula_matches) {
         if (aluno.getId() != id) {
-            return true;  // Encontrado outro aluno com a mesma matrícula
+            return true;
         }
     }
 
@@ -161,17 +164,17 @@ Aluno AlunoService::save(const AlunoDTO& aluno) const {
 
     // 2. DAL WRITE
     string data_csv = mapper.toCsvData(aluno);
-    long id = insert(ALUNO_FILE, data_csv);  // Persiste os dados e obtém o novo
-                                             // ID (lança runtime_error em I/O)
+    // Chama o método INSERT do MockConnection, especificando a tabela.
+    long id = connection.insert(ALUNO_TABLE, data_csv);
 
-    // 3. MONTAGEM DO MODELO (Evita leitura desnecessária do DB)
+    // 3. MONTAGEM DO MODELO (Evita leitura desnecessária)
     string new_record_csv = to_string(id) + "," + data_csv;
 
     try {
-        // Mapeia e injeta Agendamentos (lança runtime_error em mapeamento)
+        // Mapeia, injeta Agendamentos e retorna o Model completo.
         return mapAndInjectAgendamentos(new_record_csv);
     } catch (const runtime_error& e) {
-        // Erro crítico após sucesso na escrita: relança com contexto
+        // Erro crítico: a escrita foi bem-sucedida, mas o processamento falhou.
         throw runtime_error(
             "Inserção bem-sucedida (ID: " + to_string(id) +
             "), mas falha ao processar o registro: " + string(e.what()));
@@ -181,32 +184,31 @@ Aluno AlunoService::save(const AlunoDTO& aluno) const {
 // READ BY ID
 optional<Aluno> AlunoService::getById(long id) const {
     try {
-        // find() lança invalid_argument se ID não existe, runtime_error se I/O
-        // falhar
-        string csv_line = find(ALUNO_FILE, id);
+        // selectOne lança invalid_argument se ID não existe.
+        string csv_line = connection.selectOne(ALUNO_TABLE, id);
 
-        // Se encontrou, mapeia e retorna o optional<Aluno> com valor
+        // Se encontrou, mapeia e retorna o optional<Aluno> com valor.
         return mapAndInjectAgendamentos(csv_line);
     } catch (const invalid_argument& e) {
-        // Captura "ID não existe" e retorna optional vazio
+        // Captura "ID não existe" do DAL e retorna optional vazio.
         return nullopt;
     } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O
+        throw;  // Relança erros de I/O.
     }
 }
 
 // LIST ALL
 vector<Aluno> AlunoService::listAll() const {
-    vector<string> csv_records =
-        findAll(ALUNO_FILE);  // Pega todas as linhas (exclui cabeçalho)
+    // Pega todas as linhas de dados da tabela Alunos.
+    vector<string> csv_records = connection.selectAll(ALUNO_TABLE);
     vector<Aluno> alunos;
 
-    // Mapeia e injeta Agendamentos para todos os registros
+    // Mapeia e injeta Agendamentos para todos os registros.
     for (const string& csv_line : csv_records) {
         try {
             alunos.push_back(mapAndInjectAgendamentos(csv_line));
         } catch (const runtime_error& e) {
-            // Logs e ignora registros malformados
+            // Logs e ignora registros malformados.
             cerr << "Aviso: Pulando registro malformado durante listAll: "
                  << csv_line << " (" << e.what() << ")" << endl;
         }
@@ -233,17 +235,16 @@ optional<Aluno> AlunoService::updateById(long id, const AlunoDTO& aluno) const {
     string updated_csv;
 
     try {
-        // update() lança invalid_argument se ID não existe
-        update(ALUNO_FILE, id, data_csv);
+        // update() lança invalid_argument se ID não existe.
+        connection.update(ALUNO_TABLE, id, data_csv);
 
-        // Constrói a linha CSV completa do registro atualizado (ID + novos
-        // dados)
+        // Constrói a linha CSV completa do registro atualizado.
         updated_csv = to_string(id) + "," + data_csv;
     } catch (const invalid_argument& e) {
-        // Captura "ID não existe" e retorna optional vazio
+        // Captura "ID não existe" e retorna optional vazio.
         return nullopt;
     } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O
+        throw;  // Relança erros de I/O.
     }
 
     // 3. MONTAGEM DO MODELO
@@ -253,12 +254,12 @@ optional<Aluno> AlunoService::updateById(long id, const AlunoDTO& aluno) const {
 // DELETE
 bool AlunoService::deleteById(long id) const {
     try {
-        // remove() lança invalid_argument se ID não existe
-        remove(ALUNO_FILE, id);
-        return true;  // Sucesso na remoção
+        // deleteRecord() lança invalid_argument se ID não existe.
+        connection.deleteRecord(ALUNO_TABLE, id);
+        return true;  // Sucesso na remoção.
     } catch (const invalid_argument& e) {
-        return false;  // ID não encontrado
+        return false;  // ID não encontrado.
     } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O
+        throw;  // Relança erros de I/O.
     }
 }

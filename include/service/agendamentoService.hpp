@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "data/mockConnection.hpp"
 #include "model/agendamento.hpp"
 
 /**
@@ -15,7 +16,13 @@
  * de forma funcional.
  */
 class AgendamentoService {
+   private:
+    const MockConnection&
+        connection;  ///< Conexão simulada com o banco de dados
+
    public:
+    AgendamentoService(const MockConnection& connection);
+
     /**
      * @brief Lista todos os Agendamentos associados a um Aluno específico.
      * * * Esta função é utilizada para injetar dados relacionados ao Modelo

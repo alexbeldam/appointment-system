@@ -6,70 +6,75 @@
 #include <stdexcept>
 #include <utility>
 
-#include "helper/mock.hpp"
 using namespace std;
 
-// Definições de macros
-#define PROFESSOR_FILE "data/professores.csv"
+// --- CONFIGURAÇÕES DE PERSISTÊNCIA ---
+
+// Define o nome da "tabela" (arquivo CSV) gerenciada por este Service.
+#define PROFESSOR_TABLE "professores"
+// Índices das colunas usados para buscas específicas.
 #define EMAIL_COL_INDEX 2
 
-// Construtor: Realiza a Injeção de Dependência das referências constantes
-ProfessorService::ProfessorService(const ProfessorMapper& mapper,
+// Construtor: Inicializa todas as dependências de forma segura (Injeção de
+// Dependência).
+ProfessorService::ProfessorService(const MockConnection& connection,
+                                   const ProfessorMapper& mapper,
                                    const HorarioService& service)
-    : mapper(mapper), service(service) {}
+    : connection(connection), mapper(mapper), service(service) {}
 
 // --- MÉTODOS PRIVADOS/AUXILIARES ---
 
-// Converte uma linha CSV em Model e injeta Horarios (Responsabilidade do
-// Service)
+// Helper: Converte CSV em Model e injeta Horarios disponíveis (Responsabilidade
+// do Service)
 Professor ProfessorService::mapAndInjectHorarios(const string& csv_line) const {
     Professor professor;
 
-    // 1. Mapeamento CSV -> Model (Mapper lança invalid_argument em caso de
-    // dados malformados)
+    // 1. Mapeamento CSV -> Model (Mapper lança erro se o formato dos dados for
+    // inválido).
     try {
         professor = mapper.fromCsvLine(csv_line);
     } catch (const invalid_argument& e) {
-        // Promove o erro de mapeamento para runtime_error (indicando falha
-        // crítica no registro)
+        // Promove o erro de mapeamento para runtime_error (indicando falha na
+        // integridade do registro).
         throw runtime_error("Falha ao processar registro CSV: " +
                             string(e.what()));
     }
 
     // 2. Injeção de Horarios (Consulta a serviço externo/outra entidade)
-    // NOTE: HorarioService::listDisponivelByIdProfessor é a dependência
-    // injetada.
+    // Busca a lista de horários disponíveis do professor por meio do
+    // HorarioService.
     vector<Horario> horarios =
         service.listDisponivelByIdProfessor(professor.getId());
-    // Usa std::move para transferência eficiente do vetor de Horarios
+    // Usa std::move para transferência eficiente do vetor de Horarios.
     professor.setHorarios(move(horarios));
 
     return professor;
 }
 
-// Helper: Busca todos os Professors por Email (usa o DAL e mapeia o resultado)
+// Helper: Busca todos os Professors por Email (usa o DAL e mapeia o resultado).
 vector<Professor> ProfessorService::getByEmail(const string& email) const {
     vector<string> csv_matches;
     vector<Professor> professors;
 
     try {
-        // Chamada ao DAL. findByColumn retorna vetor vazio ou lança
-        // runtime_error (I/O)
-        csv_matches = findByColumn(PROFESSOR_FILE, EMAIL_COL_INDEX, email);
+        // Chamada ao DAL (MockConnection) para buscar na tabela
+        // PROFESSOR_TABLE.
+        csv_matches =
+            connection.selectByColumn(PROFESSOR_TABLE, EMAIL_COL_INDEX, email);
     } catch (const invalid_argument& e) {
         // Captura "Nenhum registro encontrado" do DAL e traduz para um vetor
-        // vazio
+        // vazio.
         return {};
     } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O críticos
+        throw;  // Relança erros de I/O críticos.
     }
 
-    // Mapeia todas as linhas CSV válidas para Model
+    // Mapeia todas as linhas CSV válidas para Model.
     for (const string& csv_line : csv_matches) {
         try {
             professors.push_back(mapAndInjectHorarios(csv_line));
         } catch (const runtime_error& e) {
-            // Logs e ignora registros malformados encontrados
+            // Logs e ignora registros malformados encontrados no arquivo.
             cerr << "Aviso: Pulando registro malformado durante getByEmail: "
                  << csv_line << " (" << e.what() << ")" << endl;
         }
@@ -81,17 +86,17 @@ vector<Professor> ProfessorService::getByEmail(const string& email) const {
 // --- MÉTODOS DE VALIDAÇÃO DE NEGÓCIO ---
 
 bool ProfessorService::existsByEmail(string email) const {
-    // Verifica se a lista retornada por getByEmail não está vazia
+    // Verifica se a lista retornada por getByEmail não está vazia.
     return !getByEmail(email).empty();
 }
 
 bool ProfessorService::existsByEmailAndIdNot(string email, long id) const {
     vector<Professor> email_matches = getByEmail(email);
 
-    // Itera os Models e compara o ID para verificar unicidade
+    // Itera os Models para verificar se o email pertence a um ID diferente.
     for (const Professor& professor : email_matches) {
         if (professor.getId() != id) {
-            return true;  // Encontrado outro professor com o mesmo email
+            return true;  // Encontrado outro professor com o mesmo email.
         }
     }
 
@@ -102,7 +107,7 @@ bool ProfessorService::existsByEmailAndIdNot(string email, long id) const {
 
 // CREATE
 Professor ProfessorService::save(const ProfessorDTO& professor) const {
-    // 1. VALIDAÇÃO DE NEGÓCIO (Unicidade)
+    // 1. VALIDAÇÃO DE NEGÓCIO (Unicidade de Email)
     if (existsByEmail(professor.getEmail())) {
         throw invalid_argument("O email '" + professor.getEmail() +
                                "' já está em uso por outro professor.");
@@ -110,18 +115,17 @@ Professor ProfessorService::save(const ProfessorDTO& professor) const {
 
     // 2. DAL WRITE
     string data_csv = mapper.toCsvData(professor);
-    long id =
-        insert(PROFESSOR_FILE, data_csv);  // Persiste os dados e obtém o novo
-                                           // ID (lança runtime_error em I/O)
+    // Persiste os dados e obtém o novo ID (lança runtime_error em I/O).
+    long id = connection.insert(PROFESSOR_TABLE, data_csv);
 
     // 3. MONTAGEM DO MODELO (Evita leitura desnecessária do DB)
     string new_record_csv = to_string(id) + "," + data_csv;
 
     try {
-        // Mapeia e injeta Horarios (lança runtime_error em mapeamento)
+        // Mapeia, injeta Horarios e retorna o Model completo.
         return mapAndInjectHorarios(new_record_csv);
     } catch (const runtime_error& e) {
-        // Erro crítico após sucesso na escrita: relança com contexto
+        // Erro crítico após sucesso na escrita: relança com contexto.
         throw runtime_error(
             "Inserção bem-sucedida (ID: " + to_string(id) +
             "), mas falha ao processar o registro: " + string(e.what()));
@@ -131,32 +135,31 @@ Professor ProfessorService::save(const ProfessorDTO& professor) const {
 // READ BY ID
 optional<Professor> ProfessorService::getById(long id) const {
     try {
-        // find() lança invalid_argument se ID não existe, runtime_error se I/O
-        // falhar
-        string csv_line = find(PROFESSOR_FILE, id);
+        // selectOne lança invalid_argument se ID não existe.
+        string csv_line = connection.selectOne(PROFESSOR_TABLE, id);
 
-        // Se encontrou, mapeia e retorna o optional<Professor> com valor
+        // Se encontrou, mapeia e retorna o optional<Professor> com valor.
         return mapAndInjectHorarios(csv_line);
     } catch (const invalid_argument& e) {
-        // Captura "ID não existe" e retorna optional vazio
+        // Captura "ID não existe" e retorna optional vazio.
         return nullopt;
     } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O
+        throw;  // Relança erros de I/O.
     }
 }
 
 // LIST ALL
 vector<Professor> ProfessorService::listAll() const {
-    vector<string> csv_records =
-        findAll(PROFESSOR_FILE);  // Pega todas as linhas (exclui cabeçalho)
+    // Pega todas as linhas de dados da tabela Professores.
+    vector<string> csv_records = connection.selectAll(PROFESSOR_TABLE);
     vector<Professor> professors;
 
-    // Mapeia e injeta Horarios para todos os registros
+    // Mapeia e injeta Horarios para todos os registros.
     for (const string& csv_line : csv_records) {
         try {
             professors.push_back(mapAndInjectHorarios(csv_line));
         } catch (const runtime_error& e) {
-            // Logs e ignora registros malformados
+            // Logs e ignora registros malformados.
             cerr << "Aviso: Pulando registro malformado durante listAll: "
                  << csv_line << " (" << e.what() << ")" << endl;
         }
@@ -179,17 +182,16 @@ optional<Professor> ProfessorService::updateById(
     string updated_csv;
 
     try {
-        // update() lança invalid_argument se ID não existe
-        update(PROFESSOR_FILE, id, data_csv);
+        // update() lança invalid_argument se ID não existe.
+        connection.update(PROFESSOR_TABLE, id, data_csv);
 
-        // Constrói a linha CSV completa do registro atualizado (ID + novos
-        // dados)
+        // Constrói a linha CSV completa do registro atualizado.
         updated_csv = to_string(id) + "," + data_csv;
     } catch (const invalid_argument& e) {
-        // Captura "ID não existe" e retorna optional vazio
+        // Captura "ID não existe" e retorna optional vazio.
         return nullopt;
     } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O
+        throw;  // Relança erros de I/O.
     }
 
     // 3. MONTAGEM DO MODELO
@@ -199,12 +201,12 @@ optional<Professor> ProfessorService::updateById(
 // DELETE
 bool ProfessorService::deleteById(long id) const {
     try {
-        // remove() lança invalid_argument se ID não existe
-        remove(PROFESSOR_FILE, id);
-        return true;  // Sucesso na remoção
+        // deleteRecord() lança invalid_argument se ID não existe.
+        connection.deleteRecord(PROFESSOR_TABLE, id);
+        return true;  // Sucesso na remoção.
     } catch (const invalid_argument& e) {
-        return false;  // ID não encontrado
+        return false;  // ID não encontrado.
     } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O
+        throw;  // Relança erros de I/O.
     }
 }
