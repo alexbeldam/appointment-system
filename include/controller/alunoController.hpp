@@ -13,7 +13,7 @@ class AlunoController {
     const AlunoService& service;
 
    public:
-    AlunoController(const AlunoService& service) : service(service) {}
+    AlunoController(const AlunoService& service);
 
     /**
      * @brief Cria um novo registro na tabela, após validações de formato.
