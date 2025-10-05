@@ -65,7 +65,7 @@ Aluno AlunoMapper::fromCsvLine(const string& line) const {
     // 1. Tokenização da linha CSV
     while (getline(ss, segment, ',')) {
         // Usa std::move para evitar a cópia da string do segmento para o vetor.
-        fields.push_back(std::move(segment));
+        fields.push_back(move(segment));
     }
 
     // 2. Validação da Estrutura (Business Logic)
@@ -89,9 +89,9 @@ Aluno AlunoMapper::fromCsvLine(const string& line) const {
 
         // Mapeamento de strings (usando move semantics para evitar cópia
         // desnecessária)
-        aluno.setNome(std::move(fields[1]));
-        aluno.setEmail(std::move(fields[2]));
-        aluno.setSenha(std::move(fields[3]));
+        aluno.setNome(move(fields[1]));
+        aluno.setEmail(move(fields[2]));
+        aluno.setSenha(move(fields[3]));
 
         // Agendamentos ficam vazios (default-initialized) e serão injetados
         // pelo Service.
