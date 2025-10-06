@@ -94,7 +94,7 @@ void ConsoleUI::criar_aluno() const {
     // Tentativa de leitura do long. Se falhar, é porque o usuário digitou
     // texto.
     if (!(cin >> matricula)) {
-        cout << ">> ERRO: A matrícula deve ser um número inteiro." << endl;
+        cout << "\n>> ERRO: A matrícula deve ser um número inteiro." << endl;
         // Limpa o estado de erro do cin e o buffer para permitir futuras
         // operações.
         cin.clear();

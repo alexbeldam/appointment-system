@@ -5,8 +5,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "util/controllerUtils.hpp"
-#include "util/encrypt.hpp"
+#include "util/utils.hpp"
 using namespace std;
 
 // --- MÉTODOS PÚBLICOS DA CLASSE PROFESSORCONTROLLER ---
