@@ -1,4 +1,6 @@
 #include "model/professor.hpp"
+
+#include <algorithm>
 using namespace std;
 
 Professor::Professor() {}
@@ -25,4 +27,24 @@ const vector<Horario>& Professor::getHorarios() const {
 
 void Professor::setHorarios(const vector<Horario>& horarios) {
     this->horarios = horarios;
+}
+
+void Professor::addHorario(const Horario& horario) {
+    this->horarios.push_back(horario);
+}
+
+void Professor::updateHorario(const Horario& horario) {
+    for (Horario& h : this->horarios) {
+        if (h.getId() == horario.getId()) {
+            h = horario;
+            return;
+        }
+    }
+}
+
+void Professor::removeHorario(long id) {
+    this->horarios.erase(
+        remove_if(this->horarios.begin(), this->horarios.end(),
+                  [id](const Horario& h) { return h.getId() == id; }),
+        this->horarios.end());
 }

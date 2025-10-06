@@ -65,6 +65,24 @@ class Professor : public Usuario {
      * * @param horarios O novo vetor de Horarios.
      */
     void setHorarios(const std::vector<Horario>& horarios);
+
+    /**
+     * @brief Adiciona um novo Horario à lista.
+     * @param horario O Horario a ser adicionado.
+     */
+    void addHorario(const Horario& horario);
+
+    /**
+     * @brief Atualiza um Horario existente na lista.
+     * @param horario O Horario com dados atualizados (busca por ID).
+     */
+    void updateHorario(const Horario& horario);
+
+    /**
+     * @brief Remove um Horario da lista.
+     * @param id O id do horario.
+     */
+    void removeHorario(long id);
 };
 
 #endif

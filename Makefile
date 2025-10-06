@@ -1,5 +1,5 @@
 CXX           := g++
-CXXFLAGS      := -std=c++17 -Wall -Wextra -pedantic -Iinclude -MMD -MP
+CXXFLAGS      := -std=c++17 -Wall -Wextra -pedantic -Wno-unused-parameter -Iinclude -MMD -MP
 LDFLAGS       :=
 BUILD_DIR     := build
 SRC_DIR       := src

@@ -1,32 +1,28 @@
 #include "controller/loginController.hpp"
 
+#include <memory>
+
+#include "event/events.hpp"
 #include "util/utils.hpp"
 using namespace std;
 
 LoginController::LoginController(const AlunoService& alunoService,
                                  const ProfessorService& professorService,
-                                 SessionManager& sessionManager)
+                                 EventBus& bus)
     : alunoService(alunoService),
       professorService(professorService),
-      sessionManager(sessionManager) {}
+      bus(bus) {}
 
-// Implementação do login de Aluno.
-// O retorno é por VALOR (Aluno), o que exige que retornemos uma cópia,
-// mas o objeto original logado é movido para o heap e entregue ao
-// SessionManager.
+// Tenta autenticar um Aluno.
 Aluno LoginController::loginAluno(string email, string senha) const {
     try {
-        // 1. Busca o Aluno pelo email. O Service retorna o objeto por valor
-        // (dentro
-        // de optional).
+        // 1. Busca o Aluno.
         optional<Aluno> opt_aluno = alunoService.getOneByEmail(email);
 
         if (!opt_aluno.has_value()) {
             throw invalid_argument("Senha e/ou email inválidos.");
         }
 
-        // Move o objeto Aluno do optional para a variável local 'aluno'.
-        // Neste ponto, 'aluno' está na Stack do Controller.
         Aluno aluno = move(opt_aluno.value());
 
         // 2. Verifica a senha.
@@ -34,29 +30,18 @@ Aluno LoginController::loginAluno(string email, string senha) const {
             throw invalid_argument("Senha e/ou email inválidos.");
         }
 
-        // --- Início da Gestão de Propriedade (Ownership) ---
+        // 3. CRÍTICO: Cria o objeto no HEAP usando shared_ptr<Usuario>.
+        // Isso garante: A) Posse compartilhada para o EventBus. B)
+        // Polimorfismo. O objeto 'aluno' é movido para o heap (sem cópia).
+        shared_ptr<Usuario> user_ptr = make_shared<Aluno>(move(aluno));
 
-        // 3. CRÍTICO: Cria o objeto no HEAP e o armazena em um
-        // unique_ptr<Usuario>. O objeto 'aluno' é movido (seus dados são
-        // transferidos) para a nova memória no heap. Isso é feito para: A)
-        // Garantir que o objeto sobreviva ao fim desta função. B) Habilitar o
-        // polimorfismo (upcast implícito de Aluno para Usuario).
-        unique_ptr<Usuario> user_ptr = make_unique<Aluno>(move(aluno));
+        // 4. Publica o evento de sucesso de login.
+        // O SessionManager está inscrito e irá reagir, salvando o user_ptr.
+        bus.publish(UsuarioLoggedInEvent(user_ptr));
 
-        // 4. Salva a cópia de retorno.
-        // O chamador espera um retorno por valor (cópia). Criamos a cópia ANTES
-        // de transferir a propriedade do ponteiro.
-        // Usamos static_cast para garantir que a referência seja tratada como
-        // Aluno, pegando todos os dados da classe derivada.
-        Aluno aluno_return_copy = static_cast<Aluno&>(*user_ptr);
-
-        // 5. Sucesso: Transfere a propriedade (Ownership) para o
-        // SessionManager. O std::move transfere o unique_ptr. Após esta linha,
-        // a SessionManager é a única responsável por deletar o objeto.
-        sessionManager.login(move(user_ptr));
-
-        // Retorna a cópia do objeto Aluno (valor) para o chamador.
-        return aluno_return_copy;
+        // 5. Retorna a CÓPIA do objeto Aluno (valor) para o chamador.
+        // A cópia é feita a partir do shared_ptr, que mantém o objeto vivo.
+        return static_cast<Aluno&>(*user_ptr);
     } catch (const std::invalid_argument& e) {
         handle_controller_exception(e, "validar autenticação");
     } catch (const std::runtime_error& e) {
@@ -65,8 +50,7 @@ Aluno LoginController::loginAluno(string email, string senha) const {
     throw;
 }
 
-// Implementação do login de Professor.
-// O fluxo é idêntico ao de Aluno, garantindo a gestão correta da propriedade.
+// Tenta autenticar um Professor. O fluxo é idêntico ao de Aluno.
 Professor LoginController::loginProfessor(string email, string senha) const {
     try {
         // 1. Busca o Professor.
@@ -84,18 +68,14 @@ Professor LoginController::loginProfessor(string email, string senha) const {
             throw invalid_argument("Senha e/ou email inválidos.");
         }
 
-        // 3. CRÍTICO: Cria o objeto no HEAP com unique_ptr<Usuario>.
-        unique_ptr<Usuario> user_ptr = make_unique<Professor>(move(professor));
+        // 3. CRÍTICO: Cria o objeto no HEAP com shared_ptr<Usuario>.
+        shared_ptr<Usuario> user_ptr = make_shared<Professor>(move(professor));
 
-        // 4. Salva a cópia de retorno ANTES da transferência.
-        Professor professor_return_copy = static_cast<Professor&>(*user_ptr);
+        // 4. Publica o evento de sucesso de login.
+        bus.publish(UsuarioLoggedInEvent(user_ptr));
 
-        // 5. Sucesso: Transfere a propriedade (Ownership) para o
-        // SessionManager.
-        sessionManager.login(move(user_ptr));
-
-        // Retorna a cópia do objeto Professor (valor) para o chamador.
-        return professor_return_copy;
+        // 5. Retorna a CÓPIA do objeto Professor (valor) para o chamador.
+        return static_cast<Professor&>(*user_ptr);
     } catch (const std::invalid_argument& e) {
         handle_controller_exception(e, "validar autenticação");
     } catch (const std::runtime_error& e) {

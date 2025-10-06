@@ -4,38 +4,46 @@
 #include <vector>
 
 #include "data/mockConnection.hpp"
+#include "event/bus.hpp"
 #include "model/horario.hpp"
 
 /**
- * @brief CLASSE INCOMPLETA: Simula a Camada de Serviço para a entidade
- * Horario.
+ * @brief CLASSE INCOMPLETA: Camada de Serviço (Business Logic) para Horario.
  *
- * * Esta classe foi criada apenas para satisfazer as dependências e permitir a
- * compilação e o desenvolvimento da classe ProfessorService e
- * ProfessorController.
- * * A implementação atual não interage com a Camada de Acesso a Dados (DAL)
- * de forma funcional.
+ * Classe placeholder criada para satisfazer dependências de injeção e
+ * compilação. Não possui lógica funcional de domínio ou persistência
+ * implementada.
  */
 class HorarioService {
    private:
     const MockConnection&
         connection;  ///< Conexão simulada com o banco de dados
+    EventBus& bus;   ///< Barramento de eventos.
 
    public:
-    HorarioService(const MockConnection& connection);
+    /**
+     * @brief Construtor para injeção de dependência.
+     * @param connection Referência para a conexão com o banco de dados.
+     * @param bus Referência para o Barramento de Eventos. // << NOVO PARÂMETRO
+     */
+    HorarioService(const MockConnection& connection, EventBus& bus);
 
     /**
-     * @brief Lista todos os Horarios associados a um Professor específico, cuja
-     * coluna disponivel seja true.
-     * * * Esta função é utilizada para injetar dados relacionados ao Modelo
-     * Professor.
-     * * **NOTA DE IMPLEMENTAÇÃO:** Atualmente, a função não possui lógica de
-     * busca e retorna sempre um vetor vazio (std::vector<Horario>{}) como
-     * placeholder.
-     * * @param id O identificador único (ID) do Professor.
-     * @return Um vetor **vazio** de Horarios.
+     * @brief Lista todos os Horarios disponíveis associados a um Professor.
+     *
+     * @note **PLACEHOLDER:** Atualmente, retorna sempre um vetor vazio.
+     * @param id O identificador único (ID) do Professor.
+     * @return Um vetor de Horarios disponíveis (atualmente vazio).
      */
     std::vector<Horario> listDisponivelByIdProfessor(long id) const;
+
+    /**
+     * @brief Deleta todos os horários que tenham a coluna id_professor igual ao
+     * parametro.
+     *
+     * @param id O id do professor.
+     */
+    void deleteByIdProfessor(long id) const;
 };
 
 #endif

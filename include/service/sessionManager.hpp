@@ -2,84 +2,86 @@
 #define SESSION_MANAGER_HPP
 
 #include <memory>
+#include <stdexcept>
 
+#include "event/bus.hpp"
 #include "model/aluno.hpp"
 #include "model/professor.hpp"
 
 /**
  * @brief Gerencia o estado da sessão do usuário logado na aplicação.
- * * Usado para armazenar o objeto Usuario (Aluno ou Professor) que está
- * autenticado, mantendo sua identidade polimórfica e gerenciando sua vida útil
- * através de um ponteiro exclusivo.
+ *
+ * Armazena o objeto polimórfico do usuário (Aluno ou Professor) e depende do
+ * EventBus para reagir a eventos de autenticação e atualização.
  */
 class SessionManager {
    private:
     /**
-     * @brief Ponteiro inteligente que armazena o usuário logado.
-     * * Usa **std::unique_ptr<Usuario>** para garantir que o SessionManager
-     * tenha a **propriedade exclusiva** do objeto polimórfico (Aluno ou
-     * Professor) e garantir que ele permaneça válido enquanto a sessão estiver
-     * ativa. Um valor nullptr indica que nenhum usuário está logado.
+     * @brief Ponteiro compartilhado para o usuário logado.
+     *
+     * Armazena o usuário autenticado como um `std::shared_ptr<Usuario>`,
+     * participando da posse compartilhada do objeto. `nullptr` se não houver
+     * usuário logado.
      */
-    std::unique_ptr<Usuario> loggedUser;
+    std::shared_ptr<Usuario> user;
+
+    /**
+     * @brief Referência ao EventBus.
+     *
+     * Usado para inscrever o SessionManager em eventos de login e atualização
+     * de usuário.
+     */
+    EventBus& bus;
 
    public:
     /**
-     * @brief Define o usuário que acabou de fazer login.
-     * * O SessionManager assume a **propriedade exclusiva** do objeto, que deve
-     * ser alocado dinamicamente.
-     * @param user O **std::unique_ptr** para o objeto Usuario (Aluno ou
-     * Professor) que foi autenticado.
+     * @brief Construtor do SessionManager.
+     *
+     * Inicializa a classe e utiliza o EventBus fornecido para se inscrever
+     * nos eventos necessários (login, update, etc.).
+     * @param bus Referência ao EventBus do sistema.
      */
-    void login(std::unique_ptr<Usuario> user);
+    SessionManager(EventBus& bus);
 
     /**
-     * @brief Encerra a sessão, limpando o usuário armazenado.
-     * * O ponteiro é resetado (loggedUser.reset()), destruindo o objeto do
-     * usuário.
+     * @brief Encerra a sessão.
+     *
+     * Reseta o `loggedUser`, liberando a referência do SessionManager ao
+     * objeto.
      */
     void logout();
 
     /**
-     * @brief Verifica se há um usuário ativo na sessão.
-     * @return true se um usuário estiver logado (loggedUser não é nullptr),
-     * false caso contrário.
+     * @brief Verifica o estado da sessão.
+     * @return true se `loggedUser` não for nulo.
      */
     bool isLogged() const;
 
     /**
-     * @brief Verifica se há um professor ativo na sessão.
-     * * Utiliza dynamic_cast para verificar o tipo de runtime.
-     * @return true se um usuário estiver logado e for Professor, false caso
-     * contrário.
+     * @brief Verifica se o usuário logado é um Professor.
+     * @return true se o usuário estiver logado e for do tipo Professor.
      */
     bool isProfessor() const;
 
     /**
-     * @brief Verifica se há um aluno ativo na sessão.
-     * * Utiliza dynamic_cast para verificar o tipo de runtime.
-     * @return true se um usuário estiver logado e for Aluno, false caso
-     * contrário.
+     * @brief Verifica se o usuário logado é um Aluno.
+     * @return true se o usuário estiver logado e for do tipo Aluno.
      */
     bool isAluno() const;
 
     /**
      * @brief Retorna uma cópia do objeto Professor logado.
-     * * O método realiza um downcast seguro e retorna uma cópia do valor,
-     * garantindo que não haja slicing e que o tipo exato seja retornado.
-     * @return Uma cópia completa do objeto Professor.
-     * @throws std::runtime_error Se o usuário não estiver logado **OU** se
-     * o usuário logado não for um Professor.
+     * @return Cópia completa do objeto Professor.
+     * @throws std::runtime_error Se o usuário não for um Professor ou não
+     * estiver logado.
      */
     Professor getCurrentProfessor() const;
 
     /**
      * @brief Retorna uma cópia do objeto Aluno logado.
-     * * O método realiza um downcast seguro e retorna uma cópia do valor,
-     * garantindo que não haja slicing e que o tipo exato seja retornado.
-     * @return Uma cópia completa do objeto Aluno.
-     * @throws std::runtime_error Se o usuário não estiver logado **OU** se
-     * o usuário logado não for um Aluno.
+     * @return Cópia completa do objeto Aluno.
+     * @throws std::runtime_error Se o usuário não for um Aluno ou não estiver
+     * logado.
      */
     Aluno getCurrentAluno() const;
 };

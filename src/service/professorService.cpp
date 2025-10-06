@@ -2,10 +2,12 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
 
+#include "event/events.hpp"
 using namespace std;
 
 // --- CONFIGURAÇÕES DE PERSISTÊNCIA ---
@@ -18,9 +20,9 @@ using namespace std;
 // Construtor: Inicializa todas as dependências de forma segura (Injeção de
 // Dependência).
 ProfessorService::ProfessorService(const MockConnection& connection,
-                                   const ProfessorMapper& mapper,
+                                   EventBus& bus, const ProfessorMapper& mapper,
                                    const HorarioService& service)
-    : connection(connection), mapper(mapper), service(service) {}
+    : connection(connection), bus(bus), mapper(mapper), service(service) {}
 
 // --- MÉTODOS PRIVADOS/AUXILIARES ---
 
@@ -213,14 +215,27 @@ optional<Professor> ProfessorService::updateById(
     }
 
     // 3. MONTAGEM DO MODELO
-    return mapAndInjectHorarios(updated_csv);
+    Professor updated_professor = mapAndInjectHorarios(updated_csv);
+
+    // 4. PUBLICAÇÃO DE EVENTO (Sucesso no Update)
+    // Cria o shared_ptr para o objeto e publica.
+    shared_ptr<Usuario> user_ptr = make_shared<Professor>(updated_professor);
+    bus.publish(UsuarioUpdatedEvent(user_ptr));
+
+    return updated_professor;
 }
 
 // DELETE
 bool ProfessorService::deleteById(long id) const {
     try {
+        // 1. DAL WRITE
         // deleteRecord() lança invalid_argument se ID não existe.
         connection.deleteRecord(PROFESSOR_TABLE, id);
+
+        // 2. PUBLICAÇÃO DE EVENTO (Sucesso no Delete)
+        // Publica o ID do usuário deletado.
+        bus.publish(ProfessorDeletedEvent(id));
+
         return true;  // Sucesso na remoção.
     } catch (const invalid_argument& e) {
         return false;  // ID não encontrado.

@@ -1,9 +1,9 @@
 #ifndef LOGIN_CONTROLLER_HPP
 #define LOGIN_CONTROLLER_HPP
 
+#include "event/bus.hpp"
 #include "service/alunoService.hpp"
 #include "service/professorService.hpp"
-#include "service/sessionManager.hpp"
 
 /**
  * @brief Classe responsável por controlar o fluxo de autenticação (login) no
@@ -29,11 +29,11 @@ class LoginController {
     const ProfessorService& professorService;
 
     /**
-     * @brief Referência para o Gerenciador de Sessão.
-     * * Usado para registrar a autenticação e reter a posse (ownership) do
-     * objeto logado.
+     * @brief Referência ao EventBus.
+     *
+     * Usado para publicar o evento de login do usuário.
      */
-    SessionManager& sessionManager;
+    EventBus& bus;
 
    public:
     /**
@@ -41,11 +41,10 @@ class LoginController {
      * * Recebe e inicializa os serviços necessários para autenticação.
      * @param alunoService Referência para o AlunoService.
      * @param professorService Referência para o ProfessorService.
-     * @param sessionManager Referência para o SessionManager.
+     * @param bus Referência ao EventBus do sistema.
      */
     LoginController(const AlunoService& alunoService,
-                    const ProfessorService& professorService,
-                    SessionManager& sessionManager);
+                    const ProfessorService& professorService, EventBus& bus);
 
     /**
      * @brief Tenta autenticar um usuário como Aluno.

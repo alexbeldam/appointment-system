@@ -16,7 +16,7 @@ class Aluno : public Usuario {
    private:
     long matricula;  ///< Número de matrícula único do Aluno.
     std::vector<Agendamento>
-        agendametos;  ///< Lista de Agendamentos associados a este Aluno.
+        agendamentos;  ///< Lista de Agendamentos associados a este Aluno.
 
    public:
     /**
@@ -64,6 +64,24 @@ class Aluno : public Usuario {
      * * @param agendamentos O novo vetor de Agendamentos.
      */
     void setAgendamentos(const std::vector<Agendamento>& agendamentos);
+
+    /**
+     * @brief Adiciona um novo Agendamento à lista.
+     * @param agendamento O Agendamento a ser adicionado.
+     */
+    void addAgendamento(const Agendamento& agendamento);
+
+    /**
+     * @brief Atualiza um Agendamento existente na lista.
+     * @param agendamento O Agendamento com dados atualizados (busca por ID).
+     */
+    void updateAgendamento(const Agendamento& agendamento);
+
+    /**
+     * @brief Remove um Agendamento da lista.
+     * @param id O id do agendamento.
+     */
+    void removeAgendamento(long id);
 };
 
 #endif

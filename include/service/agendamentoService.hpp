@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "data/mockConnection.hpp"
+#include "event/bus.hpp"
 #include "model/agendamento.hpp"
 
 /**
@@ -19,9 +20,15 @@ class AgendamentoService {
    private:
     const MockConnection&
         connection;  ///< Conexão simulada com o banco de dados
+    EventBus& bus;   ///< Barramento de eventos;
 
    public:
-    AgendamentoService(const MockConnection& connection);
+    /**
+     * @brief Construtor para injeção de dependência.
+     * @param connection Referência para a conexão com o banco de dados.
+     * @param bus Referência para o Barramento de Eventos.
+     */
+    AgendamentoService(const MockConnection& connection, EventBus& bus);
 
     /**
      * @brief Lista todos os Agendamentos associados a um Aluno específico.
@@ -34,6 +41,14 @@ class AgendamentoService {
      * @return Um vetor **vazio** de Agendamentos.
      */
     std::vector<Agendamento> listByIdAluno(long id) const;
+
+    /**
+     * @brief Deleta todos os agendamentos que tenham a coluna id_aluno igual ao
+     * parametro.
+     *
+     * @param id O id do aluno.
+     */
+    void deleteByIdAluno(long id) const;
 };
 
 #endif

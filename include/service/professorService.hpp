@@ -3,6 +3,7 @@
 
 #include <optional>
 
+#include "event/bus.hpp"
 #include "map/professorMapper.hpp"
 #include "service/horarioService.hpp"
 
@@ -17,6 +18,7 @@ class ProfessorService {
    private:
     const MockConnection&
         connection;                 ///< Conexão simulada com o banco de dados
+    EventBus& bus;                  ///< Barramento de eventos
     const ProfessorMapper& mapper;  ///< Referência constante para o Mapper
                                     ///< (conversão DTO<->Model).
     const HorarioService& service;  ///< Referência constante para o Serviço de
@@ -63,13 +65,12 @@ class ProfessorService {
    public:
     /**
      * @brief Construtor para injeção de dependência.
-     * * Inicializa as referências constantes para o Mapper e o Serviço de
-     * Horarios.
      * @param connection Referência para a conexão com o banco de dados.
-     * * @param mapper Referência para o ProfessorMapper.
+     * @param bus Referência para o EventBus.
+     * @param mapper Referência para o ProfessorMapper.
      * @param service Referência para o HorarioService.
      */
-    ProfessorService(const MockConnection& connection,
+    ProfessorService(const MockConnection& connection, EventBus& bus,
                      const ProfessorMapper& mapper,
                      const HorarioService& service);
 

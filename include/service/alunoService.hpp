@@ -3,6 +3,7 @@
 
 #include <optional>
 
+#include "event/bus.hpp"
 #include "map/alunoMapper.hpp"
 #include "service/agendamentoService.hpp"
 
@@ -17,6 +18,7 @@ class AlunoService {
    private:
     const MockConnection&
         connection;             ///< Conexão simulada com o banco de dados
+    EventBus& bus;              ///< Barramento de eventos;
     const AlunoMapper& mapper;  ///< Referência constante para o Mapper
                                 ///< (conversão DTO<->Model).
     const AgendamentoService&
@@ -88,14 +90,13 @@ class AlunoService {
    public:
     /**
      * @brief Construtor para injeção de dependência.
-     * * Inicializa as referências constantes para o Mapper e o Serviço de
-     * Agendamentos.
      * @param connection Referência para a conexão com o banco de dados.
-     * * @param mapper Referência para o AlunoMapper.
+     * @param bus Referência para o EventBus. <--- PARÂMETRO ADICIONADO
+     * @param mapper Referência para o AlunoMapper.
      * @param service Referência para o AgendamentoService.
      */
-    AlunoService(const MockConnection& connection, const AlunoMapper& mapper,
-                 const AgendamentoService& service);
+    AlunoService(const MockConnection& connection, EventBus& bus,
+                 const AlunoMapper& mapper, const AgendamentoService& service);
 
     // --- Métodos Públicos (CRUD) ---
 

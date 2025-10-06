@@ -1,5 +1,6 @@
 #include "service/horarioService.hpp"
 
+#include "event/events.hpp"
 using namespace std;
 
 // --- CONFIGURAÇÕES DE PERSISTÊNCIA ---
@@ -9,9 +10,16 @@ using namespace std;
 // Índices das colunas usados para buscas específicas.
 #define ID_PROFESSOR_COL_INDEX 1
 
-// Construtor: Inicializa a única dependência necessária (a MockConnection).
-HorarioService::HorarioService(const MockConnection& connection)
-    : connection(connection) {}
+HorarioService::HorarioService(const MockConnection& connection, EventBus& bus)
+    : connection(connection), bus(bus) {
+    // Assina o evento de deleção de professor para garantir a integridade
+    // referencial. Quando um professor é deletado, seus horarios são
+    // removidos.
+    bus.subscribe<ProfessorDeletedEvent>(
+        [this](const ProfessorDeletedEvent& event) {
+            this->deleteByIdProfessor(event.id);
+        });
+}
 
 // A função é o ponto de injeção de dados relacionados para a classe Professor.
 vector<Horario> HorarioService::listDisponivelByIdProfessor(long id) const {
@@ -28,4 +36,13 @@ vector<Horario> HorarioService::listDisponivelByIdProfessor(long id) const {
     // Atualmente, retorna um vetor vazio para cumprir o contrato e resolver
     // dependências.
     return vector<Horario>();
+}
+
+void HorarioService::deleteByIdProfessor(long id) const {
+    // [TODO] Implementar a lógica de deleção em massa no DAL.
+
+    // A implementação final deve:
+    // 1. Chamar connection.deleteByColumn(HORARIO_TABLE,
+    // ID_PROFESSOR_COL_INDEX, to_string(id)).
+    // 2. Tratar exceções de I/O.
 }

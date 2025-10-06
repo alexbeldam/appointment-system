@@ -1,113 +1,163 @@
+#include "service/sessionManager.hpp"
+
+#include <algorithm>
 #include <stdexcept>
 
-#include "service/sessionManager.hpp"
+#include "event/events.hpp"
 
 using namespace std;
 
-// --- Implementação dos Métodos de Gerenciamento de Sessão ---
+// O Construtor é onde o SessionManager se inscreve nos eventos.
+SessionManager::SessionManager(EventBus& bus) : bus(bus) {
+    // Handler: UsuarioLoggedInEvent (Guarda a posse compartilhada do usuário)
+    bus.subscribe<UsuarioLoggedInEvent>(
+        [this](const auto& e) { this->user = e.usuario; });
 
-/**
- * Define o usuário que acabou de fazer login.
- * O SessionManager assume a PROPRIEDADE EXCLUSIVA do objeto Usuario alocado no
- * heap.
- */
-void SessionManager::login(unique_ptr<Usuario> user) {
-    // std::move transfere a propriedade exclusiva do ponteiro 'user' para o
-    // membro 'loggedUser'.
-    loggedUser = move(user);
+    // Handler: UpdatedEvent (Atualiza o objeto SE o ID for o mesmo E o
+    // tipo for o mesmo)
+    bus.subscribe<UsuarioUpdatedEvent>([this](const auto& e) {
+        if (this->isLogged() && this->user->getId() == e.usuario->getId()) {
+            // VERIFICAÇÃO CRÍTICA: Checa se a subclasse do objeto logado é a
+            // mesma do objeto de evento. typeid(*ptr) retorna o tipo dinâmico
+            // do objeto.
+            if (typeid(*this->user) == typeid(*e.usuario)) {
+                this->user = e.usuario;  // Atualização segura
+            }
+            // Se os tipos forem diferentes (Ex: logado como Aluno, evento como
+            // Professor), a atualização é ignorada.
+        }
+    });
+
+    // --- Eventos Específicos do Professor ---
+
+    // Handler: ProfessorDeletedEvent (Faz logout se o usuário logado for
+    // deletado)
+    bus.subscribe<ProfessorDeletedEvent>([this](const auto& e) {
+        if (this->isProfessor() && this->user->getId() == e.id) {
+            this->logout();
+        }
+    });
+
+    // Handler: HorarioCreatedEvent (Adiciona Horário, verificando se o usuário
+    // é Professor e o ID corresponde)
+    bus.subscribe<HorarioCreatedEvent>([this](const auto& e) {
+        if (this->isProfessor()) {
+            if (Professor* p = dynamic_cast<Professor*>(this->user.get())) {
+                // Checa se o horário pertence ao professor logado
+                if (e.horario.getProfessorId() == p->getId()) {
+                    p->addHorario(e.horario);
+                }
+            }
+        }
+    });
+
+    // Handler: HorarioUpdatedEvent (Atualiza Horário na lista do Professor)
+    bus.subscribe<HorarioUpdatedEvent>([this](const auto& e) {
+        if (this->isProfessor()) {
+            if (Professor* p = dynamic_cast<Professor*>(this->user.get())) {
+                p->updateHorario(e.horario);
+            }
+        }
+    });
+
+    // Handler: HorarioDeletedEvent (Remove Horário da lista do Professor)
+    bus.subscribe<HorarioDeletedEvent>([this](const auto& e) {
+        if (this->isProfessor()) {
+            if (Professor* p = dynamic_cast<Professor*>(this->user.get())) {
+                p->removeHorario(e.id);
+            }
+        }
+    });
+
+    // --- Eventos Específicos do Aluno ---
+
+    // Handler: AlunoDeletedEvent (Faz logout se o usuário logado for
+    // deletado)
+    bus.subscribe<AlunoDeletedEvent>([this](const auto& e) {
+        if (this->isAluno() && this->user->getId() == e.id) {
+            this->logout();
+        }
+    });
+
+    // Handler: AgendamentoCreatedEvent (Adiciona Agendamento, verificando se o
+    // usuário é Aluno e o ID corresponde)
+    bus.subscribe<AgendamentoCreatedEvent>([this](const auto& e) {
+        if (this->isAluno()) {
+            if (Aluno* a = dynamic_cast<Aluno*>(this->user.get())) {
+                // Checa se o agendamento pertence ao aluno logado
+                if (e.agendamento.getAlunoId() == a->getId()) {
+                    a->addAgendamento(e.agendamento);
+                }
+            }
+        }
+    });
+
+    // Handler: AgendamentoUpdatedEvent (Atualiza Agendamento na lista do Aluno)
+    bus.subscribe<AgendamentoUpdatedEvent>([this](const auto& e) {
+        if (this->isAluno()) {
+            if (Aluno* a = dynamic_cast<Aluno*>(this->user.get())) {
+                a->updateAgendamento(e.agendamento);
+            }
+        }
+    });
+
+    // Handler: AgendamentoDeletedEvent (Remove Agendamento da lista do Aluno)
+    bus.subscribe<AgendamentoDeletedEvent>([this](const auto& e) {
+        if (this->isAluno()) {
+            if (Aluno* a = dynamic_cast<Aluno*>(this->user.get())) {
+                a->removeAgendamento(e.id);
+            }
+        }
+    });
 }
 
-/**
- * Encerra a sessão.
- */
+// --- Métodos de Gerenciamento de Sessão ---
+
 void SessionManager::logout() {
-    // Reseta o unique_ptr. Isso destrói o objeto no heap e garante que a
-    // memória seja liberada.
-    loggedUser.reset();
+    // Reseta o shared_ptr, encerrando a sessão.
+    user.reset();
 }
 
-/**
- * Verifica se há um usuário ativo.
- * Para unique_ptr, a checagem é feita diretamente contra nullptr.
- */
+// --- Métodos de Consulta ---
+
 bool SessionManager::isLogged() const {
-    return (loggedUser != nullptr);
+    // Verifica se o ponteiro interno é válido.
+    return (user != nullptr);
 }
 
-// --- Implementação dos Métodos de Checagem de Tipo (instanceof) ---
-
-/**
- * Verifica se o usuário logado é da classe Aluno (ou uma classe derivada).
- * Utiliza dynamic_cast, que requer a checagem do ponteiro bruto.
- */
 bool SessionManager::isAluno() const {
-    if (!isLogged()) {
+    if (!isLogged())
         return false;
-    }
-
-    // Tenta converter o ponteiro base (Usuario*) para o derivado (Aluno*).
-    // O .get() retorna o ponteiro bruto que o dynamic_cast precisa.
-    return (dynamic_cast<const Aluno*>(loggedUser.get()) != nullptr);
+    // Downcast seguro para verificar o tipo em runtime.
+    return (dynamic_cast<const Aluno*>(user.get()) != nullptr);
 }
 
-/**
- * Verifica se o usuário logado é da classe Professor.
- */
 bool SessionManager::isProfessor() const {
-    if (!isLogged()) {
+    if (!isLogged())
         return false;
-    }
-
-    // Tenta o downcast: Se for um Professor, o ponteiro não será nulo.
-    return (dynamic_cast<const Professor*>(loggedUser.get()) != nullptr);
+    // Downcast seguro para verificar o tipo em runtime.
+    return (dynamic_cast<const Professor*>(user.get()) != nullptr);
 }
 
-// --- Implementação dos Métodos de Acesso de Valor Seguro ---
-
-/**
- * Retorna uma cópia do objeto Professor logado.
- * Lança runtime_error se não estiver logado ou o tipo for incompatível.
- */
 Professor SessionManager::getCurrentProfessor() const {
-    // 1. Checagem de Sessão Ativa
     if (!isLogged()) {
         throw runtime_error("Não há usuário logado na sessão.");
     }
-
-    // 2. Tentativa de Downcast
-    // Tenta converter o ponteiro genérico (Usuario*) para o tipo específico
-    // (Professor*).
+    // Downcast para Professor e retorna uma CÓPIA completa.
     if (const Professor* professor_ptr =
-            dynamic_cast<const Professor*>(loggedUser.get())) {
-        // Cast bem-sucedido! Retorna uma CÓPIA completa do objeto Professor.
-        // Isso evita o 'slicing'.
+            dynamic_cast<const Professor*>(user.get())) {
         return *professor_ptr;
     }
-
-    // 3. Checagem de Tipo Incorreto
-    // O usuário está logado, mas não é um Professor (é Aluno ou outro).
     throw runtime_error("O usuário logado não é um Professor.");
 }
 
-/**
- * Retorna uma cópia do objeto Aluno logado.
- * Lança runtime_error se não estiver logado ou o tipo for incompatível.
- */
 Aluno SessionManager::getCurrentAluno() const {
-    // 1. Checagem de Sessão Ativa
     if (!isLogged()) {
         throw runtime_error("Não há usuário logado na sessão.");
     }
-
-    // 2. Tentativa de Downcast
-    // Tenta converter o ponteiro genérico (Usuario*) para o tipo específico
-    // (Aluno*).
-    if (const Aluno* aluno_ptr = dynamic_cast<const Aluno*>(loggedUser.get())) {
-        // Cast bem-sucedido! Retorna uma CÓPIA completa do objeto Aluno.
+    // Downcast para Aluno e retorna uma CÓPIA completa.
+    if (const Aluno* aluno_ptr = dynamic_cast<const Aluno*>(user.get())) {
         return *aluno_ptr;
     }
-
-    // 3. Checagem de Tipo Incorreto
-    // O usuário está logado, mas não é um Aluno.
     throw runtime_error("O usuário logado não é um Aluno.");
 }

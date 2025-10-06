@@ -4,6 +4,7 @@
 #include "controller/alunoController.hpp"
 #include "controller/loginController.hpp"
 #include "controller/professorController.hpp"
+#include "service/sessionManager.hpp"
 
 /**
  * @brief Classe da Interface de Usuário (Presentation Layer) para aplicações de

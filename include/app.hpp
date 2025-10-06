@@ -4,6 +4,7 @@
 #include "controller/alunoController.hpp"
 #include "controller/loginController.hpp"
 #include "controller/professorController.hpp"
+#include "service/sessionManager.hpp"
 
 /**
  * @brief Classe responsável por centralizar a composição (criação e injeção)
@@ -15,6 +16,7 @@ class App {
     const MockConnection connection;
     const AlunoMapper alunoMapper;
     const ProfessorMapper professorMapper;
+    EventBus bus;
 
     // 2. Membros de nível intermediário, que dependem dos anteriores
     const AgendamentoService agendamentoService;

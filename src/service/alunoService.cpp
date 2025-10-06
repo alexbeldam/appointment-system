@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <utility>
 
+#include "event/events.hpp"
+
 using namespace std;
 
 // --- CONFIGURAÇÕES DE PERSISTÊNCIA ---
@@ -18,10 +20,10 @@ using namespace std;
 
 // Construtor: Inicializa todas as dependências de forma segura (Injeção de
 // Dependência). A ordem é crucial para membros const e referências.
-AlunoService::AlunoService(const MockConnection& connection,
+AlunoService::AlunoService(const MockConnection& connection, EventBus& bus,
                            const AlunoMapper& mapper,
                            const AgendamentoService& service)
-    : connection(connection), mapper(mapper), service(service) {}
+    : connection(connection), bus(bus), mapper(mapper), service(service) {}
 
 // --- MÉTODOS PRIVADOS/AUXILIARES ---
 
@@ -266,14 +268,27 @@ optional<Aluno> AlunoService::updateById(long id, const AlunoDTO& aluno) const {
     }
 
     // 3. MONTAGEM DO MODELO
-    return mapAndInjectAgendamentos(updated_csv);
+    Aluno updated_aluno = mapAndInjectAgendamentos(updated_csv);
+
+    // 4. PUBLICAÇÃO DE EVENTO (Sucesso no Update)
+    // Cria o shared_ptr para o objeto e publica.
+    shared_ptr<Usuario> user_ptr = make_shared<Aluno>(updated_aluno);
+    bus.publish(UsuarioUpdatedEvent(user_ptr));
+
+    return updated_aluno;
 }
 
 // DELETE
 bool AlunoService::deleteById(long id) const {
     try {
+        // 1. DAL WRITE
         // deleteRecord() lança invalid_argument se ID não existe.
         connection.deleteRecord(ALUNO_TABLE, id);
+
+        // 2. PUBLICAÇÃO DE EVENTO (Sucesso no Delete)
+        // Publica o ID do usuário deletado.
+        bus.publish(AlunoDeletedEvent(id));
+
         return true;  // Sucesso na remoção.
     } catch (const invalid_argument& e) {
         return false;  // ID não encontrado.

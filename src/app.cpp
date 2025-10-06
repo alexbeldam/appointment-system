@@ -6,14 +6,15 @@ App::App()
     : connection(),
       alunoMapper(),
       professorMapper(),
-      agendamentoService(connection),
-      horarioService(connection),
-      alunoService(connection, alunoMapper, agendamentoService),
-      professorService(connection, professorMapper, horarioService),
-      sessionManager(),
+      bus(),
+      agendamentoService(connection, bus),
+      horarioService(connection, bus),
+      alunoService(connection, bus, alunoMapper, agendamentoService),
+      professorService(connection, bus, professorMapper, horarioService),
+      sessionManager(bus),
       alunoController(alunoService),
       professorController(professorService),
-      loginController(alunoService, professorService, sessionManager) {}
+      loginController(alunoService, professorService, bus) {}
 
 void App::run() {
     ConsoleUI ui(alunoController, professorController, loginController,
