@@ -15,7 +15,3 @@ string encrypt(const string& pwd) {
 
     return ss.str();
 }
-
-bool check(const string& cypher, const string& pwd) {
-    return cypher == encrypt(pwd);
-}

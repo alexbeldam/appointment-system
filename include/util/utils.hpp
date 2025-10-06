@@ -66,6 +66,8 @@ std::string encrypt(const std::string& pwd);
  * criptografia/verificação.
  * @return false caso contrário.
  */
-bool check(const std::string& cypher, const std::string& pwd);
+inline bool check(const std::string& cypher, const std::string& pwd) {
+    return cypher == encrypt(pwd);
+}
 
 #endif
