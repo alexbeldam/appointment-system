@@ -10,7 +10,8 @@ using namespace std;
 // Índices das colunas usados para buscas específicas.
 #define ID_PROFESSOR_COL_INDEX 1
 
-HorarioService::HorarioService(const MockConnection& connection, EventBus& bus)
+HorarioService::HorarioService(const MockConnection& connection,
+                               const EventBus& bus)
     : connection(connection), bus(bus) {
     // Assina o evento de deleção de professor para garantir a integridade
     // referencial. Quando um professor é deletado, seus horarios são

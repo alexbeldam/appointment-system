@@ -31,7 +31,7 @@ class SessionManager {
      * Usado para inscrever o SessionManager em eventos de login e atualização
      * de usuário.
      */
-    EventBus& bus;
+    const EventBus& bus;
 
    public:
     /**
@@ -41,7 +41,7 @@ class SessionManager {
      * nos eventos necessários (login, update, etc.).
      * @param bus Referência ao EventBus do sistema.
      */
-    SessionManager(EventBus& bus);
+    SessionManager(const EventBus& bus);
 
     /**
      * @brief Encerra a sessão.
