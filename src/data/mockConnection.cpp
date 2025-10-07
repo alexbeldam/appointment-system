@@ -239,40 +239,62 @@ void MockConnection::update(const string& table_name, long id,
     writeAllLines(filename, lines);
 }
 
-// [SQL: DELETE] Remove o registro associado ao ID.
-void MockConnection::deleteRecord(const string& table_name, long id) const {
+/**
+ * [SQL: DELETE BY COLUMN] Remove todas as linhas onde o valor da coluna
+ * (índice) corresponde ao valor fornecido.
+ * @return O número de linhas removidas.
+ */
+size_t MockConnection::deleteByColumn(const string& table_name, size_t index,
+                                      const string& value) const {
     string filename = getFullFilePath(table_name);
     vector<string> lines = readAllLines(filename);
     size_t initial_size = lines.size();
 
-    // Verifica se o arquivo está vazio ou tem apenas cabeçalho.
-    auto start_it = lines.begin();
-    if (lines.size() > 0) {
-        start_it++;
-    } else {
+    // Se o arquivo estiver vazio, nada a remover.
+    if (initial_size <= 1) {
+        return 0;  // 0 ou 1 significa cabeçalho ou vazio.
+    }
+
+    // Garante que a iteração comece APÓS o cabeçalho.
+    auto start_it = lines.begin() + 1;
+
+    // 1. Remove_if + erase idiom: Remove linhas que correspondem ao critério.
+    // O predicado (lambda) retorna 'true' se a linha DEVE ser removida.
+    lines.erase(
+        remove_if(start_it, lines.end(),
+                  [&index, &value](const string& line) {
+                      try {
+                          string col_value = extractColumnFromLine(line, index);
+                          return col_value == value;  // Condição de remoção
+                      } catch (const invalid_argument& e) {
+                          // Linha malformada (não tem a coluna) não é removida.
+                          return false;
+                      }
+                  }),
+        lines.end());
+
+    size_t removed_count = initial_size - lines.size();
+
+    if (removed_count > 0) {
+        // 2. Se alguma linha foi removida, reescreve o arquivo.
+        writeAllLines(filename, lines);
+    }
+
+    return removed_count;
+}
+
+// [SQL: DELETE] Remove o registro associado ao ID.
+void MockConnection::deleteRecord(const string& table_name, long id) const {
+    string id_str = to_string(id);
+
+    // Chama o método genérico, buscando pelo ID (coluna 0).
+    // O ID é a chave primária, então a unicidade é esperada.
+    size_t removed_count = deleteByColumn(table_name, 0, id_str);
+
+    if (removed_count == 0) {
+        // Se 0 registros foram removidos, significa que o ID não foi encontrado
+        // ou a tabela estava vazia.
         throw invalid_argument("O ID " + to_string(id) +
                                " não existe na tabela " + table_name + ".");
     }
-
-    // Usa o remove_if + erase idiom para remover a linha do vetor.
-    lines.erase(remove_if(start_it, lines.end(),
-                          [&id](const string& line) {
-                              try {
-                                  long current_id = extractIdFromLine(line);
-                                  return current_id == id;
-                              } catch (const invalid_argument& e) {
-                                  // Linha malformada não é o alvo da remoção.
-                                  return false;
-                              }
-                          }),
-                lines.end());
-
-    if (lines.size() >= initial_size) {
-        // Se o tamanho do vetor não diminuiu, o registro não foi encontrado.
-        throw invalid_argument("O ID " + to_string(id) +
-                               " não existe na tabela " + table_name + ".");
-    }
-
-    // Reescreve o arquivo sem a linha removida.
-    writeAllLines(filename, lines);
 }

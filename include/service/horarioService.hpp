@@ -38,12 +38,24 @@ class HorarioService {
     std::vector<Horario> listDisponivelByIdProfessor(long id) const;
 
     /**
+     * @brief Lista todos os Horarios associados a um Professor.
+     *
+     * @note **PLACEHOLDER:** Atualmente, retorna sempre um vetor vazio.
+     * @param id O identificador único (ID) do Professor.
+     * @return Um vetor de Horarios (atualmente vazio).
+     */
+    std::vector<Horario> listByIdProfessor(long id) const;
+
+    /**
      * @brief Deleta todos os horários que tenham a coluna id_professor igual ao
      * parametro.
      *
      * @param id O id do professor.
+     * @return true se os registros foram encontrados e deletados; false se o
+     * registro não foi encontrado.
+     * @throws std::runtime_error Em caso de falha crítica de I/O.
      */
-    void deleteByIdProfessor(long id) const;
+    bool deleteByIdProfessor(long id) const;
 };
 
 #endif

@@ -10,6 +10,7 @@ using namespace std;
 #define AGENDAMENTO_TABLE "agendamentos"
 // Índices das colunas usados para buscas específicas.
 #define ID_ALUNO_COL_INDEX 1
+#define ID_HORARIO_COL_INDEX 2
 
 AgendamentoService::AgendamentoService(const MockConnection& connection,
                                        const EventBus& bus)
@@ -20,6 +21,12 @@ AgendamentoService::AgendamentoService(const MockConnection& connection,
     bus.subscribe<AlunoDeletedEvent>([this](const AlunoDeletedEvent& event) {
         this->deleteByIdAluno(event.id);
     });
+
+    // Analogamente, um horário
+    bus.subscribe<HorarioDeletedEvent>(
+        [this](const HorarioDeletedEvent& event) {
+            this->deleteByIdHorario(event.id);
+        });
 }
 
 // A função é o ponto de injeção de dados relacionados para a classe Aluno.
@@ -43,5 +50,18 @@ void AgendamentoService::deleteByIdAluno(long id) const {
     // A implementação final deve:
     // 1. Chamar connection.deleteByColumn(AGENDAMENTO_TABLE,
     // ID_ALUNO_COL_INDEX, to_string(id)).
-    // 2. Tratar exceções de I/O.
+    // 2. Publicar no barramento de eventos todos os agendamentos deletados
+    // 3. Tratar exceções de I/O.
+    // Veja o exemplo em horarioService.hpp
+}
+
+void AgendamentoService::deleteByIdHorario(long id) const {
+    // [TODO] Implementar a lógica de deleção em massa no DAL.
+
+    // A implementação final deve:
+    // 1. Chamar connection.deleteByColumn(AGENDAMENTO_TABLE,
+    // ID_HORARIO_COL_INDEX, to_string(id)).
+    // 2. Publicar no barramento de eventos todos os agendamentos deletados
+    // 3. Tratar exceções de I/O.
+    // Veja o exemplo em horarioService.hpp
 }

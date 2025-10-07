@@ -22,8 +22,8 @@ HorarioService::HorarioService(const MockConnection& connection,
         });
 }
 
-// A função é o ponto de injeção de dados relacionados para a classe Professor.
-vector<Horario> HorarioService::listDisponivelByIdProfessor(long id) const {
+// A função é usada para reagir ao evento de deleção do Professor.
+vector<Horario> HorarioService::listByIdProfessor(long id) const {
     // [TODO] Esta é uma função placeholder incompleta.
 
     // A implementação final deve:
@@ -31,19 +31,39 @@ vector<Horario> HorarioService::listDisponivelByIdProfessor(long id) const {
     // ID_PROFESSOR_COL_INDEX, to_string(id)) para buscar TODOS os horários do
     // professor.
     // 2. Mapear as linhas CSV para objetos Horario.
-    // 3. Filtrar a lista resultante, mantendo apenas aqueles onde o status de
-    // DISPONIVEL (coluna DISPONIVEL_COL_INDEX) é igual a '1'.
 
     // Atualmente, retorna um vetor vazio para cumprir o contrato e resolver
     // dependências.
     return vector<Horario>();
 }
 
-void HorarioService::deleteByIdProfessor(long id) const {
-    // [TODO] Implementar a lógica de deleção em massa no DAL.
+// A função é o ponto de injeção de dados relacionados para a classe Professor.
+vector<Horario> HorarioService::listDisponivelByIdProfessor(long id) const {
+    // [TODO] Esta é uma função placeholder incompleta.
 
     // A implementação final deve:
-    // 1. Chamar connection.deleteByColumn(HORARIO_TABLE,
-    // ID_PROFESSOR_COL_INDEX, to_string(id)).
-    // 2. Tratar exceções de I/O.
+    // 1. Chamar listByProfessorId
+    // 2. Filtrar a lista resultante, mantendo apenas aqueles com atributo
+    // horario.disponivel for true
+
+    // Atualmente, retorna listByProfessorId.
+    return listByIdProfessor(id);
+}
+
+bool HorarioService::deleteByIdProfessor(long id) const {
+    try {
+        vector<Horario> horarios = listByIdProfessor(id);
+
+        // Deleta do arquivo
+        connection.deleteByColumn(HORARIO_TABLE, ID_PROFESSOR_COL_INDEX,
+                                  to_string(id));
+
+        // Publica a deleção
+        for (const auto& h : horarios)
+            bus.publish(HorarioDeletedEvent(h.getId()));
+    } catch (const invalid_argument& e) {
+        return false;  // Nenhum horário encontrado
+    } catch (const runtime_error& e) {
+        throw;  // Relança erros de I/O.
+    }
 }

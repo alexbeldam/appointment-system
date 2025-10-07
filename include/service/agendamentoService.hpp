@@ -47,8 +47,22 @@ class AgendamentoService {
      * parametro.
      *
      * @param id O id do aluno.
+     * @return true se os registros foram encontrados e deletados; false se o
+     * registro não foi encontrado.
+     * @throws std::runtime_error Em caso de falha crítica de I/O.
      */
-    void deleteByIdAluno(long id) const;
+    bool deleteByIdAluno(long id) const;
+
+    /**
+     * @brief Deleta todos os agendamentos que tenham a coluna id_horario igual
+     * ao parametro.
+     *
+     * @param id O id do horario.
+     * @return true se os registros foram encontrados e deletados; false se o
+     * registro não foi encontrado.
+     * @throws std::runtime_error Em caso de falha crítica de I/O.
+     */
+    bool deleteByIdHorario(long id) const;
 };
 
 #endif

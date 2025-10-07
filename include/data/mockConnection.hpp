@@ -85,6 +85,17 @@ class MockConnection {
      * @throws std::runtime_error Em caso de falha de I/O.
      */
     void deleteRecord(const std::string& table_name, long id) const;
+
+    /**
+     * @brief [SQL: DELETE] Remove o registro onde uma
+     * coluna corresponde a um valor.
+     * @param index O índice (base 0) da coluna a ser comparada.
+     * @param value O valor a ser buscado na coluna.
+     * @return O número de linhas deletadas.
+     * @throws std::runtime_error Em caso de falha de I/O.
+     */
+    size_t deleteByColumn(const std::string& table_name, size_t index,
+                          const std::string& value) const;
 };
 
 #endif
