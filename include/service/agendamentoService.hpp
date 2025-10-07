@@ -19,8 +19,8 @@
 class AgendamentoService {
    private:
     const MockConnection&
-        connection;       ///< Conexão simulada com o banco de dados
-    const EventBus& bus;  ///< Barramento de eventos;
+        connection;  ///< Conexão simulada com o banco de dados
+    EventBus& bus;   ///< Barramento de eventos;
 
    public:
     /**
@@ -28,7 +28,7 @@ class AgendamentoService {
      * @param connection Referência para a conexão com o banco de dados.
      * @param bus Referência para o Barramento de Eventos.
      */
-    AgendamentoService(const MockConnection& connection, const EventBus& bus);
+    AgendamentoService(const MockConnection& connection, EventBus& bus);
 
     /**
      * @brief Lista todos os Agendamentos associados a um Aluno específico.

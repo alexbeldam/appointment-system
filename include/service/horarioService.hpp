@@ -17,8 +17,8 @@
 class HorarioService {
    private:
     const MockConnection&
-        connection;       ///< Conexão simulada com o banco de dados
-    const EventBus& bus;  ///< Barramento de eventos.
+        connection;  ///< Conexão simulada com o banco de dados
+    EventBus& bus;   ///< Barramento de eventos.
 
    public:
     /**
@@ -26,7 +26,7 @@ class HorarioService {
      * @param connection Referência para a conexão com o banco de dados.
      * @param bus Referência para o Barramento de Eventos. // << NOVO PARÂMETRO
      */
-    HorarioService(const MockConnection& connection, const EventBus& bus);
+    HorarioService(const MockConnection& connection, EventBus& bus);
 
     /**
      * @brief Lista todos os Horarios disponíveis associados a um Professor.

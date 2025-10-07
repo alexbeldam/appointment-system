@@ -18,7 +18,7 @@ class ProfessorService {
    private:
     const MockConnection&
         connection;                 ///< Conexão simulada com o banco de dados
-    const EventBus& bus;            ///< Barramento de eventos
+    EventBus& bus;                  ///< Barramento de eventos
     const ProfessorMapper& mapper;  ///< Referência constante para o Mapper
                                     ///< (conversão DTO<->Model).
     const HorarioService& service;  ///< Referência constante para o Serviço de
@@ -70,7 +70,7 @@ class ProfessorService {
      * @param mapper Referência para o ProfessorMapper.
      * @param service Referência para o HorarioService.
      */
-    ProfessorService(const MockConnection& connection, const EventBus& bus,
+    ProfessorService(const MockConnection& connection, EventBus& bus,
                      const ProfessorMapper& mapper,
                      const HorarioService& service);
 

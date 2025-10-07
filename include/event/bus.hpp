@@ -43,7 +43,7 @@ class EventBus {
      * @param handler A função a ser executada ao receber o evento.
      */
     template <typename EventType>
-    void subscribe(Handler<EventType> handler) const {
+    void subscribe(Handler<EventType> handler) {
         std::lock_guard<std::mutex> lock(mx);
 
         auto& handlers = subscribers[std::type_index(typeid(EventType))];
@@ -59,7 +59,7 @@ class EventBus {
      * @param event A instância do evento a ser publicada.
      */
     template <typename EventType>
-    void publish(const EventType& event) const {
+    void publish(const EventType& event) {
         std::lock_guard<std::mutex> lock(mx);
 
         auto it = subscribers.find(std::type_index(typeid(EventType)));

@@ -20,8 +20,8 @@ using namespace std;
 
 // Construtor: Inicializa todas as dependências de forma segura (Injeção de
 // Dependência). A ordem é crucial para membros const e referências.
-AlunoService::AlunoService(const MockConnection& connection,
-                           const EventBus& bus, const AlunoMapper& mapper,
+AlunoService::AlunoService(const MockConnection& connection, EventBus& bus,
+                           const AlunoMapper& mapper,
                            const AgendamentoService& service)
     : connection(connection), bus(bus), mapper(mapper), service(service) {}
 

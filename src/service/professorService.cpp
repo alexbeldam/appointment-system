@@ -20,8 +20,7 @@ using namespace std;
 // Construtor: Inicializa todas as dependências de forma segura (Injeção de
 // Dependência).
 ProfessorService::ProfessorService(const MockConnection& connection,
-                                   const EventBus& bus,
-                                   const ProfessorMapper& mapper,
+                                   EventBus& bus, const ProfessorMapper& mapper,
                                    const HorarioService& service)
     : connection(connection), bus(bus), mapper(mapper), service(service) {}
 

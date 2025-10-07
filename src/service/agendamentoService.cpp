@@ -13,7 +13,7 @@ using namespace std;
 #define ID_HORARIO_COL_INDEX 2
 
 AgendamentoService::AgendamentoService(const MockConnection& connection,
-                                       const EventBus& bus)
+                                       EventBus& bus)
     : connection(connection), bus(bus) {
     // Assina o evento de deleção de aluno para garantir a integridade
     // referencial. Quando um aluno é deletado, seus agendamentos são

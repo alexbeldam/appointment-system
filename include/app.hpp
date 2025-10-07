@@ -16,7 +16,7 @@ class App {
     const MockConnection connection;
     const AlunoMapper alunoMapper;
     const ProfessorMapper professorMapper;
-    const EventBus bus;
+    EventBus bus;
 
     // 2. Membros de nível intermediário, que dependem dos anteriores
     const AgendamentoService agendamentoService;

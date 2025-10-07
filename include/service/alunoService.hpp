@@ -18,7 +18,7 @@ class AlunoService {
    private:
     const MockConnection&
         connection;             ///< Conexão simulada com o banco de dados
-    const EventBus& bus;        ///< Barramento de eventos;
+    EventBus& bus;              ///< Barramento de eventos;
     const AlunoMapper& mapper;  ///< Referência constante para o Mapper
                                 ///< (conversão DTO<->Model).
     const AgendamentoService&
@@ -95,7 +95,7 @@ class AlunoService {
      * @param mapper Referência para o AlunoMapper.
      * @param service Referência para o AgendamentoService.
      */
-    AlunoService(const MockConnection& connection, const EventBus& bus,
+    AlunoService(const MockConnection& connection, EventBus& bus,
                  const AlunoMapper& mapper, const AgendamentoService& service);
 
     // --- Métodos Públicos (CRUD) ---

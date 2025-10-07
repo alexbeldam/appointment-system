@@ -8,7 +8,7 @@
 using namespace std;
 
 // O Construtor é onde o SessionManager se inscreve nos eventos.
-SessionManager::SessionManager(const EventBus& bus) : bus(bus) {
+SessionManager::SessionManager(EventBus& bus) : bus(bus) {
     // Handler: UsuarioLoggedInEvent (Guarda a posse compartilhada do usuário)
     bus.subscribe<UsuarioLoggedInEvent>(
         [this](const auto& e) { this->user = e.usuario; });
