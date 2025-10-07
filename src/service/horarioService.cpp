@@ -1,5 +1,7 @@
 #include "service/horarioService.hpp"
 
+#include <stdexcept>
+
 #include "event/events.hpp"
 using namespace std;
 

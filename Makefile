@@ -5,7 +5,7 @@ BUILD_DIR     := build
 SRC_DIR       := src
 INCLUDE_DIR   := include
 TARGET        := programa
-SOURCES       := $(shell find $(SRC_DIR) -name "*.cpp")
+SOURCES       := $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/*/*.cpp)
 OBJECTS       := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SOURCES))
 DEPS          := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.d, $(SOURCES))
 
