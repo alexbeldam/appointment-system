@@ -54,6 +54,9 @@ bool HorarioService::deleteByIdProfessor(long id) const {
     try {
         vector<Horario> horarios = listByIdProfessor(id);
 
+        if (horarios.size() == 0)
+            return false;
+
         // Deleta do arquivo
         connection.deleteByColumn(HORARIO_TABLE, ID_PROFESSOR_COL_INDEX,
                                   to_string(id));
@@ -61,6 +64,8 @@ bool HorarioService::deleteByIdProfessor(long id) const {
         // Publica a deleção
         for (const auto& h : horarios)
             bus.publish(HorarioDeletedEvent(h.getId()));
+
+        return true;
     } catch (const invalid_argument& e) {
         return false;  // Nenhum horário encontrado
     } catch (const runtime_error& e) {

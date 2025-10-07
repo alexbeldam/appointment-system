@@ -44,7 +44,7 @@ vector<Agendamento> AgendamentoService::listByIdAluno(long id) const {
     return vector<Agendamento>();
 }
 
-void AgendamentoService::deleteByIdAluno(long id) const {
+bool AgendamentoService::deleteByIdAluno(long id) const {
     // [TODO] Implementar a lógica de deleção em massa no DAL.
 
     // A implementação final deve:
@@ -53,9 +53,11 @@ void AgendamentoService::deleteByIdAluno(long id) const {
     // 2. Publicar no barramento de eventos todos os agendamentos deletados
     // 3. Tratar exceções de I/O.
     // Veja o exemplo em horarioService.hpp
+
+    return false;
 }
 
-void AgendamentoService::deleteByIdHorario(long id) const {
+bool AgendamentoService::deleteByIdHorario(long id) const {
     // [TODO] Implementar a lógica de deleção em massa no DAL.
 
     // A implementação final deve:
@@ -64,4 +66,6 @@ void AgendamentoService::deleteByIdHorario(long id) const {
     // 2. Publicar no barramento de eventos todos os agendamentos deletados
     // 3. Tratar exceções de I/O.
     // Veja o exemplo em horarioService.hpp
+
+    return false;
 }
