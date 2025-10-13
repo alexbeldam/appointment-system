@@ -5,6 +5,8 @@
 #include "controller/loginController.hpp"
 #include "controller/professorController.hpp"
 #include "service/sessionManager.hpp"
+#include "controller/horarioController.hpp"
+
 
 /**
  * @brief Classe da Interface de Usuário (Presentation Layer) para aplicações de
@@ -35,6 +37,12 @@ class ConsoleUI {
      * * Usada para delegar a autenticação de usuários.
      */
     const LoginController& loginController;
+
+    /**
+     * @brief Referência constante para o Controller de Horário.
+     * * Usada para delegar o cadastro e listagem de horários disponíveis.
+     */
+    HorarioController& horarioController;
 
     /**
      * @brief Referência para o Gerenciador de Sessão.
@@ -123,13 +131,17 @@ class ConsoleUI {
     /**
      * @brief Construtor da Interface. Recebe e inicializa todas as dependências
      * da aplicação.
-     * * @param ac O Controller de Aluno.
+     * @param ac O Controller de Aluno.
      * @param pc O Controller de Professor.
      * @param lc O Controller de Login.
+     * @param hc O Controller de Horário.
      * @param sm O Gerenciador de Sessão (referência mutável).
      */
-    ConsoleUI(const AlunoController& ac, const ProfessorController& pc,
-              const LoginController& lc, SessionManager& sm);
+    ConsoleUI(const AlunoController& ac,
+            const ProfessorController& pc,
+            const LoginController& lc,
+            HorarioController& hc,
+            SessionManager& sm);
 
     /**
      * @brief Inicia o motor da aplicação, gerando o loop de execução principal.

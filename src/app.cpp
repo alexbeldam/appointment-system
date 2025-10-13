@@ -2,6 +2,7 @@
 
 #include "consoleUI.hpp"
 
+
 App::App()
     : connection(),
       alunoMapper(),
@@ -11,13 +12,14 @@ App::App()
       horarioService(connection, bus),
       alunoService(connection, bus, alunoMapper, agendamentoService),
       professorService(connection, bus, professorMapper, horarioService),
+      horarioController(horarioService),
       sessionManager(bus),
       alunoController(alunoService),
       professorController(professorService),
       loginController(alunoService, professorService, bus) {}
 
 void App::run() {
-    ConsoleUI ui(alunoController, professorController, loginController,
+    ConsoleUI ui(alunoController, professorController, loginController, horarioController,
                  sessionManager);
 
     ui.start();

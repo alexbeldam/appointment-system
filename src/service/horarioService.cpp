@@ -1,54 +1,58 @@
 #include "service/horarioService.hpp"
 
-#include <stdexcept>
-
-#include "event/events.hpp"
-using namespace std;
-
-// --- CONFIGURAÇÕES DE PERSISTÊNCIA ---
-
-// Define o nome da "tabela" (arquivo CSV) gerenciada por este Service.
-#define HORARIO_TABLE "horarios"
-// Índices das colunas usados para buscas específicas.
+// Recomendo manter o nome da tabela sem extensão para evitar o problema anterior
+#define HORARIO_TABLE "horarios" 
 #define ID_PROFESSOR_COL_INDEX 1
 
+#include <sstream>
+#include <stdexcept>
+
+using std::vector;
+using std::string;
+using std::to_string;
+using std::invalid_argument;
+using std::runtime_error;
+
+
 HorarioService::HorarioService(const MockConnection& connection, EventBus& bus)
-    : connection(connection), bus(bus) {
-    // Assina o evento de deleção de professor para garantir a integridade
-    // referencial. Quando um professor é deletado, seus horarios são
-    // removidos.
-    bus.subscribe<ProfessorDeletedEvent>(
-        [this](const ProfessorDeletedEvent& event) {
-            this->deleteByIdProfessor(event.id);
-        });
-}
+    : connection(connection), bus(bus) {}
 
-// A função é usada para reagir ao evento de deleção do Professor.
-vector<Horario> HorarioService::listByIdProfessor(long id) const {
-    // [TODO] Esta é uma função placeholder incompleta.
+Horario HorarioService::save(long idProfessor, const std::string& inicio,
+                             const std::string& fim) {
+  //  Verifica se o horário final é posterior ao inicial
+  if (fim <= inicio) {
+    throw std::invalid_argument("O horário final deve ser posterior ao horário inicial.");
+  }
 
-    // A implementação final deve:
-    // 1. Chamar connection.selectByColumn(HORARIO_TABLE,
-    // ID_PROFESSOR_COL_INDEX, to_string(id)) para buscar TODOS os horários do
-    // professor.
-    // 2. Mapear as linhas CSV para objetos Horario.
+  // 1. Buscar horários do professor
+  auto horarios = connection.selectByColumn(HORARIO_TABLE, ID_PROFESSOR_COL_INDEX, std::to_string(idProfessor));
 
-    // Atualmente, retorna um vetor vazio para cumprir o contrato e resolver
-    // dependências.
-    return vector<Horario>();
-}
+  // 2. Verificar conflito de intervalo
+  for (const auto& linha : horarios) {
+    std::stringstream ss(linha);
+    std::string id, idProf, inicioExistente, fimExistente, disponivelStr;
+    std::getline(ss, id, ',');
+    std::getline(ss, idProf, ',');
+    std::getline(ss, inicioExistente, ',');
+    std::getline(ss, fimExistente, ',');
+    std::getline(ss, disponivelStr, ',');
 
-// A função é o ponto de injeção de dados relacionados para a classe Professor.
-vector<Horario> HorarioService::listDisponivelByIdProfessor(long id) const {
-    // [TODO] Esta é uma função placeholder incompleta.
+    if (inicio == inicioExistente && fim == fimExistente) {
+      Horario conflito(std::stol(id), std::stol(idProf), inicioExistente, fimExistente, true);
+      bus.publish(HorarioConflictEvent(conflito));
+      throw std::invalid_argument("Já existe um horário cadastrado nesse período.");
+    }
+  }
 
-    // A implementação final deve:
-    // 1. Chamar listByProfessorId
-    // 2. Filtrar a lista resultante, mantendo apenas aqueles com atributo
-    // horario.disponivel for true
+  // 3. Inserir novo horário
+  std::stringstream dados;
+  dados << idProfessor << "," << inicio << "," << fim << ",1";
+  long newId = connection.insert(HORARIO_TABLE, dados.str());
 
-    // Atualmente, retorna listByProfessorId.
-    return listByIdProfessor(id);
+  Horario novo(newId, idProfessor, inicio, fim, true);
+  bus.publish(HorarioCreatedEvent(novo));
+
+  return novo;
 }
 
 bool HorarioService::deleteByIdProfessor(long id) const {
@@ -72,4 +76,34 @@ bool HorarioService::deleteByIdProfessor(long id) const {
     } catch (const runtime_error& e) {
         throw;  // Relança erros de I/O.
     }
+}
+
+std::vector<Horario> HorarioService::listDisponivelByIdProfessor(long id) const {
+    std::vector<Horario> todosHorarios = listByIdProfessor(id);
+    std::vector<Horario> horariosDisponiveis;
+
+    for (const auto& horario : todosHorarios) {
+        if (horario.isDisponivel()) {
+            horariosDisponiveis.push_back(horario);
+        }
+    }
+
+    return horariosDisponiveis;
+}
+
+
+std::vector<Horario> HorarioService::listByIdProfessor(long id) const {
+  auto linhas = connection.selectByColumn(HORARIO_TABLE, ID_PROFESSOR_COL_INDEX, std::to_string(id));
+  std::vector<Horario> horarios;
+  for (const auto& linha : linhas) {
+    std::stringstream ss(linha);
+    std::string idStr, idProf, inicio, fim, disponivelStr;
+    std::getline(ss, idStr, ',');
+    std::getline(ss, idProf, ',');
+    std::getline(ss, inicio, ',');
+    std::getline(ss, fim, ',');
+    std::getline(ss, disponivelStr, ',');
+    horarios.emplace_back(std::stol(idStr), std::stol(idProf), inicio, fim, disponivelStr == "1");
+  }
+  return horarios;
 }

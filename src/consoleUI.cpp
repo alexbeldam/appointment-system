@@ -7,12 +7,17 @@
 
 using namespace std;
 
-ConsoleUI::ConsoleUI(const AlunoController& ac, const ProfessorController& pc,
-                     const LoginController& lc, SessionManager& sm)
+ConsoleUI::ConsoleUI(const AlunoController& ac,
+                     const ProfessorController& pc,
+                     const LoginController& lc,
+                     HorarioController& hc,
+                     SessionManager& sm)
     : alunoController(ac),
       professorController(pc),
       loginController(lc),
+      horarioController(hc),
       sessionManager(sm) {}
+
 
 void desenhar_relogio() {
     cout << "*-------------------------------*" << endl;
@@ -51,11 +56,13 @@ void imprimir_opcoes_aluno() {
 }
 
 void imprimir_opcoes_professor() {
-    cout << "MENU PROFESSOR:" << endl;
-    cout << "1 - Logout" << endl;
-    cout << "0 - Sair do programa" << endl;
-    cout << "Escolha uma opcao: ";
+  cout << "MENU PROFESSOR:" << endl;
+  cout << "1 - Logout" << endl;
+  cout << "2 - Cadastrar horário disponível" << endl;
+  cout << "0 - Sair do programa" << endl;
+  cout << "Escolha uma opcao: ";
 }
+
 
 void imprimir_opcoes_logout() {
     cout << "\nMENU DE OPCOES:" << endl;
@@ -396,6 +403,8 @@ void ConsoleUI::loop_professor(int& opcao) const {
             continue;
         }
 
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // limpar o buffer
+
         switch (opcao) {
             case 0:
                 cout << "\n>> Saindo do programa" << endl;
@@ -405,8 +414,29 @@ void ConsoleUI::loop_professor(int& opcao) const {
                 realizar_logout();
                 break;
 
+            case 2: {
+                string inicio, fim;
+                cout << "\nData e hora de início (ex: 1/11 08:30): ";
+                getline(cin, inicio);
+                cout << "Data e hora de término (ex: 1/11 09:00): ";
+                getline(cin, fim);
+
+                try {
+                    auto prof = sessionManager.getCurrentProfessor();
+                    auto horario = horarioController.cadastrarHorario(
+                        prof.getId(), inicio, fim);
+                    cout << "\n✅ Horário cadastrado com sucesso! ID: "
+                         << horario.getId() << endl;
+                } catch (const std::invalid_argument& e) {
+                    cout << "\n⚠️  " << e.what() << endl;
+                } catch (const std::exception& e) {
+                    cout << "\n❌ Erro inesperado: " << e.what() << endl;
+                }
+                break;
+            }
+
             default:
-                cout << "\n>> Opcao invalida! Tente novamente" << endl;
+                cout << "\n>> Opção inválida! Tente novamente." << endl;
                 break;
         }
 
@@ -414,8 +444,10 @@ void ConsoleUI::loop_professor(int& opcao) const {
             cout << "\nPressione Enter para continuar...";
             cin.get();
         }
+
     } while (opcao != 0 && sessionManager.isProfessor());
 }
+
 
 void ConsoleUI::start() const {
     int opcao = -1;

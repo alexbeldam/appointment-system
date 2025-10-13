@@ -2,10 +2,13 @@
 #define HORARIO_SERVICE_HPP
 
 #include <vector>
+#include <string>
 
 #include "data/mockConnection.hpp"
 #include "event/bus.hpp"
 #include "model/horario.hpp"
+#include "data/mockConnection.hpp"
+#include "event/events.hpp"
 
 /**
  * @brief CLASSE INCOMPLETA: Camada de Serviço (Business Logic) para Horario.
@@ -15,10 +18,9 @@
  * implementada.
  */
 class HorarioService {
-   private:
-    const MockConnection&
-        connection;  ///< Conexão simulada com o banco de dados
-    EventBus& bus;   ///< Barramento de eventos.
+ private:
+  const MockConnection& connection;
+  EventBus& bus;
 
    public:
     /**
@@ -56,6 +58,12 @@ class HorarioService {
      * @throws std::runtime_error Em caso de falha crítica de I/O.
      */
     bool deleteByIdProfessor(long id) const;
+
+      Horario save(long idProfessor, const std::string& inicio,
+               const std::string& fim);
+
 };
+
+
 
 #endif
