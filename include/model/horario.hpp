@@ -1,36 +1,38 @@
 #ifndef HORARIO_HPP
 #define HORARIO_HPP
 
+#include <string>
+
 /**
- * @brief CLASSE PLACEHOLDER. Representa a entidade Horário.
- *
- * Esta definição é incompleta e serve unicamente para resolver dependências de
- * compilação em outras classes (ex: Professor). Atributos e métodos de domínio
- * devem ser adicionados posteriormente.
+ * @brief Representa a entidade Horário de disponibilidade de um professor.
  */
 class Horario {
-   public:
-    /**
-     * @brief Obtém o identificador único (ID) do Horário.
-     * * @return O ID do Horário.
-     */
-    long getId() const;
+ private:
+  long id;
+  long idProfessor;
+  std::string inicio;
+  std::string fim;
+  bool disponivel;
 
-    /**
-     * @brief Obtém o ID do Professor associado a este horário.
-     * @return O ID único do Professor.
-     */
-    long getProfessorId() const;
+ public:
+  Horario() = default;
 
-    // --- NÃO APAGAR ---
+    Horario(long id, long idProf, const std::string& inicio,
+            const std::string& fim, bool disp)
+        : id(id), idProfessor(idProf), inicio(inicio), fim(fim), disponivel(disp) {}
 
-    /**
-     * @brief Construtor de cópia (copy constructor).
-     *
-     * Habilitado explicitamente para permitir que objetos Horario sejam
-     * copiados por valor (necessário para std::vector e eventos).
-     */
-    Horario(const Horario& other) = default;
+
+  long getId() const { return id; }
+  long getProfessorId() const { return idProfessor; }
+  const std::string& getInicio() const { return inicio; }
+  const std::string& getFim() const { return fim; }
+  bool isDisponivel() const { return disponivel; }
+
+  void setId(long id) { this->id = id; }
+  void setProfessorId(long idProfessor) { this->idProfessor = idProfessor; }
+  void setInicio(const std::string& inicio) { this->inicio = inicio; }
+  void setFim(const std::string& fim) { this->fim = fim; }
+  void setDisponivel(bool disponivel) { this->disponivel = disponivel; }
 };
 
 #endif

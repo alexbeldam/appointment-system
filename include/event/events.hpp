@@ -59,6 +59,7 @@ DEFINE_EVENT(ProfessorDeletedEvent, long id, id)
 DEFINE_EVENT(HorarioCreatedEvent, Horario horario, horario)
 DEFINE_EVENT(HorarioUpdatedEvent, Horario horario, horario)
 DEFINE_EVENT(HorarioDeletedEvent, long id, id)
+DEFINE_EVENT(HorarioConflictEvent, Horario horario, horario)
 
 // Eventos de Agendamento
 DEFINE_EVENT(AgendamentoCreatedEvent, Agendamento agendamento, agendamento)

@@ -5,6 +5,8 @@
 #include "controller/loginController.hpp"
 #include "controller/professorController.hpp"
 #include "service/sessionManager.hpp"
+#include "controller/horarioController.hpp"
+
 
 /**
  * @brief Classe responsável por centralizar a composição (criação e injeção)
@@ -13,22 +15,24 @@
 class App {
    private:
     // 1. Membros de baixo nível
-    const MockConnection connection;
-    const AlunoMapper alunoMapper;
-    const ProfessorMapper professorMapper;
+     MockConnection connection;
+     AlunoMapper alunoMapper;
+     ProfessorMapper professorMapper;
     EventBus bus;
 
     // 2. Membros de nível intermediário, que dependem dos anteriores
-    const AgendamentoService agendamentoService;
-    const HorarioService horarioService;
-    const AlunoService alunoService;
-    const ProfessorService professorService;
+     AgendamentoService agendamentoService;
+     HorarioService horarioService;
+     AlunoService alunoService;
+     ProfessorService professorService;
+    HorarioController horarioController;
     SessionManager sessionManager;
 
+
     // 3. Membros de nível superior
-    const AlunoController alunoController;
-    const ProfessorController professorController;
-    const LoginController loginController;
+     AlunoController alunoController;
+     ProfessorController professorController;
+     LoginController loginController;
 
    public:
     App();
