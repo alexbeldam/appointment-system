@@ -46,6 +46,7 @@ void imprimir_opcoes_login() {
 void imprimir_opcoes_aluno() {
     cout << "MENU ALUNO:" << endl;
     cout << "1 - Logout" << endl;
+    cout << " 2 - Visualizar agendamentos" << endl;
     cout << "0 - Sair do programa" << endl;
     cout << "Escolha uma opcao: ";
 }
@@ -370,6 +371,10 @@ void ConsoleUI::loop_aluno(int& opcao) const {
             case 1:
                 realizar_logout();
                 break;
+            
+            case 2:
+                visualizar_agendamentos();
+                break;
 
             default:
                 cout << "\n>> Opcao invalida! Tente novamente" << endl;
@@ -428,4 +433,8 @@ void ConsoleUI::start() const {
         else
             loop_aluno(opcao);
     } while (opcao != 0);
+}
+
+void ConsoleUI::visualizar_agendamentos() const {
+ cout<<
 }

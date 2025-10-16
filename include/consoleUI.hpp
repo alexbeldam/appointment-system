@@ -62,6 +62,8 @@ class ConsoleUI {
      */
     void realizar_login() const;
 
+    void visualizar_agendamentos() const;
+
     /**
      * @brief Gerencia o fluxo de I/O e delega a autenticação de um Aluno.
      *
