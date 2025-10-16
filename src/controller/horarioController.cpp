@@ -17,3 +17,17 @@ Horario HorarioController::cadastrarHorario(long idProfessor,
 std::vector<Horario> HorarioController::listarPorProfessor(long idProfessor) const {
   return service.listByIdProfessor(idProfessor);
 }
+
+bool HorarioController::excluirTodosPorProfessor(long idProfessor) {
+    return service.deleteByIdProfessor(idProfessor);
+}
+
+bool HorarioController::excluirPorId(long idHorario) {
+    try {
+        return service.deleteById(idHorario);
+    } catch (...) {
+        return false;
+    }
+}
+
+

@@ -1,8 +1,5 @@
 #include "service/horarioService.hpp"
-
-// Recomendo manter o nome da tabela sem extensão para evitar o problema anterior
-#define HORARIO_TABLE "horarios" 
-#define ID_PROFESSOR_COL_INDEX 1
+#include "event/events.hpp"
 
 #include <sstream>
 #include <stdexcept>
@@ -13,46 +10,53 @@ using std::to_string;
 using std::invalid_argument;
 using std::runtime_error;
 
+#define HORARIO_TABLE "horarios"
+#define ID_PROFESSOR_COL_INDEX 1
 
 HorarioService::HorarioService(const MockConnection& connection, EventBus& bus)
-    : connection(connection), bus(bus) {}
+    : connection(connection), bus(bus) {
+    bus.subscribe<ProfessorDeletedEvent>(
+        [this](const ProfessorDeletedEvent& event) {
+            this->deleteByIdProfessor(event.id);
+        });
+}
 
 Horario HorarioService::save(long idProfessor, const std::string& inicio,
                              const std::string& fim) {
-  //  Verifica se o horário final é posterior ao inicial
-  if (fim <= inicio) {
-    throw std::invalid_argument("O horário final deve ser posterior ao horário inicial.");
-  }
-
-  // 1. Buscar horários do professor
-  auto horarios = connection.selectByColumn(HORARIO_TABLE, ID_PROFESSOR_COL_INDEX, std::to_string(idProfessor));
-
-  // 2. Verificar conflito de intervalo
-  for (const auto& linha : horarios) {
-    std::stringstream ss(linha);
-    std::string id, idProf, inicioExistente, fimExistente, disponivelStr;
-    std::getline(ss, id, ',');
-    std::getline(ss, idProf, ',');
-    std::getline(ss, inicioExistente, ',');
-    std::getline(ss, fimExistente, ',');
-    std::getline(ss, disponivelStr, ',');
-
-    if (inicio == inicioExistente && fim == fimExistente) {
-      Horario conflito(std::stol(id), std::stol(idProf), inicioExistente, fimExistente, true);
-      bus.publish(HorarioConflictEvent(conflito));
-      throw std::invalid_argument("Já existe um horário cadastrado nesse período.");
+    //  Verifica se o horário final é posterior ao inicial
+    if (fim <= inicio) {
+        throw std::invalid_argument("O horário final deve ser posterior ao horário inicial.");
     }
-  }
 
-  // 3. Inserir novo horário
-  std::stringstream dados;
-  dados << idProfessor << "," << inicio << "," << fim << ",1";
-  long newId = connection.insert(HORARIO_TABLE, dados.str());
+    // 1. Buscar horários do professor
+    auto horarios = connection.selectByColumn(HORARIO_TABLE, ID_PROFESSOR_COL_INDEX, std::to_string(idProfessor));
 
-  Horario novo(newId, idProfessor, inicio, fim, true);
-  bus.publish(HorarioCreatedEvent(novo));
+    // 2. Verificar conflito de intervalo
+    for (const auto& linha : horarios) {
+        std::stringstream ss(linha);
+        std::string id, idProf, inicioExistente, fimExistente, disponivelStr;
+        std::getline(ss, id, ',');
+        std::getline(ss, idProf, ',');
+        std::getline(ss, inicioExistente, ',');
+        std::getline(ss, fimExistente, ',');
+        std::getline(ss, disponivelStr, ',');
 
-  return novo;
+        if (inicio == inicioExistente && fim == fimExistente) {
+            Horario conflito(std::stol(id), std::stol(idProf), inicioExistente, fimExistente, true);
+            bus.publish(HorarioConflictEvent(conflito));
+            throw std::invalid_argument("Já existe um horário cadastrado nesse período.");
+        }
+    }
+
+    // 3. Inserir novo horário
+    std::stringstream dados;
+    dados << idProfessor << "," << inicio << "," << fim << ",1";
+    long newId = connection.insert(HORARIO_TABLE, dados.str());
+
+    Horario novo(newId, idProfessor, inicio, fim, true);
+    bus.publish(HorarioCreatedEvent(novo));
+
+    return novo;
 }
 
 bool HorarioService::deleteByIdProfessor(long id) const {
@@ -78,6 +82,32 @@ bool HorarioService::deleteByIdProfessor(long id) const {
     }
 }
 
+bool HorarioService::deleteById(long id) const {
+    try {
+        // Usa selectOne para obter uma única linha por ID
+        std::string linha = connection.selectOne(HORARIO_TABLE, id);
+        if (linha.empty()) return false;
+
+        std::stringstream ss(linha);
+        std::string idStr, idProf, inicio, fim, disponivelStr;
+        std::getline(ss, idStr, ',');
+        std::getline(ss, idProf, ',');
+        std::getline(ss, inicio, ',');
+        std::getline(ss, fim, ',');
+        std::getline(ss, disponivelStr, ',');
+
+        // Usa deleteRecord para remover o registro
+        connection.deleteRecord(HORARIO_TABLE, id);
+        bus.publish(HorarioDeletedEvent(std::stol(idStr)));
+
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+
+
 std::vector<Horario> HorarioService::listDisponivelByIdProfessor(long id) const {
     std::vector<Horario> todosHorarios = listByIdProfessor(id);
     std::vector<Horario> horariosDisponiveis;
@@ -91,19 +121,18 @@ std::vector<Horario> HorarioService::listDisponivelByIdProfessor(long id) const 
     return horariosDisponiveis;
 }
 
-
 std::vector<Horario> HorarioService::listByIdProfessor(long id) const {
-  auto linhas = connection.selectByColumn(HORARIO_TABLE, ID_PROFESSOR_COL_INDEX, std::to_string(id));
-  std::vector<Horario> horarios;
-  for (const auto& linha : linhas) {
-    std::stringstream ss(linha);
-    std::string idStr, idProf, inicio, fim, disponivelStr;
-    std::getline(ss, idStr, ',');
-    std::getline(ss, idProf, ',');
-    std::getline(ss, inicio, ',');
-    std::getline(ss, fim, ',');
-    std::getline(ss, disponivelStr, ',');
-    horarios.emplace_back(std::stol(idStr), std::stol(idProf), inicio, fim, disponivelStr == "1");
-  }
-  return horarios;
+    auto linhas = connection.selectByColumn(HORARIO_TABLE, ID_PROFESSOR_COL_INDEX, std::to_string(id));
+    std::vector<Horario> horarios;
+    for (const auto& linha : linhas) {
+        std::stringstream ss(linha);
+        std::string idStr, idProf, inicio, fim, disponivelStr;
+        std::getline(ss, idStr, ',');
+        std::getline(ss, idProf, ',');
+        std::getline(ss, inicio, ',');
+        std::getline(ss, fim, ',');
+        std::getline(ss, disponivelStr, ',');
+        horarios.emplace_back(std::stol(idStr), std::stol(idProf), inicio, fim, disponivelStr == "1");
+    }
+    return horarios;
 }
