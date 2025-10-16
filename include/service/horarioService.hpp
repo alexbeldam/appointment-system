@@ -59,6 +59,9 @@ class HorarioService {
      */
     bool deleteByIdProfessor(long id) const;
 
+    bool deleteById(long id) const;
+
+
       Horario save(long idProfessor, const std::string& inicio,
                const std::string& fim);
 
