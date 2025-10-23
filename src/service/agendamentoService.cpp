@@ -1,71 +1,230 @@
 #include "service/agendamentoService.hpp"
-
-// Incluir o evento necessário para a funcionalidade de deleção
 #include "event/events.hpp"
-using namespace std;
+#include <sstream>
+#include <stdexcept>
+#include <vector>
+#include <string>
+
+using std::vector;
+using std::string;
+using std::to_string;
+using std::invalid_argument;
+using std::runtime_error;
+using std::stringstream;
+using std::getline;
+using std::stol;
 
 // --- CONFIGURAÇÕES DE PERSISTÊNCIA ---
-
-// Define o nome da "tabela" (arquivo CSV) gerenciada por este Service.
 #define AGENDAMENTO_TABLE "agendamentos"
-// Índices das colunas usados para buscas específicas.
 #define ID_ALUNO_COL_INDEX 1
 #define ID_HORARIO_COL_INDEX 2
 
+// --- DECLARAÇÃO DE FUNÇÃO AUXILIAR ---
+static vector<Agendamento> listByIdHorario(const MockConnection& connection, long id);
+
+// --- CONSTRUTOR ---
 AgendamentoService::AgendamentoService(const MockConnection& connection,
-                                       EventBus& bus)
-    : connection(connection), bus(bus) {
-    // Assina o evento de deleção de aluno para garantir a integridade
-    // referencial. Quando um aluno é deletado, seus agendamentos são
-    // removidos.
+                                     EventBus& bus, HorarioService& horarioService)
+    : connection(connection), bus(bus), horarioService(horarioService) {
+    
     bus.subscribe<AlunoDeletedEvent>([this](const AlunoDeletedEvent& event) {
         this->deleteByIdAluno(event.id);
     });
 
-    // Analogamente, um horário
     bus.subscribe<HorarioDeletedEvent>(
         [this](const HorarioDeletedEvent& event) {
             this->deleteByIdHorario(event.id);
         });
 }
 
-// A função é o ponto de injeção de dados relacionados para a classe Aluno.
+// --- MÉTODOS CRUD ---
+
+Agendamento AgendamentoService::save(const Agendamento& agendamento) const {
+    
+    // AC 2: Verificar disponibilidade
+    try {
+        Horario h = this->horarioService.getById(agendamento.getHorarioId());
+        if (!h.isDisponivel()) {
+            throw std::runtime_error("Horário indisponível.");
+        }
+    } catch (const std::runtime_error& e) {
+        throw; // Repassa erro (ex: "Horário não encontrado")
+    }
+
+    // AC 1 (Registro): Salvar o agendamento
+    stringstream dados;
+    dados << agendamento.getAlunoId() << "," 
+          << agendamento.getHorarioId() << "," 
+          << agendamento.getStatus();
+          
+    long newId = connection.insert(AGENDAMENTO_TABLE, dados.str());
+    
+    Agendamento salvo(newId, agendamento.getAlunoId(), 
+                      agendamento.getHorarioId(), agendamento.getStatus());
+
+    // AC 1 (Atualização): Marcar horário como reservado
+    try {
+        this->horarioService.marcarComoReservado(salvo.getHorarioId());
+    } catch (...) {
+        // Falha silenciosa. Idealmente, isso seria uma transação.
+    }
+    
+    // AC 1 (Notificar)
+    this->bus.publish(AgendamentoCreatedEvent(salvo));
+
+    return salvo;
+}
+
+Agendamento AgendamentoService::getById(long id) const {
+    try {
+        string linha = connection.selectOne(AGENDAMENTO_TABLE, id);
+        if (linha.empty()) {
+            throw runtime_error("Agendamento não encontrado.");
+        }
+
+        stringstream ss(linha);
+        string idStr, alunoIdStr, horarioIdStr, statusStr;
+        getline(ss, idStr, ',');
+        getline(ss, alunoIdStr, ',');
+        getline(ss, horarioIdStr, ',');
+        getline(ss, statusStr, ',');
+
+        return Agendamento(stol(idStr), stol(alunoIdStr), stol(horarioIdStr), statusStr);
+
+    } catch (const runtime_error& e) {
+        throw; 
+    }
+}
+
+vector<Agendamento> AgendamentoService::listAll() const {
+    vector<Agendamento> agendamentos;
+    try {
+        auto linhas = connection.selectAll(AGENDAMENTO_TABLE);
+        for (const auto& linha : linhas) {
+            stringstream ss(linha);
+            string idStr, alunoIdStr, horarioIdStr, statusStr;
+            getline(ss, idStr, ',');
+            getline(ss, alunoIdStr, ',');
+            getline(ss, horarioIdStr, ',');
+            getline(ss, statusStr, ',');
+
+            agendamentos.emplace_back(stol(idStr), stol(alunoIdStr), stol(horarioIdStr), statusStr);
+        }
+        return agendamentos;
+    } catch (const runtime_error& e) {
+        throw; 
+    }
+}
+
+Agendamento AgendamentoService::updateById(long id, const Agendamento& agendamento) const {
+    (void)this->getById(id); // Garante que existe
+
+    try {
+        stringstream dados;
+        dados << agendamento.getAlunoId() << "," 
+              << agendamento.getHorarioId() << "," 
+              << agendamento.getStatus();
+              
+        connection.update(AGENDAMENTO_TABLE, id, dados.str());
+
+        return Agendamento(id, agendamento.getAlunoId(), 
+                           agendamento.getHorarioId(), agendamento.getStatus());
+    } catch (const runtime_error& e) {
+        throw;
+    }
+}
+
+bool AgendamentoService::deleteById(long id) const {
+    try {
+        (void)this->getById(id); // Verifica se existe
+        connection.deleteRecord(AGENDAMENTO_TABLE, id);
+        bus.publish(AgendamentoDeletedEvent(id));
+        return true;
+    } catch (...) {
+        return false; 
+    }
+}
+
+
+// --- MÉTODOS EXISTENTES ---
+
 vector<Agendamento> AgendamentoService::listByIdAluno(long id) const {
-    // [TODO] Esta é uma função placeholder incompleta.
+    vector<Agendamento> agendamentos;
+    try {
+        auto linhas = connection.selectByColumn(AGENDAMENTO_TABLE, ID_ALUNO_COL_INDEX, to_string(id));
+        for (const auto& linha : linhas) {
+            stringstream ss(linha);
+            string idStr, alunoIdStr, horarioIdStr, statusStr;
+            getline(ss, idStr, ',');
+            getline(ss, alunoIdStr, ',');
+            getline(ss, horarioIdStr, ',');
+            getline(ss, statusStr, ',');
 
-    // A implementação final deve:
-    // 1. Chamar connection.selectByColumn(AGENDAMENTO_TABLE,
-    // ID_ALUNO_COL_INDEX, to_string(id)).
-    // 2. Mapear as linhas CSV resultantes para objetos Agendamento (usando um
-    // AgendamentoMapper).
-    // 3. Tratar exceções de I/O do DAL (runtime_error).
-
-    // Retorna um vetor vazio, cumprindo o contrato do placeholder.
-    return vector<Agendamento>();
+            agendamentos.emplace_back(stol(idStr), stol(alunoIdStr), stol(horarioIdStr), statusStr);
+        }
+        return agendamentos;
+    } catch (const runtime_error& e) {
+        throw;
+    }
 }
 
 bool AgendamentoService::deleteByIdAluno(long id) const {
-    // [TODO] Implementar a lógica de deleção em massa no DAL.
-
-    // A implementação final deve:
-    // 1. Chamar connection.deleteByColumn(AGENDAMENTO_TABLE,
-    // ID_ALUNO_COL_INDEX, to_string(id)).
-    // 2. Publicar no barramento de eventos todos os agendamentos deletados
-    // 3. Tratar exceções de I/O.
-    // Veja o exemplo em horarioService.hpp
-
-    return false;
+    try {
+        vector<Agendamento> agendamentos = listByIdAluno(id);
+        if (agendamentos.empty())
+            return false;
+        connection.deleteByColumn(AGENDAMENTO_TABLE, ID_ALUNO_COL_INDEX, to_string(id));
+        for (const auto& a : agendamentos)
+            bus.publish(AgendamentoDeletedEvent(a.getId()));
+        return true;
+    } catch (const invalid_argument& e) {
+        return false; 
+    } catch (const runtime_error& e) {
+        throw; 
+    }
 }
 
 bool AgendamentoService::deleteByIdHorario(long id) const {
-    // [TODO] Implementar a lógica de deleção em massa no DAL.
+    try {
+        vector<Agendamento> agendamentos = listByIdHorario(this->connection, id);
+        if (agendamentos.empty())
+            return false;
+        connection.deleteByColumn(AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX, to_string(id));
+        for (const auto& a : agendamentos)
+            bus.publish(AgendamentoDeletedEvent(a.getId()));
+        return true;
+    } catch (const invalid_argument& e) {
+        return false; 
+    } catch (const runtime_error& e) {
+        throw;
+    }
+}
 
-    // A implementação final deve:
-    // 1. Chamar connection.deleteByColumn(AGENDAMENTO_TABLE,
-    // ID_HORARIO_COL_INDEX, to_string(id)).
-    // 2. Publicar no barramento de eventos todos os agendamentos deletados
-    // 3. Tratar exceções de I/O.
-    // Veja o exemplo em horarioService.hpp
 
-    return false;
+// --- IMPLEMENTAÇÃO DA FUNÇÃO AUXILIAR ---
+
+/**
+ * @brief Método auxiliar estático para listar agendamentos por ID_HORARIO.
+ * @param connection Conexão com o banco de dados.
+ * @param id O id do horario.
+ * @return vector<Agendamento>
+ */
+static vector<Agendamento> listByIdHorario(const MockConnection& connection, long id) {
+    vector<Agendamento> agendamentos;
+    try {
+        auto linhas = connection.selectByColumn(AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX, to_string(id));
+        for (const auto& linha : linhas) {
+            stringstream ss(linha);
+            string idStr, alunoIdStr, horarioIdStr, statusStr;
+            getline(ss, idStr, ',');
+            getline(ss, alunoIdStr, ',');
+            getline(ss, horarioIdStr, ',');
+            getline(ss, statusStr, ',');
+
+            agendamentos.emplace_back(stol(idStr), stol(alunoIdStr), stol(horarioIdStr), statusStr);
+        }
+        return agendamentos;
+    } catch (const runtime_error& e) {
+        throw; 
+    }
 }
