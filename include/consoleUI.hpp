@@ -6,6 +6,7 @@
 #include "controller/professorController.hpp"
 #include "service/sessionManager.hpp"
 #include "controller/horarioController.hpp"
+#include "controller/agendamentoController.hpp" // Adicionado
 
 
 /**
@@ -51,6 +52,12 @@ class ConsoleUI {
      */
     SessionManager& sessionManager;
 
+    /**
+     * @brief Referência constante para o Controller de Agendamento.
+     * * Usada para delegar a ação de agendar um horário.
+     */
+    const AgendamentoController& agendamentoController;
+
     // --- MÉTODOS DE FLUXO DE CRIAÇÃO ---
 
     /**
@@ -72,27 +79,11 @@ class ConsoleUI {
 
     /**
      * @brief Gerencia o fluxo de I/O e delega a autenticação de um Aluno.
-     *
-     * * Coleta as credenciais (e-mail e senha) do console e chama o
-     * LoginController para autenticar o usuário como Aluno. Em caso de sucesso,
-     * o usuário é registrado na sessão.
-     * @throws std::invalid_argument Se as credenciais forem inválidas ou
-     * incompletas.
-     * @throws std::runtime_error Em caso de falha crítica na persistência de
-     * dados.
      */
     void login_aluno() const;
 
     /**
      * @brief Gerencia o fluxo de I/O e delega a autenticação de um Professor.
-     *
-     * * Coleta as credenciais (e-mail e senha) do console e chama o
-     * LoginController para autenticar o usuário como Professor. Em caso de
-     * sucesso, o usuário é registrado na sessão.
-     * @throws std::invalid_argument Se as credenciais forem inválidas ou
-     * incompletas.
-     * @throws std::runtime_error Em caso de falha crítica na persistência de
-     * dados.
      */
     void login_professor() const;
 
@@ -102,6 +93,13 @@ class ConsoleUI {
      *
      */
     void realizar_logout() const;
+
+    // --- MÉTODOS DE CASO DE USO (ALUNO) ---
+
+    /**
+     * @brief Gerencia a interação de I/O para o caso de uso "Agendar Horário".
+     */
+    void handleAgendarHorario() const;
 
     // --- MÉTODOS DO LOOP PRINCIPAL BASEADOS NO ESTADO ---
 
@@ -136,12 +134,14 @@ class ConsoleUI {
      * @param lc O Controller de Login.
      * @param hc O Controller de Horário.
      * @param sm O Gerenciador de Sessão (referência mutável).
+     * @param agc O Controller de Agendamento.
      */
     ConsoleUI(const AlunoController& ac,
-            const ProfessorController& pc,
-            const LoginController& lc,
-            HorarioController& hc,
-            SessionManager& sm);
+              const ProfessorController& pc,
+              const LoginController& lc,
+              HorarioController& hc,
+              SessionManager& sm,
+              const AgendamentoController& agc); // Adicionado
 
     /**
      * @brief Inicia o motor da aplicação, gerando o loop de execução principal.

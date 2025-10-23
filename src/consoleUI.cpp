@@ -11,23 +11,25 @@ ConsoleUI::ConsoleUI(const AlunoController& ac,
                      const ProfessorController& pc,
                      const LoginController& lc,
                      HorarioController& hc,
-                     SessionManager& sm)
+                     SessionManager& sm,
+                     const AgendamentoController& agc)
     : alunoController(ac),
       professorController(pc),
       loginController(lc),
       horarioController(hc),
-      sessionManager(sm) {}
+      sessionManager(sm),
+      agendamentoController(agc) {}
 
 
 void desenhar_relogio() {
     cout << "*-------------------------------*" << endl;
     cout << "|       AGENDAMENTO DE          |" << endl;
     cout << "|           HORARIOS            |" << endl;
-    cout << "|          .---.                |" << endl;
-    cout << "|         /   / \\               |" << endl;
-    cout << "|        |   o   |              |" << endl;
-    cout << "|         \\ | /               |" << endl;
-    cout << "|          '---'                |" << endl;
+    cout << "|           .---.               |" << endl;
+    cout << "|          /   / \\              |" << endl;
+    cout << "|         |   o   |             |" << endl;
+    cout << "|          \\ | /                |" << endl;
+    cout << "|           '---'               |" << endl;
     cout << "*-------------------------------*" << endl;
     cout << endl;
 }
@@ -51,6 +53,7 @@ void imprimir_opcoes_login() {
 void imprimir_opcoes_aluno() {
     cout << "MENU ALUNO:" << endl;
     cout << "1 - Logout" << endl;
+    cout << "2 - Agendar Horário" << endl;
     cout << "0 - Sair do programa" << endl;
     cout << "Escolha uma opcao: ";
 }
@@ -80,8 +83,6 @@ void ConsoleUI::criar_aluno() const {
     long matricula;
 
     cout << "\n--- Criar Novo Aluno ---" << endl;
-
-    // --- COLETA DE INPUTS (STRING) ---
 
     // O 'cin.ignore' é essencial aqui para limpar qualquer '\n' pendente no
     // buffer de operações anteriores (e.g., seleção de menu).
@@ -126,8 +127,8 @@ void ConsoleUI::criar_aluno() const {
         cout << "\n==================================================" << endl;
         cout << "✅ SUCESSO! Aluno criado com ID: " << novo_aluno.getId()
              << endl;
-        cout << "    Nome: " << novo_aluno.getNome() << endl;
-        cout << "    Matrícula: " << novo_aluno.getMatricula() << endl;
+        cout << "     Nome: " << novo_aluno.getNome() << endl;
+        cout << "     Matrícula: " << novo_aluno.getMatricula() << endl;
         cout << "==================================================" << endl;
 
     } catch (const std::invalid_argument& e) {
@@ -171,8 +172,8 @@ void ConsoleUI::criar_professor() const {
         cout << "\n==================================================" << endl;
         cout << "✅ SUCESSO! Professor criado com ID: "
              << novo_professor.getId() << endl;
-        cout << "    Nome: " << novo_professor.getNome() << endl;
-        cout << "    Disciplina: " << disciplina << endl;
+        cout << "   Nome: " << novo_professor.getNome() << endl;
+        cout << "   Disciplina: " << disciplina << endl;
         cout << "==================================================" << endl;
 
     } catch (const std::invalid_argument& e) {
@@ -372,6 +373,9 @@ void ConsoleUI::loop_aluno(int& opcao) const {
             continue;
         }
 
+        // Limpa o buffer do cin para próximas leituras (getline ou cin)
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
         switch (opcao) {
             case 0:
                 cout << "\n>> Saindo do programa" << endl;
@@ -380,6 +384,49 @@ void ConsoleUI::loop_aluno(int& opcao) const {
             case 1:
                 realizar_logout();
                 break;
+
+            case 2: { // Agendar Horário
+                long horarioId;
+                cout << "\n--- Agendar Horário ---" << endl;
+                
+                // TODO: Idealmente, listar horários disponíveis primeiro
+                // auto horarios = horarioController.listarDisponiveis();
+                // ... (imprimir horarios) ...
+
+                cout << "Digite o ID do Horário desejado: ";
+
+                if (!(cin >> horarioId)) {
+                    cout << "\n>> ERRO: O ID do horário deve ser um número." << endl;
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    break;
+                }
+                
+                cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+
+                try {
+                    // Pega o ID do aluno logado na sessão
+                    long alunoId = sessionManager.getCurrentAluno().getId(); 
+                    
+                    // Delega ao controller
+                    agendamentoController.agendarHorario(alunoId, horarioId);
+
+                    // Sucesso (AC 1)
+                    cout << "\n==================================================" << endl;
+                    cout << "✅ SUCESSO! Horário agendado." << endl;
+                    cout << "==================================================" << endl;
+
+                } catch (const std::invalid_argument& e) {
+                    // Erro de validação (ex: ID <= 0)
+                    cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
+                } catch (const std::runtime_error& e) {
+                    // Erro de negócio (ex: "Horário indisponível") (AC 2)
+                    cout << "\n>> ERRO: " << e.what() << endl;
+                } catch (...) {
+                    cout << "\n>> ERRO DESCONHECIDO: Falha ao agendar." << endl;
+                }
+                break;
+            }
 
             default:
                 cout << "\n>> Opcao invalida! Tente novamente" << endl;
@@ -407,7 +454,7 @@ void ConsoleUI::loop_professor(int& opcao) const {
         }
 
         cin.ignore(numeric_limits<streamsize>::max(), '\n'); // limpar o buffer
-             
+                
             switch (opcao) {
                 case 0:
                     cout << "\n>> Saindo do programa" << endl;
@@ -429,7 +476,7 @@ void ConsoleUI::loop_professor(int& opcao) const {
                         auto horario = horarioController.cadastrarHorario(
                             prof.getId(), inicio, fim);
                         cout << "\n✅ Horário cadastrado com sucesso! ID: "
-                            << horario.getId() << endl;
+                             << horario.getId() << endl;
                     } catch (const std::invalid_argument& e) {
                         cout << "\n⚠️  " << e.what() << endl;
                     } catch (const std::exception& e) {
@@ -449,9 +496,9 @@ void ConsoleUI::loop_professor(int& opcao) const {
                         cout << "----------------------------------------------" << endl;
                         for (const auto& h : horarios) {
                             cout << "ID: " << h.getId()
-                                << " | Início: " << h.getInicio()
-                                << " | Fim: " << h.getFim()
-                                << endl;
+                                 << " | Início: " << h.getInicio()
+                                 << " | Fim: " << h.getFim()
+                                 << endl;
                         }
                         cout << "----------------------------------------------" << endl;
                     }
@@ -468,7 +515,7 @@ void ConsoleUI::loop_professor(int& opcao) const {
                     if (confirm == 's' || confirm == 'S') {
                         bool ok = horarioController.excluirTodosPorProfessor(prof.getId());
                         if (ok)
-                            cout << "\n  Todos os horários foram removidos!" << endl;
+                            cout << "\n   Todos os horários foram removidos!" << endl;
                         else
                             cout << "\n⚠️  Nenhum horário para remover." << endl;
                     } else {
@@ -491,7 +538,7 @@ void ConsoleUI::loop_professor(int& opcao) const {
                     if (confirm == 's' || confirm == 'S') {
                         bool ok = horarioController.excluirPorId(idHorario);
                         if (ok)
-                            cout << "\n  Horário excluído com sucesso!" << endl;
+                            cout << "\n   Horário excluído com sucesso!" << endl;
                         else
                             cout << "\n⚠️  Horário não encontrado." << endl;
                     } else {
