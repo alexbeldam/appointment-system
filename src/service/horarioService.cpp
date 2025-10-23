@@ -23,15 +23,12 @@ HorarioService::HorarioService(const MockConnection& connection, EventBus& bus)
 
 Horario HorarioService::save(long idProfessor, const std::string& inicio,
                              const std::string& fim) {
-    //  Verifica se o horário final é posterior ao inicial
     if (fim <= inicio) {
         throw std::invalid_argument("O horário final deve ser posterior ao horário inicial.");
     }
 
-    // 1. Buscar horários do professor
     auto horarios = connection.selectByColumn(HORARIO_TABLE, ID_PROFESSOR_COL_INDEX, std::to_string(idProfessor));
 
-    // 2. Verificar conflito de intervalo
     for (const auto& linha : horarios) {
         std::stringstream ss(linha);
         std::string id, idProf, inicioExistente, fimExistente, disponivelStr;
@@ -48,7 +45,6 @@ Horario HorarioService::save(long idProfessor, const std::string& inicio,
         }
     }
 
-    // 3. Inserir novo horário
     std::stringstream dados;
     dados << idProfessor << "," << inicio << "," << fim << ",1";
     long newId = connection.insert(HORARIO_TABLE, dados.str());
@@ -66,37 +62,30 @@ bool HorarioService::deleteByIdProfessor(long id) const {
         if (horarios.size() == 0)
             return false;
 
-        // Deleta do arquivo
         connection.deleteByColumn(HORARIO_TABLE, ID_PROFESSOR_COL_INDEX,
                                   to_string(id));
 
-        // Publica a deleção
         for (const auto& h : horarios)
             bus.publish(HorarioDeletedEvent(h.getId()));
 
         return true;
     } catch (const invalid_argument& e) {
-        return false;  // Nenhum horário encontrado
+        return false;
     } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O.
+        throw;
     }
 }
 
 bool HorarioService::deleteById(long id) const {
     try {
-        // Usa selectOne para obter uma única linha por ID
         std::string linha = connection.selectOne(HORARIO_TABLE, id);
         if (linha.empty()) return false;
 
         std::stringstream ss(linha);
-        std::string idStr, idProf, inicio, fim, disponivelStr;
+        std::string idStr;
         std::getline(ss, idStr, ',');
-        std::getline(ss, idProf, ',');
-        std::getline(ss, inicio, ',');
-        std::getline(ss, fim, ',');
-        std::getline(ss, disponivelStr, ',');
+        // O resto dos dados não é necessário para a deleção
 
-        // Usa deleteRecord para remover o registro
         connection.deleteRecord(HORARIO_TABLE, id);
         bus.publish(HorarioDeletedEvent(std::stol(idStr)));
 
@@ -105,8 +94,6 @@ bool HorarioService::deleteById(long id) const {
         return false;
     }
 }
-
-
 
 std::vector<Horario> HorarioService::listDisponivelByIdProfessor(long id) const {
     std::vector<Horario> todosHorarios = listByIdProfessor(id);
@@ -135,4 +122,61 @@ std::vector<Horario> HorarioService::listByIdProfessor(long id) const {
         horarios.emplace_back(std::stol(idStr), std::stol(idProf), inicio, fim, disponivelStr == "1");
     }
     return horarios;
+}
+
+// --- MÉTODOS ADICIONADOS PARA SUPORTE AO AGENDAMENTO ---
+
+/**
+ * @brief Busca um horário específico pelo seu ID.
+ */
+Horario HorarioService::getById(long id) const {
+    try {
+        std::string linha = connection.selectOne(HORARIO_TABLE, id);
+        if (linha.empty()) {
+            throw std::runtime_error("Horário não encontrado.");
+        }
+
+        std::stringstream ss(linha);
+        std::string idStr, idProf, inicio, fim, disponivelStr;
+        std::getline(ss, idStr, ',');
+        std::getline(ss, idProf, ',');
+        std::getline(ss, inicio, ',');
+        std::getline(ss, fim, ',');
+        std::getline(ss, disponivelStr, ',');
+
+        return Horario(std::stol(idStr), std::stol(idProf), inicio, fim, disponivelStr == "1");
+
+    } catch (const std::runtime_error& e) {
+        throw;
+    }
+}
+
+/**
+ * @brief Atualiza o status de um horário para "indisponível" (reservado).
+ */
+void HorarioService::marcarComoReservado(long id) const {
+    try {
+        Horario horario = this->getById(id);
+
+        if (!horario.isDisponivel()) {
+            return; // Já está reservado, não faz nada.
+        }
+
+        // Formato CSV: idProfessor,inicio,fim,disponivel
+        std::stringstream dados;
+        dados << horario.getProfessorId() << ","
+              << horario.getInicio() << ","
+              << horario.getFim() << ","
+              << "0"; // "0" significa não disponível
+
+        connection.update(HORARIO_TABLE, id, dados.str());
+
+        Horario horarioAtualizado(horario.getId(), horario.getProfessorId(),
+                                  horario.getInicio(), horario.getFim(), false);
+        
+        bus.publish(HorarioUpdatedEvent(horarioAtualizado));
+
+    } catch (const std::runtime_error& e) {
+        throw; // Repassa erros (ex: "Horário não encontrado" vindo do getById)
+    }
 }
