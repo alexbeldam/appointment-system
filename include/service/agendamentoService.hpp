@@ -15,7 +15,7 @@ class AgendamentoService {
    private:
     const MockConnection& connection;
     EventBus& bus;
-    HorarioService& horarioService;
+    const HorarioService& horarioService;
 
    public:
     /**
@@ -25,7 +25,7 @@ class AgendamentoService {
      * @param horarioService Referência para o Serviço de Horários.
      */
     AgendamentoService(const MockConnection& connection, EventBus& bus,
-                       HorarioService& horarioService);
+                       const HorarioService& horarioService);
 
     /**
      * @brief Salva um novo agendamento, aplicando as regras de negócio.
