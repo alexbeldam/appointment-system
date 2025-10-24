@@ -61,6 +61,8 @@ class AgendamentoService {
      */
     std::optional<Agendamento> updateById(long id, const Agendamento& agendamento) const;
 
+    std::vector<Agendamento> listByIdHorario(const MockConnection&, long) const;
+
     /**
      * @brief Deleta um agendamento pelo seu ID.
      * @param id O ID do agendamento a ser deletado.

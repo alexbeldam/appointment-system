@@ -212,7 +212,7 @@ bool AgendamentoService::deleteByIdHorario(long id) const {
  * @param id O id do horario.
  * @return vector<Agendamento>
  */
-static vector<Agendamento> listByIdHorario(const MockConnection& connection, long id) {
+vector<Agendamento> AgendamentoService::listByIdHorario(const MockConnection& connection, long id) const {
     vector<Agendamento> agendamentos;
     try {
         auto linhas = connection.selectByColumn(AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX, to_string(id));
