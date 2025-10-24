@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <vector>
 #include <string>
+#include <optional>
 
 using std::vector;
 using std::string;
@@ -24,7 +25,7 @@ static vector<Agendamento> listByIdHorario(const MockConnection& connection, lon
 
 // --- CONSTRUTOR ---
 AgendamentoService::AgendamentoService(const MockConnection& connection,
-                                     EventBus& bus, HorarioService& horarioService)
+                                     EventBus& bus, const HorarioService& horarioService)
     : connection(connection), bus(bus), horarioService(horarioService) {
     
     bus.subscribe<AlunoDeletedEvent>([this](const AlunoDeletedEvent& event) {
@@ -116,9 +117,7 @@ vector<Agendamento> AgendamentoService::listAll() const {
     }
 }
 
-Agendamento AgendamentoService::updateById(long id, const Agendamento& agendamento) const {
-    (void)this->getById(id); // Garante que existe
-
+std::optional<Agendamento> AgendamentoService::updateById(long id, const Agendamento& agendamento) const {
     try {
         stringstream dados;
         dados << agendamento.getAlunoId() << "," 
@@ -129,6 +128,8 @@ Agendamento AgendamentoService::updateById(long id, const Agendamento& agendamen
 
         return Agendamento(id, agendamento.getAlunoId(), 
                            agendamento.getHorarioId(), agendamento.getStatus());
+    }catch(const invalid_argument& e){
+        return std::nullopt;
     } catch (const runtime_error& e) {
         throw;
     }

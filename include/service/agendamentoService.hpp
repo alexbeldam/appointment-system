@@ -59,7 +59,7 @@ class AgendamentoService {
      * @return O objeto Agendamento após a atualização.
      * @throws std::runtime_error Se o agendamento não for encontrado.
      */
-    Agendamento updateById(long id, const Agendamento& agendamento) const;
+    std::optional<Agendamento> updateById(long id, const Agendamento& agendamento) const;
 
     /**
      * @brief Deleta um agendamento pelo seu ID.
