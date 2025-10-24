@@ -44,7 +44,7 @@ class AgendamentoService {
      * @return O objeto Agendamento.
      * @throws std::runtime_error Se o agendamento não for encontrado.
      */
-    Agendamento getById(long id) const;
+    std::optional<Agendamento> getById(long id) const;
 
     /**
      * @brief Lista todos os agendamentos cadastrados.

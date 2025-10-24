@@ -80,7 +80,7 @@ Agendamento AgendamentoService::save(const Agendamento& agendamento) const {
     return salvo;
 }
 
-Agendamento AgendamentoService::getById(long id) const {
+std::optional<Agendamento>AgendamentoService::getById(long id) const {
     try {
         string linha = connection.selectOne(AGENDAMENTO_TABLE, id);
         if (linha.empty()) {
@@ -96,6 +96,8 @@ Agendamento AgendamentoService::getById(long id) const {
 
         return Agendamento(stol(idStr), stol(alunoIdStr), stol(horarioIdStr), statusStr);
 
+    } catch (const invalid_argument& e) {
+        return std::nullopt; 
     } catch (const runtime_error& e) {
         throw; 
     }
