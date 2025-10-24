@@ -129,9 +129,10 @@ std::optional<Agendamento> AgendamentoService::updateById(long id, const Agendam
               << agendamento.getStatus();
               
         connection.update(AGENDAMENTO_TABLE, id, dados.str());
-
-        return Agendamento(id, agendamento.getAlunoId(), 
-                           agendamento.getHorarioId(), agendamento.getStatus());
+        Agendamento agendamentoAtualizado(id, agendamento.getAlunoId(), 
+                                          agendamento.getHorarioId(), agendamento.getStatus());
+        this->bus.publish(AgendamentoUpdatedEvent(agendamentoAtualizado));
+        return agendamentoAtualizado;
     }catch(const invalid_argument& e){
         return std::nullopt;
     } catch (const runtime_error& e) {
