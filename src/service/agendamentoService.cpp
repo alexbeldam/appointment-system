@@ -20,9 +20,6 @@ using std::stol;
 #define ID_ALUNO_COL_INDEX 1
 #define ID_HORARIO_COL_INDEX 2
 
-// --- DECLARAÇÃO DE FUNÇÃO AUXILIAR ---
-static vector<Agendamento> listByIdHorario(const MockConnection& connection, long id);
-
 // --- CONSTRUTOR ---
 AgendamentoService::AgendamentoService(const MockConnection& connection,
                                      EventBus& bus, const HorarioService& horarioService)

@@ -2,6 +2,7 @@
 #define AGENDAMENTO_SERVICE_HPP
 
 #include <vector>
+#include <optional>
 
 #include "data/mockConnection.hpp"
 #include "event/bus.hpp"
