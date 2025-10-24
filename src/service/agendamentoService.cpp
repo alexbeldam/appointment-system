@@ -142,7 +142,6 @@ std::optional<Agendamento> AgendamentoService::updateById(long id, const Agendam
 
 bool AgendamentoService::deleteById(long id) const {
     try {
-        (void)this->getById(id); // Verifica se existe
         connection.deleteRecord(AGENDAMENTO_TABLE, id);
         bus.publish(AgendamentoDeletedEvent(id));
         return true;
