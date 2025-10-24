@@ -40,36 +40,40 @@ AgendamentoService::AgendamentoService(const MockConnection& connection,
 
 // --- MÉTODOS CRUD ---
 
+/**
+ * @brief Salva um novo agendamento, aplicando as regras de negócio.
+ */
 Agendamento AgendamentoService::save(const Agendamento& agendamento) const {
     
-    // AC 2: Verificar disponibilidade
+    // AC 2 (Parte 1): O professor abriu este slot?
     try {
         Horario h = this->horarioService.getById(agendamento.getHorarioId());
-        if (!h.isDisponivel()) {
-            throw std::runtime_error("Horário indisponível.");
+        if (!h.isDisponivel()) { 
+            throw std::runtime_error("Este horário não está aberto para agendamentos.");
         }
     } catch (const std::runtime_error& e) {
         throw; // Repassa erro (ex: "Horário não encontrado")
     }
 
-    // AC 1 (Registro): Salvar o agendamento
+    // AC 2 (Parte 2): O slot já foi reservado por outro aluno?
+    // (Verifica se já existe agendamento, PENDENTE ou CONFIRMADO)
+    vector<Agendamento> agendamentosExistentes = listByIdHorario(this->connection, agendamento.getHorarioId());
+    
+    if (!agendamentosExistentes.empty()) {
+        throw std::runtime_error("Horário indisponível (já solicitado por outro aluno).");
+    }
+
+    // AC 1 (Registro): Salvar o agendamento (com status "PENDENTE")
     stringstream dados;
     dados << agendamento.getAlunoId() << "," 
           << agendamento.getHorarioId() << "," 
-          << agendamento.getStatus();
+          << agendamento.getStatus(); // status será "PENDENTE"
           
     long newId = connection.insert(AGENDAMENTO_TABLE, dados.str());
     
     Agendamento salvo(newId, agendamento.getAlunoId(), 
                       agendamento.getHorarioId(), agendamento.getStatus());
 
-    // AC 1 (Atualização): Marcar horário como reservado
-    try {
-        this->horarioService.marcarComoReservado(salvo.getHorarioId());
-    } catch (...) {
-        // Falha silenciosa. Idealmente, isso seria uma transação.
-    }
-    
     // AC 1 (Notificar)
     this->bus.publish(AgendamentoCreatedEvent(salvo));
 

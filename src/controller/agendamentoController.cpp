@@ -29,7 +29,6 @@ AgendamentoController::AgendamentoController(const AgendamentoService& service)
 void AgendamentoController::agendarHorario(long alunoID, long horarioId) const {
     try {
         // 1. VALIDAÇÃO DE FORMATO
-        // O Controller valida se os IDs são minimamente aceitáveis.
         if (alunoID <= 0) {
             throw std::invalid_argument("ID do aluno inválido ou não fornecido.");
         }
@@ -38,29 +37,19 @@ void AgendamentoController::agendarHorario(long alunoID, long horarioId) const {
         }
 
         // 2. PREPARAÇÃO DO MODELO
-        // Com base no CSV (id,aluno,horario,status), definimos
-        // "CONFIRMADO" como o status padrão para novos agendamentos.
-        const std::string statusPadrao = "CONFIRMADO";
+        // O status inicial deve ser "PENDENTE" para o professor
+        // aprovar.
+        const std::string statusPadrao = "PENDENTE";
         Agendamento novoAgendamento(alunoID, horarioId, statusPadrao);
 
         // 3. DELEGAÇÃO PARA O SERVICE
-        // O Service trata a lógica de negócio principal:
-        // - Verifica se o Horario (horarioId) está disponível (AC 2)
-        // - Salva o novo Agendamento no CSV (AC 1)
-        // - Atualiza o Horario para "reservado" (AC 1)
-        // - Dispara o evento de notificação (AC 1)
         this->agendamentoService.save(novoAgendamento);
 
-        // 4. TRATAMENTO DE ERROS
     } catch (const std::invalid_argument& e) {
-        // Captura erros de validação (IDs <= 0)
         handle_controller_exception(e, "validar dados do novo agendamento");
         
     } catch (const std::runtime_error& e) {
-        // Captura erros de I/O ou de lógica de negócio do Service
-        // (Ex: "Horário indisponível." ou "Horário não encontrado.")
         handle_controller_exception(e, "criar agendamento no serviço");
     }
-    // Relança a exceção para a camada da UI (Console) tratar
     throw;
 }
