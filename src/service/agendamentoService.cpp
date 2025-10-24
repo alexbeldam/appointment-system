@@ -83,10 +83,6 @@ Agendamento AgendamentoService::save(const Agendamento& agendamento) const {
 std::optional<Agendamento>AgendamentoService::getById(long id) const {
     try {
         string linha = connection.selectOne(AGENDAMENTO_TABLE, id);
-        if (linha.empty()) {
-            throw runtime_error("Agendamento não encontrado.");
-        }
-
         stringstream ss(linha);
         string idStr, alunoIdStr, horarioIdStr, statusStr;
         getline(ss, idStr, ',');
