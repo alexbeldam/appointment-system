@@ -75,7 +75,6 @@ void ConsoleUI::criar_aluno() const {
     long matricula;
 
     cout << "\n--- Criar Novo Aluno ---" << endl;
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     cout << "Nome: ";
     getline(cin, nome);
@@ -125,7 +124,6 @@ void ConsoleUI::criar_professor() const {
 
     cout << "\n--- Criar Novo Professor ---" << endl;
 
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
     cout << "Nome: ";
     getline(cin, nome);
     cout << "E-mail: ";
