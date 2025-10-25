@@ -4,30 +4,31 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
+#include <vector>
+
+#include "util/utils.hpp"
 
 using namespace std;
 
-ConsoleUI::ConsoleUI(const AlunoController& ac,
-                     const ProfessorController& pc,
-                     const LoginController& lc,
-                     HorarioController& hc,
-                     SessionManager& sm)
+ConsoleUI::ConsoleUI(const AlunoController& ac, const ProfessorController& pc,
+                     const LoginController& lc, const HorarioController& hc,
+                     SessionManager& sm, const AgendamentoController& agc)
     : alunoController(ac),
       professorController(pc),
       loginController(lc),
       horarioController(hc),
-      sessionManager(sm) {}
-
+      sessionManager(sm),
+      agendamentoController(agc) {}
 
 void desenhar_relogio() {
     cout << "*-------------------------------*" << endl;
     cout << "|       AGENDAMENTO DE          |" << endl;
     cout << "|           HORARIOS            |" << endl;
-    cout << "|          .---.                |" << endl;
-    cout << "|         /   / \\               |" << endl;
-    cout << "|        |   o   |              |" << endl;
-    cout << "|         \\ | /               |" << endl;
-    cout << "|          '---'                |" << endl;
+    cout << "|           .---.               |" << endl;
+    cout << "|          /   / \\              |" << endl;
+    cout << "|         |   o   |             |" << endl;
+    cout << "|          \\ | /                |" << endl;
+    cout << "|           '---'               |" << endl;
     cout << "*-------------------------------*" << endl;
     cout << endl;
 }
@@ -38,21 +39,19 @@ void imprimir_login() {
     cout << "2 - Criar Novo Professor (Cadastro)" << endl;
     cout << "3 - Fazer Login" << endl;
     cout << "0 - Sair do programa" << endl;
-    cout << "Escolha uma opcao: ";
 }
 
 void imprimir_opcoes_login() {
     cout << "\nMENU DE OPCOES:" << endl;
     cout << "0 - Entrar como aluno" << endl;
     cout << "1 - Entrar como professor" << endl;
-    cout << "Escolha uma opcao: ";
 }
 
 void imprimir_opcoes_aluno() {
     cout << "MENU ALUNO:" << endl;
     cout << "1 - Logout" << endl;
+    cout << "2 - Agendar Horário" << endl;
     cout << "0 - Sair do programa" << endl;
-    cout << "Escolha uma opcao: ";
 }
 
 void imprimir_opcoes_professor() {
@@ -63,32 +62,21 @@ void imprimir_opcoes_professor() {
     cout << "4 - Excluir todos meus horários" << endl;
     cout << "5 - Excluir horário por ID" << endl;
     cout << "0 - Sair do programa" << endl;
-    cout << "Escolha uma opcao: ";
 }
-
 
 void imprimir_opcoes_logout() {
     cout << "\nMENU DE OPCOES:" << endl;
     cout << "1 - Voltar" << endl;
     cout << "0 - Deslogar" << endl;
-    cout << "Escolha uma opcao: ";
 }
 
-// Função de interface de console para a criação de um novo Aluno.
 void ConsoleUI::criar_aluno() const {
     string nome, email, senha;
     long matricula;
 
     cout << "\n--- Criar Novo Aluno ---" << endl;
 
-    // --- COLETA DE INPUTS (STRING) ---
-
-    // O 'cin.ignore' é essencial aqui para limpar qualquer '\n' pendente no
-    // buffer de operações anteriores (e.g., seleção de menu).
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
     cout << "Nome: ";
-    // Usamos getline para ler a linha inteira, incluindo espaços no nome.
     getline(cin, nome);
 
     cout << "E-mail: ";
@@ -97,51 +85,34 @@ void ConsoleUI::criar_aluno() const {
     cout << "Senha: ";
     getline(cin, senha);
 
-    // --- COLETA DE INPUT NUMÉRICO ---
-
     cout << "Matrícula: ";
-
-    // Tentativa de leitura do long. Se falhar, é porque o usuário digitou
-    // texto.
     if (!(cin >> matricula)) {
         cout << "\n>> ERRO: A matrícula deve ser um número inteiro." << endl;
-        // Limpa o estado de erro do cin e o buffer para permitir futuras
-        // operações.
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        return;  // Retorna, pois não há dados válidos para processar.
+        return;
     }
-
-    // Limpa o buffer, pois a última leitura foi númerica
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-    // --- FLUXO DE PROCESSAMENTO E TRATAMENTO DE EXCEÇÕES ---
-
     try {
-        // Delega a criação ao Controller (que valida e persiste).
         Aluno novo_aluno =
             alunoController.create(nome, email, senha, matricula);
 
-        // Mensagem de sucesso e exibição dos dados retornados pelo Service.
         cout << "\n==================================================" << endl;
         cout << "✅ SUCESSO! Aluno criado com ID: " << novo_aluno.getId()
              << endl;
-        cout << "    Nome: " << novo_aluno.getNome() << endl;
-        cout << "    Matrícula: " << novo_aluno.getMatricula() << endl;
+        cout << "     Nome: " << novo_aluno.getNome() << endl;
+        cout << "     Matrícula: " << novo_aluno.getMatricula() << endl;
         cout << "==================================================" << endl;
 
     } catch (const std::invalid_argument& e) {
-        // Captura erros de validação (formato, unicidade) vindos do
-        // Controller/Service.
         cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
         cout << ">> Tente novamente com dados válidos." << endl;
     } catch (const std::runtime_error& e) {
-        // Captura erros críticos (I/O, falhas no DAL/Mapper) vindos do Service.
         cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao salvar o Aluno."
              << endl;
         cout << ">> Detalhes do Erro: " << e.what() << endl;
     } catch (...) {
-        // Captura qualquer outra exceção inesperada.
         cout << "\n>> ERRO DESCONHECIDO: Ocorreu uma falha inesperada durante "
                 "a criação."
              << endl;
@@ -153,7 +124,6 @@ void ConsoleUI::criar_professor() const {
 
     cout << "\n--- Criar Novo Professor ---" << endl;
 
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
     cout << "Nome: ";
     getline(cin, nome);
     cout << "E-mail: ";
@@ -162,7 +132,6 @@ void ConsoleUI::criar_professor() const {
     getline(cin, senha);
     cout << "Disciplina: ";
     getline(cin, disciplina);
-    // Não precisa limpar o buffer, pois a última leitura foi da linha
 
     try {
         Professor novo_professor =
@@ -171,8 +140,8 @@ void ConsoleUI::criar_professor() const {
         cout << "\n==================================================" << endl;
         cout << "✅ SUCESSO! Professor criado com ID: "
              << novo_professor.getId() << endl;
-        cout << "    Nome: " << novo_professor.getNome() << endl;
-        cout << "    Disciplina: " << disciplina << endl;
+        cout << "   Nome: " << novo_professor.getNome() << endl;
+        cout << "   Disciplina: " << disciplina << endl;
         cout << "==================================================" << endl;
 
     } catch (const std::invalid_argument& e) {
@@ -190,33 +159,17 @@ void ConsoleUI::criar_professor() const {
 }
 
 void ConsoleUI::realizar_login() const {
-    int opcao = -1;
+    imprimir_opcoes_login();
 
-    do {
-        imprimir_opcoes_login();
+    int opcao = read_integer_range("Escolha uma opcao: ", 0, 1);
 
-        if (!(cin >> opcao)) {
-            cout << "\n>> Entrada inválida. Por favor, digite um número."
-                 << endl;
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            continue;
-        }
-
-        switch (opcao) {
-            case 0:
-                login_aluno();
-                break;
-
-            case 1:
-                login_professor();
-                break;
-
-            default:
-                cout << "\n>> Opcao invalida! Tente novamente" << endl;
-                break;
-        }
-    } while (opcao < 0 && opcao > 1);
+    switch (opcao) {
+        case 0:
+            login_aluno();
+            break;
+        case 1:
+            login_professor();
+    }
 }
 
 void ConsoleUI::login_aluno() const {
@@ -224,7 +177,6 @@ void ConsoleUI::login_aluno() const {
 
     cout << "\n--- Entrar Aluno ---" << endl;
 
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
     cout << "E-mail: ";
     getline(cin, email);
     cout << "Senha: ";
@@ -255,7 +207,6 @@ void ConsoleUI::login_professor() const {
 
     cout << "\n--- Entrar Professor ---" << endl;
 
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
     cout << "E-mail: ";
     getline(cin, email);
     cout << "Senha: ";
@@ -286,235 +237,243 @@ void ConsoleUI::realizar_logout() const {
     if (!sessionManager.isLogged())
         return;
 
-    int opcao = -1;
+    imprimir_opcoes_logout();
 
-    do {
-        imprimir_opcoes_logout();
+    int opcao = read_integer_range("Escolha uma opcao: ", 0, 1);
 
-        if (!(cin >> opcao)) {
-            cout << "\n>> Entrada inválida. Por favor, digite um número."
-                 << endl;
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            continue;
+    if (opcao == 0) {
+        sessionManager.logout();
+        cout << "\n==================================================" << endl;
+        cout << "✅ SUCESSO! Logout realizado." << endl;
+        cout << "==================================================" << endl;
+        return;
+    }
+}
+
+void ConsoleUI::handleAgendarHorario() const {
+    cout << "\n--- Professores ---" << endl;
+
+    vector<Professor> professores;
+
+    try {
+        professores = this->professorController.list();
+        if (professores.empty()) {
+            cout << ">> Nenhum professor cadastrado no sistema." << endl;
+            return;
         }
 
-        switch (opcao) {
-            case 0:
-                cout << "\n>> Deslogando..." << endl;
-                sessionManager.logout();
-                break;
+        for (size_t i = 0; i < professores.size(); i++) {
+            const auto& prof = professores[i];
 
-            case 1:
-                break;
-
-            default:
-                cout << "\n>> Opcao invalida! Tente novamente" << endl;
-                break;
+            cout << '#' << (i + 1) << " | Nome: " << prof.getNome()
+                 << " | Disciplina: " << prof.getDisciplina() << endl;
         }
+    } catch (const std::exception& e) {
+        cout << "\n>> ERRO ao listar professores: " << e.what() << endl;
+        return;
+    }
 
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    } while (opcao < 0 && opcao > 1);
+    size_t profIdx =
+        read_integer_range("Escolha um professor: ", 1, professores.size());
+
+    const auto& prof = professores[profIdx - 1];
+    const auto& horarios = prof.getHorariosDisponiveis();
+
+    cout << "\n--- Horários Disponíveis ---" << endl;
+
+    if (horarios.empty()) {
+        cout << ">> Nenhum horário disponível para este professor." << endl;
+        return;
+    }
+
+    for (size_t i = 0; i < horarios.size(); i++) {
+        const auto& h = horarios[i];
+        cout << '#' << (i + 1) << " | Início: " << h.getInicio()
+             << " | Fim: " << h.getFim() << endl;
+    }
+
+    size_t horarioIdx = read_integer_range(
+        "Escolha um horário para agendar: ", 1, horarios.size());
+
+    const auto& horario = horarios[horarioIdx - 1];
+
+    try {
+        long alunoId = sessionManager.getCurrentAluno().getId();
+        long horarioId = horario.getId();
+
+        agendamentoController.agendarHorario(alunoId, horarioId);
+
+        cout << "\n================================================"
+                "=="
+             << endl;
+        cout << "✅ SUCESSO! Solicitação de agendamento enviada." << endl;
+        cout << "==================================================" << endl;
+
+    } catch (const std::invalid_argument& e) {
+        cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
+    } catch (const std::runtime_error& e) {
+        cout << "\n>> ERRO: " << e.what() << endl;
+    } catch (...) {
+        cout << "\n>> ERRO DESCONHECIDO: Falha ao agendar." << endl;
+    }
 }
 
 void ConsoleUI::loop_login(int& opcao) const {
-    do {
+    while (!sessionManager.isLogged()) {
         desenhar_relogio();
         imprimir_login();
 
-        if (!(cin >> opcao)) {
-            cout << "\n>> Entrada inválida. Por favor, digite um número."
-                 << endl;
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            continue;
-        }
+        opcao = read_integer_range("Escolha uma opcao: ", 0, 3);
+
+        if (opcao == 0)
+            return;
 
         switch (opcao) {
-            case 0:
-                cout << "\n>> Saindo do programa" << endl;
-                break;
-
             case 1:
                 criar_aluno();
                 break;
-
             case 2:
                 criar_professor();
                 break;
-
             case 3:
                 realizar_login();
                 break;
-
-            default:
-                cout << "\n>> Opcao invalida! Tente novamente" << endl;
-                break;
         }
 
-        if (opcao != 0) {
-            cout << "\nPressione Enter para continuar...";
-            cin.get();
-        }
-    } while (opcao != 0 && !sessionManager.isLogged());
+        cout << "\nPressione Enter para continuar...";
+        cin.get();
+    }
 }
 
 void ConsoleUI::loop_aluno(int& opcao) const {
-    do {
+    while (sessionManager.isAluno()) {
         desenhar_relogio();
         imprimir_opcoes_aluno();
 
-        if (!(cin >> opcao)) {
-            cout << "\n>> Entrada inválida. Por favor, digite um número."
-                 << endl;
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            continue;
-        }
+        opcao = read_integer_range("Escolha uma opcao: ", 0, 2);
+
+        if (opcao == 0)
+            return;
 
         switch (opcao) {
-            case 0:
-                cout << "\n>> Saindo do programa" << endl;
+            case 1:
+                realizar_logout();
                 break;
+            case 2:
+                handleAgendarHorario();
+                break;
+        }
 
+        cout << "\nPressione Enter para continuar...";
+        cin.get();
+    }
+}
+
+void ConsoleUI::loop_professor(int& opcao) const {
+    while (sessionManager.isProfessor()) {
+        desenhar_relogio();
+        imprimir_opcoes_professor();
+
+        opcao = read_integer_range("Escolha uma opcao: ", 0, 5);
+
+        if (opcao == 0)
+            return;
+
+        switch (opcao) {
             case 1:
                 realizar_logout();
                 break;
 
-            default:
-                cout << "\n>> Opcao invalida! Tente novamente" << endl;
+            case 2: {
+                string inicio, fim;
+                cout << "\nData e hora de início (ex: 1/11 08:30): ";
+                getline(cin, inicio);
+                cout << "Data e hora de término (ex: 1/11 09:00): ";
+                getline(cin, fim);
+
+                try {
+                    auto prof = sessionManager.getCurrentProfessor();
+                    auto horario = horarioController.cadastrarHorario(
+                        prof.getId(), inicio, fim);
+                    cout << "\n✅ Horário cadastrado com sucesso! ID: "
+                         << horario.getId() << endl;
+                } catch (const std::invalid_argument& e) {
+                    cout << "\n⚠️  " << e.what() << endl;
+                } catch (const std::exception& e) {
+                    cout << "\n Erro inesperado: " << e.what() << endl;
+                }
                 break;
+            }
+
+            case 3: {  // Listar horários
+                auto prof = sessionManager.getCurrentProfessor();
+                auto horarios = prof.getHorarios();
+
+                if (horarios.empty()) {
+                    cout << "\n⚠️  Nenhum horário cadastrado." << endl;
+                } else {
+                    cout << "\n--- Horários cadastrados ---" << endl;
+                    for (const auto& h : horarios) {
+                        cout << "ID: " << h.getId()
+                             << " | Início: " << h.getInicio()
+                             << " | Fim: " << h.getFim() << " | Disponível: "
+                             << (h.isDisponivel() ? "Sim" : "Não") << endl;
+                    }
+                }
+                break;
+            }
+
+            case 4: {  // Excluir todos os horários
+                auto prof = sessionManager.getCurrentProfessor();
+                char confirm;
+                cout << "\n⚠️  Deseja realmente excluir todos os horários? "
+                        "(s/n): ";
+                cin >> confirm;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                if (confirm == 's' || confirm == 'S') {
+                    bool ok = horarioController.excluirTodosPorProfessor(
+                        prof.getId());
+                    if (ok)
+                        cout << "\n   Todos os horários foram removidos!"
+                             << endl;
+                    else
+                        cout << "\n⚠️  Nenhum horário para remover." << endl;
+                } else {
+                    cout << "\nAção cancelada." << endl;
+                }
+                break;
+            }
+
+            case 5: {  // Excluir horário por ID
+                long idHorario;
+                cout << "\nDigite o ID do horário a ser excluído: ";
+                cin >> idHorario;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                char confirm;
+                cout << "Confirmar exclusão do horário " << idHorario
+                     << "? (s/n): ";
+                cin >> confirm;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                if (confirm == 's' || confirm == 'S') {
+                    bool ok = horarioController.excluirPorId(idHorario);
+                    if (ok)
+                        cout << "\n   Horário excluído com sucesso!" << endl;
+                    else
+                        cout << "\n⚠️  Horário não encontrado." << endl;
+                } else {
+                    cout << "\nAção cancelada." << endl;
+                }
+                break;
+            }
         }
 
-        if (opcao != 0) {
-            cout << "\nPressione Enter para continuar...";
-            cin.get();
-        }
-    } while (opcao != 0 && sessionManager.isAluno());
+        cout << "\nPressione Enter para continuar...";
+        cin.get();
+    }
 }
-
-void ConsoleUI::loop_professor(int& opcao) const {
-    do {
-        desenhar_relogio();
-        imprimir_opcoes_professor();
-
-        if (!(cin >> opcao)) {
-            cout << "\n>> Entrada inválida. Por favor, digite um número."
-                 << endl;
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            continue;
-        }
-
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // limpar o buffer
-             
-            switch (opcao) {
-                case 0:
-                    cout << "\n>> Saindo do programa" << endl;
-                    break;
-
-                case 1:
-                    realizar_logout();
-                    break;
-
-                case 2: {
-                    string inicio, fim;
-                    cout << "\nData e hora de início (ex: 1/11 08:30): ";
-                    getline(cin, inicio);
-                    cout << "Data e hora de término (ex: 1/11 09:00): ";
-                    getline(cin, fim);
-
-                    try {
-                        auto prof = sessionManager.getCurrentProfessor();
-                        auto horario = horarioController.cadastrarHorario(
-                            prof.getId(), inicio, fim);
-                        cout << "\n✅ Horário cadastrado com sucesso! ID: "
-                            << horario.getId() << endl;
-                    } catch (const std::invalid_argument& e) {
-                        cout << "\n⚠️  " << e.what() << endl;
-                    } catch (const std::exception& e) {
-                        cout << "\n Erro inesperado: " << e.what() << endl;
-                    }
-                    break;
-                }
-
-                case 3: { // Listar horários
-                    auto prof = sessionManager.getCurrentProfessor();
-                    auto horarios = horarioController.listarPorProfessor(prof.getId());
-
-                    if (horarios.empty()) {
-                        cout << "\n⚠️  Nenhum horário cadastrado." << endl;
-                    } else {
-                        cout << "\n Horários cadastrados:" << endl;
-                        cout << "----------------------------------------------" << endl;
-                        for (const auto& h : horarios) {
-                            cout << "ID: " << h.getId()
-                                << " | Início: " << h.getInicio()
-                                << " | Fim: " << h.getFim()
-                                << endl;
-                        }
-                        cout << "----------------------------------------------" << endl;
-                    }
-                    break;
-                }
-
-                case 4: { // Excluir todos os horários
-                    auto prof = sessionManager.getCurrentProfessor();
-                    char confirm;
-                    cout << "\n⚠️  Deseja realmente excluir todos os horários? (s/n): ";
-                    cin >> confirm;
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-                    if (confirm == 's' || confirm == 'S') {
-                        bool ok = horarioController.excluirTodosPorProfessor(prof.getId());
-                        if (ok)
-                            cout << "\n  Todos os horários foram removidos!" << endl;
-                        else
-                            cout << "\n⚠️  Nenhum horário para remover." << endl;
-                    } else {
-                        cout << "\nAção cancelada." << endl;
-                    }
-                    break;
-                }
-
-                case 5: { // Excluir horário por ID
-                    long idHorario;
-                    cout << "\nDigite o ID do horário a ser excluído: ";
-                    cin >> idHorario;
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-                    char confirm;
-                    cout << "Confirmar exclusão do horário " << idHorario << "? (s/n): ";
-                    cin >> confirm;
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-                    if (confirm == 's' || confirm == 'S') {
-                        bool ok = horarioController.excluirPorId(idHorario);
-                        if (ok)
-                            cout << "\n  Horário excluído com sucesso!" << endl;
-                        else
-                            cout << "\n⚠️  Horário não encontrado." << endl;
-                    } else {
-                        cout << "\nAção cancelada." << endl;
-                    }
-                    break;
-                }
-
-                default:
-                    cout << "\n>> Opção inválida! Tente novamente." << endl;
-                    break;
-
-        }
-
-
-        if (opcao != 0) {
-            cout << "\nPressione Enter para continuar...";
-            cin.get();
-        }
-
-    } while (opcao != 0 && sessionManager.isProfessor());
-}
-
 
 void ConsoleUI::start() const {
     int opcao = -1;
@@ -527,4 +486,6 @@ void ConsoleUI::start() const {
         else
             loop_aluno(opcao);
     } while (opcao != 0);
+
+    cout << "\n>> Saindo do programa" << endl;
 }

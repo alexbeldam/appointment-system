@@ -25,6 +25,17 @@ const vector<Horario>& Professor::getHorarios() const {
     return horarios;
 }
 
+const vector<Horario>& Professor::getHorariosDisponiveis() const {
+    static vector<Horario> disponiveis;
+    disponiveis.clear();
+    for (const Horario& h : this->horarios) {
+        if (h.isDisponivel()) {
+            disponiveis.push_back(h);
+        }
+    }
+    return disponiveis;
+}
+
 void Professor::setHorarios(const vector<Horario>& horarios) {
     this->horarios = horarios;
 }

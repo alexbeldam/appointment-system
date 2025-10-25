@@ -70,4 +70,6 @@ inline bool check(const std::string& cypher, const std::string& pwd) {
     return cypher == encrypt(pwd);
 }
 
+int read_integer_range(const std::string& prompt, int min_val, int max_val);
+
 #endif

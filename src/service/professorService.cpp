@@ -43,10 +43,9 @@ Professor ProfessorService::mapAndInjectHorarios(const string& csv_line) const {
     }
 
     // 2. Injeção de Horarios (Consulta a serviço externo/outra entidade)
-    // Busca a lista de horários disponíveis do professor por meio do
+    // Busca a lista de horários do professor por meio do
     // HorarioService.
-    vector<Horario> horarios =
-        service.listDisponivelByIdProfessor(professor.getId());
+    vector<Horario> horarios = service.listByIdProfessor(professor.getId());
     // Usa std::move para transferência eficiente do vetor de Horarios.
     professor.setHorarios(move(horarios));
 

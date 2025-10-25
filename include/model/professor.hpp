@@ -59,6 +59,12 @@ class Professor : public Usuario {
     const std::vector<Horario>& getHorarios() const;
 
     /**
+     * @brief Obtém a lista de Horarios disponíveis associados a este Professor.
+     * * @return Uma referência constante para o vetor de Horarios disponíveis.
+     */
+    const std::vector<Horario>& getHorariosDisponiveis() const;
+
+    /**
      * @brief Define a lista de Horarios.
      * * * Nota: No contexto de mapeamento (mapper), esta lista é frequentemente
      * preenchida pela camada de Serviço.

@@ -55,11 +55,14 @@ Aluno AlunoController::create(const string& nome, const string& email,
     } catch (const std::invalid_argument& e) {
         // Captura erros de validação (formato e unicidade do Service)
         handle_controller_exception(e, "validar novos dados do Aluno");
+
+        throw;
     } catch (const std::runtime_error& e) {
         // Captura erros de I/O ou falhas críticas do Service
         handle_controller_exception(e, "criar Aluno no serviço");
+
+        throw;
     }
-    throw;
 }
 
 // READ: Busca um Aluno pelo ID.
@@ -82,12 +85,14 @@ Aluno AlunoController::read(long id) const {
         handle_controller_exception(e,
                                     "ler Aluno pelo ID " + std::to_string(id));
 
+        throw;
     } catch (const std::runtime_error& e) {
         // Captura I/O ou erros críticos.
         handle_controller_exception(e,
                                     "ler Aluno pelo ID " + std::to_string(id));
+
+        throw;
     }
-    throw;
 }
 
 // LIST: Retorna todos os Alunos.
@@ -98,8 +103,9 @@ vector<Aluno> AlunoController::list() const {
     } catch (const std::runtime_error& e) {
         // Captura I/O ou erros críticos.
         handle_controller_exception(e, "listar todos os Alunos");
+
+        throw;
     }
-    throw;
 }
 
 // UPDATE: Atualiza um registro existente com lógica de "patch" (parcial).
@@ -176,12 +182,15 @@ Aluno AlunoController::update(long id, const string& nome, const string& email,
         // encontrado (Service)
         handle_controller_exception(
             e, "validar dados de atualização para o ID " + std::to_string(id));
+
+        throw;
     } catch (const std::runtime_error& e) {
         // Captura I/O ou erros críticos.
         handle_controller_exception(
             e, "atualizar Aluno com ID " + std::to_string(id));
+
+        throw;
     }
-    throw;
 }
 
 // DESTROY: Deleta um registro pelo ID.
@@ -193,6 +202,6 @@ bool AlunoController::destroy(long id) const {
         // Captura I/O ou erros críticos.
         handle_controller_exception(
             e, "excluir Aluno com ID " + std::to_string(id));
+        throw;
     }
-    throw;
 }

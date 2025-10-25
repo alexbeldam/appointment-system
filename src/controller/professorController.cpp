@@ -56,11 +56,14 @@ Professor ProfessorController::create(const string& nome, const string& email,
     } catch (const std::invalid_argument& e) {
         // Captura erros de validação (formato e unicidade do Service)
         handle_controller_exception(e, "validar novos dados do Professor");
+
+        throw;
     } catch (const std::runtime_error& e) {
         // Captura erros de I/O ou falhas críticas do Service
         handle_controller_exception(e, "criar Professor no serviço");
+
+        throw;
     }
-    throw;
 }
 
 // READ: Busca um Professor pelo ID.
@@ -83,12 +86,14 @@ Professor ProfessorController::read(long id) const {
         handle_controller_exception(
             e, "ler Professor pelo ID " + std::to_string(id));
 
+        throw;
     } catch (const std::runtime_error& e) {
         // Captura I/O ou erros críticos.
         handle_controller_exception(
             e, "ler Professor pelo ID " + std::to_string(id));
+
+        throw;
     }
-    throw;
 }
 
 // LIST: Retorna todos os Professors.
@@ -99,8 +104,9 @@ vector<Professor> ProfessorController::list() const {
     } catch (const std::runtime_error& e) {
         // Captura I/O ou erros críticos.
         handle_controller_exception(e, "listar todos os Professors");
+
+        throw;
     }
-    throw;
 }
 
 // UPDATE: Atualiza um registro existente com lógica de "patch" (parcial).
@@ -182,12 +188,15 @@ Professor ProfessorController::update(long id, const string& nome,
         // encontrado (Service)
         handle_controller_exception(
             e, "validar dados de atualização para o ID " + std::to_string(id));
+
+        throw;
     } catch (const std::runtime_error& e) {
         // Captura I/O ou erros críticos.
         handle_controller_exception(
             e, "atualizar Professor com ID " + std::to_string(id));
+
+        throw;
     }
-    throw;
 }
 
 // DESTROY: Deleta um registro pelo ID.
@@ -199,6 +208,7 @@ bool ProfessorController::destroy(long id) const {
         // Captura I/O ou erros críticos.
         handle_controller_exception(
             e, "excluir Professor com ID " + std::to_string(id));
+
+        throw;
     }
-    throw;
 }
