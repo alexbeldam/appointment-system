@@ -7,21 +7,20 @@
 /**
  * @brief Controlador responsável por mediar a criação e listagem de horários.
  */
-class HorarioController
-{
-private:
-  HorarioService &service;
+class HorarioController {
+   private:
+    const HorarioService& service;
 
-public:
-  HorarioController(HorarioService &service);
+   public:
+    HorarioController(const HorarioService& service);
 
-  Horario cadastrarHorario(long idProfessor, const std::string &inicio,
-                           const std::string &fim);
+    Horario cadastrarHorario(long idProfessor, const std::string& inicio,
+                             const std::string& fim) const;
 
-  bool excluirTodosPorProfessor(long idProfessor);
-  bool excluirPorId(long idHorario);
+    bool excluirTodosPorProfessor(long idProfessor) const;
+    bool excluirPorId(long idHorario) const;
 
-  std::vector<Horario> listarPorProfessor(long idProfessor) const;
+    std::vector<Horario> listarPorProfessor(long idProfessor) const;
 };
 
 #endif

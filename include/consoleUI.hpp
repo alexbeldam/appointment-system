@@ -1,13 +1,12 @@
 #ifndef CONSOLE_UI_HPP
 #define CONSOLE_UI_HPP
 
+#include "controller/agendamentoController.hpp"  // Adicionado
 #include "controller/alunoController.hpp"
+#include "controller/horarioController.hpp"
 #include "controller/loginController.hpp"
 #include "controller/professorController.hpp"
 #include "service/sessionManager.hpp"
-#include "controller/horarioController.hpp"
-#include "controller/agendamentoController.hpp" // Adicionado
-
 
 /**
  * @brief Classe da Interface de Usuário (Presentation Layer) para aplicações de
@@ -43,7 +42,7 @@ class ConsoleUI {
      * @brief Referência constante para o Controller de Horário.
      * * Usada para delegar o cadastro e listagem de horários disponíveis.
      */
-    HorarioController& horarioController;
+    const HorarioController& horarioController;
 
     /**
      * @brief Referência para o Gerenciador de Sessão.
@@ -136,12 +135,10 @@ class ConsoleUI {
      * @param sm O Gerenciador de Sessão (referência mutável).
      * @param agc O Controller de Agendamento.
      */
-    ConsoleUI(const AlunoController& ac,
-              const ProfessorController& pc,
-              const LoginController& lc,
-              HorarioController& hc,
+    ConsoleUI(const AlunoController& ac, const ProfessorController& pc,
+              const LoginController& lc, const HorarioController& hc,
               SessionManager& sm,
-              const AgendamentoController& agc); // Adicionado
+              const AgendamentoController& agc);  // Adicionado
 
     /**
      * @brief Inicia o motor da aplicação, gerando o loop de execução principal.

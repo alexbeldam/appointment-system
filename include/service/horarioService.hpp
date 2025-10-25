@@ -1,23 +1,24 @@
 #ifndef HORARIO_SERVICE_HPP
 #define HORARIO_SERVICE_HPP
 
-#include <vector>
+#include <optional>
 #include <string>
+#include <vector>
 
 #include "data/mockConnection.hpp"
 #include "event/bus.hpp"
-#include "model/horario.hpp"
 #include "event/events.hpp"
+#include "model/horario.hpp"
 
 /**
  * @brief Camada de Serviço (Business Logic) para Horario.
  */
 class HorarioService {
-private:
+   private:
     const MockConnection& connection;
     EventBus& bus;
 
-public:
+   public:
     /**
      * @brief Construtor para injeção de dependência.
      * @param connection Referência para a conexão com o banco de dados.
@@ -52,7 +53,7 @@ public:
      * @brief Salva um novo horário para um professor.
      */
     Horario save(long idProfessor, const std::string& inicio,
-                 const std::string& fim);
+                 const std::string& fim) const;
 
     // --- MÉTODOS ADICIONADOS PARA SUPORTE AO AGENDAMENTO ---
 
@@ -74,6 +75,13 @@ public:
      * @throws std::runtime_error Se o horário não for encontrado.
      */
     void marcarComoReservado(long id) const;
+
+    /**
+     * @brief Verifica se um horário está disponível pelo seu ID.
+     * @param id O ID do horário.
+     * @return true se estiver disponível, false caso contrário.
+     */
+    bool isDisponivelById(long id) const;
 };
 
 #endif
