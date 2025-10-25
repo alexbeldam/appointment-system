@@ -44,10 +44,13 @@ Aluno LoginController::loginAluno(string email, string senha) const {
         return static_cast<Aluno&>(*user_ptr);
     } catch (const std::invalid_argument& e) {
         handle_controller_exception(e, "validar autenticação");
+
+        throw;
     } catch (const std::runtime_error& e) {
         handle_controller_exception(e, "resgatar aluno do serviço");
+
+        throw;
     }
-    throw;
 }
 
 // Tenta autenticar um Professor. O fluxo é idêntico ao de Aluno.
@@ -78,8 +81,11 @@ Professor LoginController::loginProfessor(string email, string senha) const {
         return static_cast<Professor&>(*user_ptr);
     } catch (const std::invalid_argument& e) {
         handle_controller_exception(e, "validar autenticação");
+
+        throw;
     } catch (const std::runtime_error& e) {
         handle_controller_exception(e, "resgatar professor do serviço");
+
+        throw;
     }
-    throw;
 }

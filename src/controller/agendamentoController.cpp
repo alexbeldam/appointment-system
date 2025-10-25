@@ -9,7 +9,8 @@
 // --- MÉTODOS PÚBLICOS DA CLASSE AGENDAMENTOCONTROLLER ---
 
 /**
- * @brief Construtor: Injeção de Dependência da Camada de Serviço (AgendamentoService).
+ * @brief Construtor: Injeção de Dependência da Camada de Serviço
+ * (AgendamentoService).
  * @param service Referência constante para o serviço de agendamento.
  */
 
@@ -30,10 +31,12 @@ void AgendamentoController::agendarHorario(long alunoID, long horarioId) const {
     try {
         // 1. VALIDAÇÃO DE FORMATO
         if (alunoID <= 0) {
-            throw std::invalid_argument("ID do aluno inválido ou não fornecido.");
+            throw std::invalid_argument(
+                "ID do aluno inválido ou não fornecido.");
         }
         if (horarioId <= 0) {
-            throw std::invalid_argument("ID do horário inválido ou não fornecido.");
+            throw std::invalid_argument(
+                "ID do horário inválido ou não fornecido.");
         }
 
         // 2. PREPARAÇÃO DO MODELO
@@ -47,9 +50,11 @@ void AgendamentoController::agendarHorario(long alunoID, long horarioId) const {
 
     } catch (const std::invalid_argument& e) {
         handle_controller_exception(e, "validar dados do novo agendamento");
-        
+
+        throw;
     } catch (const std::runtime_error& e) {
         handle_controller_exception(e, "criar agendamento no serviço");
+
+        throw;
     }
-    throw;
 }
