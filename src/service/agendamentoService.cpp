@@ -1,19 +1,21 @@
 #include "service/agendamentoService.hpp"
-#include "event/events.hpp"
+
+#include <optional>
 #include <sstream>
 #include <stdexcept>
-#include <vector>
 #include <string>
-#include <optional>
+#include <vector>
 
-using std::vector;
-using std::string;
-using std::to_string;
+#include "event/events.hpp"
+
+using std::getline;
 using std::invalid_argument;
 using std::runtime_error;
-using std::stringstream;
-using std::getline;
 using std::stol;
+using std::string;
+using std::stringstream;
+using std::to_string;
+using std::vector;
 
 // --- CONFIGURAÇÕES DE PERSISTÊNCIA ---
 #define AGENDAMENTO_TABLE "agendamentos"
@@ -22,9 +24,9 @@ using std::stol;
 
 // --- CONSTRUTOR ---
 AgendamentoService::AgendamentoService(const MockConnection& connection,
-                                     EventBus& bus, const HorarioService& horarioService)
+                                       EventBus& bus,
+                                       const HorarioService& horarioService)
     : connection(connection), bus(bus), horarioService(horarioService) {
-    
     bus.subscribe<AlunoDeletedEvent>([this](const AlunoDeletedEvent& event) {
         this->deleteByIdAluno(event.id);
     });
@@ -41,34 +43,19 @@ AgendamentoService::AgendamentoService(const MockConnection& connection,
  * @brief Salva um novo agendamento, aplicando as regras de negócio.
  */
 Agendamento AgendamentoService::save(const Agendamento& agendamento) const {
-    
-    // AC 2 (Parte 1): O professor abriu este slot?
-    try {
-        Horario h = this->horarioService.getById(agendamento.getHorarioId());
-        if (!h.isDisponivel()) { 
-            throw std::runtime_error("Este horário não está aberto para agendamentos.");
-        }
-    } catch (const std::runtime_error& e) {
-        throw; // Repassa erro (ex: "Horário não encontrado")
-    }
-
-    // AC 2 (Parte 2): O slot já foi reservado por outro aluno?
-    // (Verifica se já existe agendamento, PENDENTE ou CONFIRMADO)
-    vector<Agendamento> agendamentosExistentes = listByIdHorario(this->connection, agendamento.getHorarioId());
-    
-    if (!agendamentosExistentes.empty()) {
-        throw std::runtime_error("Horário indisponível (já solicitado por outro aluno).");
+    if (!horarioService.isDisponivelById(agendamento.getHorarioId())) {
+        throw std::runtime_error(
+            "Este horário não está aberto para agendamentos.");
     }
 
     // AC 1 (Registro): Salvar o agendamento (com status "PENDENTE")
     stringstream dados;
-    dados << agendamento.getAlunoId() << "," 
-          << agendamento.getHorarioId() << "," 
-          << agendamento.getStatus(); // status será "PENDENTE"
-          
+    dados << agendamento.getAlunoId() << "," << agendamento.getHorarioId()
+          << "," << agendamento.getStatus();  // status será "PENDENTE"
+
     long newId = connection.insert(AGENDAMENTO_TABLE, dados.str());
-    
-    Agendamento salvo(newId, agendamento.getAlunoId(), 
+
+    Agendamento salvo(newId, agendamento.getAlunoId(),
                       agendamento.getHorarioId(), agendamento.getStatus());
 
     // AC 1 (Notificar)
@@ -77,7 +64,7 @@ Agendamento AgendamentoService::save(const Agendamento& agendamento) const {
     return salvo;
 }
 
-std::optional<Agendamento>AgendamentoService::getById(long id) const {
+std::optional<Agendamento> AgendamentoService::getById(long id) const {
     try {
         string linha = connection.selectOne(AGENDAMENTO_TABLE, id);
         stringstream ss(linha);
@@ -87,12 +74,13 @@ std::optional<Agendamento>AgendamentoService::getById(long id) const {
         getline(ss, horarioIdStr, ',');
         getline(ss, statusStr, ',');
 
-        return Agendamento(stol(idStr), stol(alunoIdStr), stol(horarioIdStr), statusStr);
+        return Agendamento(stol(idStr), stol(alunoIdStr), stol(horarioIdStr),
+                           statusStr);
 
     } catch (const invalid_argument& e) {
-        return std::nullopt; 
+        return std::nullopt;
     } catch (const runtime_error& e) {
-        throw; 
+        throw;
     }
 }
 
@@ -108,27 +96,29 @@ vector<Agendamento> AgendamentoService::listAll() const {
             getline(ss, horarioIdStr, ',');
             getline(ss, statusStr, ',');
 
-            agendamentos.emplace_back(stol(idStr), stol(alunoIdStr), stol(horarioIdStr), statusStr);
+            agendamentos.emplace_back(stol(idStr), stol(alunoIdStr),
+                                      stol(horarioIdStr), statusStr);
         }
         return agendamentos;
     } catch (const runtime_error& e) {
-        throw; 
+        throw;
     }
 }
 
-std::optional<Agendamento> AgendamentoService::updateById(long id, const Agendamento& agendamento) const {
+std::optional<Agendamento> AgendamentoService::updateById(
+    long id, const Agendamento& agendamento) const {
     try {
         stringstream dados;
-        dados << agendamento.getAlunoId() << "," 
-              << agendamento.getHorarioId() << "," 
-              << agendamento.getStatus();
-              
+        dados << agendamento.getAlunoId() << "," << agendamento.getHorarioId()
+              << "," << agendamento.getStatus();
+
         connection.update(AGENDAMENTO_TABLE, id, dados.str());
-        Agendamento agendamentoAtualizado(id, agendamento.getAlunoId(), 
-                                          agendamento.getHorarioId(), agendamento.getStatus());
+        Agendamento agendamentoAtualizado(id, agendamento.getAlunoId(),
+                                          agendamento.getHorarioId(),
+                                          agendamento.getStatus());
         this->bus.publish(AgendamentoUpdatedEvent(agendamentoAtualizado));
         return agendamentoAtualizado;
-    }catch(const invalid_argument& e){
+    } catch (const invalid_argument& e) {
         return std::nullopt;
     } catch (const runtime_error& e) {
         throw;
@@ -141,17 +131,17 @@ bool AgendamentoService::deleteById(long id) const {
         bus.publish(AgendamentoDeletedEvent(id));
         return true;
     } catch (...) {
-        return false; 
+        return false;
     }
 }
-
 
 // --- MÉTODOS EXISTENTES ---
 
 vector<Agendamento> AgendamentoService::listByIdAluno(long id) const {
     vector<Agendamento> agendamentos;
     try {
-        auto linhas = connection.selectByColumn(AGENDAMENTO_TABLE, ID_ALUNO_COL_INDEX, to_string(id));
+        auto linhas = connection.selectByColumn(
+            AGENDAMENTO_TABLE, ID_ALUNO_COL_INDEX, to_string(id));
         for (const auto& linha : linhas) {
             stringstream ss(linha);
             string idStr, alunoIdStr, horarioIdStr, statusStr;
@@ -160,7 +150,8 @@ vector<Agendamento> AgendamentoService::listByIdAluno(long id) const {
             getline(ss, horarioIdStr, ',');
             getline(ss, statusStr, ',');
 
-            agendamentos.emplace_back(stol(idStr), stol(alunoIdStr), stol(horarioIdStr), statusStr);
+            agendamentos.emplace_back(stol(idStr), stol(alunoIdStr),
+                                      stol(horarioIdStr), statusStr);
         }
         return agendamentos;
     } catch (const runtime_error& e) {
@@ -173,33 +164,35 @@ bool AgendamentoService::deleteByIdAluno(long id) const {
         vector<Agendamento> agendamentos = listByIdAluno(id);
         if (agendamentos.empty())
             return false;
-        connection.deleteByColumn(AGENDAMENTO_TABLE, ID_ALUNO_COL_INDEX, to_string(id));
+        connection.deleteByColumn(AGENDAMENTO_TABLE, ID_ALUNO_COL_INDEX,
+                                  to_string(id));
         for (const auto& a : agendamentos)
             bus.publish(AgendamentoDeletedEvent(a.getId()));
         return true;
     } catch (const invalid_argument& e) {
-        return false; 
-    } catch (const runtime_error& e) {
-        throw; 
-    }
-}
-
-bool AgendamentoService::deleteByIdHorario(long id) const {
-    try {
-        vector<Agendamento> agendamentos = listByIdHorario(this->connection, id);
-        if (agendamentos.empty())
-            return false;
-        connection.deleteByColumn(AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX, to_string(id));
-        for (const auto& a : agendamentos)
-            bus.publish(AgendamentoDeletedEvent(a.getId()));
-        return true;
-    } catch (const invalid_argument& e) {
-        return false; 
+        return false;
     } catch (const runtime_error& e) {
         throw;
     }
 }
 
+bool AgendamentoService::deleteByIdHorario(long id) const {
+    try {
+        vector<Agendamento> agendamentos =
+            listByIdHorario(this->connection, id);
+        if (agendamentos.empty())
+            return false;
+        connection.deleteByColumn(AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX,
+                                  to_string(id));
+        for (const auto& a : agendamentos)
+            bus.publish(AgendamentoDeletedEvent(a.getId()));
+        return true;
+    } catch (const invalid_argument& e) {
+        return false;
+    } catch (const runtime_error& e) {
+        throw;
+    }
+}
 
 // --- IMPLEMENTAÇÃO DA FUNÇÃO AUXILIAR ---
 
@@ -209,10 +202,12 @@ bool AgendamentoService::deleteByIdHorario(long id) const {
  * @param id O id do horario.
  * @return vector<Agendamento>
  */
-vector<Agendamento> AgendamentoService::listByIdHorario(const MockConnection& connection, long id) const {
+vector<Agendamento> AgendamentoService::listByIdHorario(
+    const MockConnection& connection, long id) const {
     vector<Agendamento> agendamentos;
     try {
-        auto linhas = connection.selectByColumn(AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX, to_string(id));
+        auto linhas = connection.selectByColumn(
+            AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX, to_string(id));
         for (const auto& linha : linhas) {
             stringstream ss(linha);
             string idStr, alunoIdStr, horarioIdStr, statusStr;
@@ -221,10 +216,11 @@ vector<Agendamento> AgendamentoService::listByIdHorario(const MockConnection& co
             getline(ss, horarioIdStr, ',');
             getline(ss, statusStr, ',');
 
-            agendamentos.emplace_back(stol(idStr), stol(alunoIdStr), stol(horarioIdStr), statusStr);
+            agendamentos.emplace_back(stol(idStr), stol(alunoIdStr),
+                                      stol(horarioIdStr), statusStr);
         }
         return agendamentos;
     } catch (const runtime_error& e) {
-        throw; 
+        throw;
     }
 }
