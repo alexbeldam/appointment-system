@@ -1,38 +1,48 @@
 #include "app.hpp"
-#include "consoleUI.hpp"
+
+#include <iostream>
+
+#include "view/alunoUI.hpp"
+#include "view/authUI.hpp"
+#include "view/professorUI.hpp"
+using std::cout;
 
 /**
  * @brief Construtor do App.
- * Inicializa todos os membros na ordem exata em que foram declarados no app.hpp.
+ * Inicializa todos os membros na ordem exata em que foram declarados no
+ * app.hpp.
  */
 App::App()
     : connection(),
-      alunoMapper(),
-      professorMapper(),
       bus(),
       sessionManager(bus),
       horarioService(connection, bus),
       agendamentoService(connection, bus, horarioService),
-      alunoService(connection, bus, alunoMapper, agendamentoService),
-      professorService(connection, bus, professorMapper, horarioService),
+      alunoService(connection, bus, agendamentoService),
+      professorService(connection, bus, horarioService),
       alunoController(alunoService),
       professorController(professorService),
       horarioController(horarioService),
       loginController(alunoService, professorService, bus),
-      agendamentoController(agendamentoService)
-{
-}
-
+      agendamentoController(agendamentoService),
+      authUI(alunoController, professorController, loginController,
+             sessionManager),
+      alunoUI(alunoController, professorController, horarioController,
+              agendamentoController, sessionManager),
+      professorUI(professorController, horarioController, agendamentoController,
+                  sessionManager) {}
 
 void App::run() {
-    ConsoleUI ui(
-        alunoController,
-        professorController,
-        loginController,
-        horarioController,
-        sessionManager,
-        agendamentoController
-    );
+    bool keepRunning = true;
 
-    ui.start();
+    while (keepRunning) {
+        if (sessionManager.isProfessor())
+            keepRunning = professorUI.show();
+        else if (sessionManager.isAluno())
+            keepRunning = alunoUI.show();
+        else
+            keepRunning = authUI.show();
+    }
+
+    cout << "\n>> Saindo do programa\n";
 }
