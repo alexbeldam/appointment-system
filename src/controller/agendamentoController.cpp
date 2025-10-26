@@ -39,14 +39,7 @@ void AgendamentoController::agendarHorario(long alunoID, long horarioId) const {
                 "ID do horário inválido ou não fornecido.");
         }
 
-        // 2. PREPARAÇÃO DO MODELO
-        // O status inicial deve ser "PENDENTE" para o professor
-        // aprovar.
-        const std::string statusPadrao = "PENDENTE";
-        Agendamento novoAgendamento(alunoID, horarioId, statusPadrao);
-
-        // 3. DELEGAÇÃO PARA O SERVICE
-        this->agendamentoService.save(novoAgendamento);
+        this->agendamentoService.save(alunoID, horarioId);
 
     } catch (const std::invalid_argument& e) {
         handle_controller_exception(e, "validar dados do novo agendamento");

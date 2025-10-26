@@ -1,8 +1,8 @@
 #ifndef AGENDAMENTO_SERVICE_HPP
 #define AGENDAMENTO_SERVICE_HPP
 
-#include <vector>
 #include <optional>
+#include <vector>
 
 #include "data/mockConnection.hpp"
 #include "event/bus.hpp"
@@ -31,13 +31,15 @@ class AgendamentoService {
     /**
      * @brief Salva um novo agendamento, aplicando as regras de negócio.
      *
-     * Implementa os Critérios de Aceitação 1 e 2 do caso de uso "Agendar Horário".
+     * Implementa os Critérios de Aceitação 1 e 2 do caso de uso "Agendar
+     * Horário".
      *
-     * @param agendamento O objeto Agendamento (com id=0) a ser salvo.
-     * @return O objeto Agendamento salvo (com o ID real definido pelo DB).
+     * @param alunoId O ID do aluno.
+     * @param horarioId O ID do horário.
+     * @return O objeto Agendamento salvo.
      * @throws std::runtime_error Se o horário não estiver disponível (AC 2).
      */
-    Agendamento save(const Agendamento& agendamento) const;
+    Agendamento save(long alunoId, long horarioId) const;
 
     /**
      * @brief Busca um agendamento pelo seu ID único.
@@ -56,11 +58,13 @@ class AgendamentoService {
     /**
      * @brief Atualiza os dados de um agendamento existente.
      * @param id O ID do agendamento a ser atualizado.
-     * @param agendamento O objeto Agendamento com os dados atualizados.
-     * @return O objeto Agendamento após a atualização.
-     * @throws std::runtime_error Se o agendamento não for encontrado.
+     * @param alunoId O ID do aluno.
+     * @param horarioId O ID do horário.
+     * @param status O novo status do agendamento.
+     * @return std::optional<Agendamento>
      */
-    std::optional<Agendamento> updateById(long id, const Agendamento& agendamento) const;
+    std::optional<Agendamento> updateById(long id, long alunoId, long horarioId,
+                                          const std::string& status) const;
 
     std::vector<Agendamento> listByIdHorario(const MockConnection&, long) const;
 
