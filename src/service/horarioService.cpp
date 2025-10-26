@@ -22,8 +22,8 @@ HorarioService::HorarioService(const MockConnection& connection, EventBus& bus)
         });
 }
 
-Horario HorarioService::save(long idProfessor, const std::string& inicio,
-                             const std::string& fim) const {
+Horario HorarioService::save(long idProfessor, std::time_t inicio,
+                             std::time_t fim) const {
     if (fim <= inicio) {
         throw std::invalid_argument(
             "O horário final deve ser posterior ao horário inicial.");
@@ -41,10 +41,8 @@ Horario HorarioService::save(long idProfessor, const std::string& inicio,
         std::getline(ss, fimExistente, ',');
         std::getline(ss, disponivelStr, ',');
 
-        if (inicio == inicioExistente && fim == fimExistente) {
-            Horario conflito(std::stol(id), std::stol(idProf), inicioExistente,
-                             fimExistente, true);
-            bus.publish(HorarioConflictEvent(conflito));
+        if (inicio == std::stol(inicioExistente) &&
+            fim == std::stol(fimExistente)) {
             throw std::invalid_argument(
                 "Já existe um horário cadastrado nesse período.");
         }
@@ -127,7 +125,9 @@ std::vector<Horario> HorarioService::listByIdProfessor(long id) const {
         std::getline(ss, inicio, ',');
         std::getline(ss, fim, ',');
         std::getline(ss, disponivelStr, ',');
-        horarios.emplace_back(std::stol(idStr), std::stol(idProf), inicio, fim,
+
+        horarios.emplace_back(std::stol(idStr), std::stol(idProf),
+                              std::stol(inicio), std::stol(fim),
                               disponivelStr == "1");
     }
     return horarios;
@@ -146,14 +146,15 @@ Horario HorarioService::getById(long id) const {
         }
 
         std::stringstream ss(linha);
-        std::string idStr, idProf, inicio, fim, disponivelStr;
+        std::string idStr, idProf, inicioStr, fimStr, disponivelStr;
         std::getline(ss, idStr, ',');
         std::getline(ss, idProf, ',');
-        std::getline(ss, inicio, ',');
-        std::getline(ss, fim, ',');
+        std::getline(ss, inicioStr, ',');
+        std::getline(ss, fimStr, ',');
         std::getline(ss, disponivelStr, ',');
 
-        return Horario(std::stol(idStr), std::stol(idProf), inicio, fim,
+        return Horario(std::stol(idStr), std::stol(idProf),
+                       std::stol(inicioStr), std::stol(fimStr),
                        disponivelStr == "1");
 
     } catch (const std::runtime_error& e) {

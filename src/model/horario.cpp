@@ -1,38 +1,54 @@
-#ifndef HORARIO_HPP
-#define HORARIO_HPP
+#include "model/horario.hpp"
 
 #include <string>
 
-class Horario {
- private:
-  long id;
-  long idProfessor;
-  std::string inicio;
-  std::string fim;
-  bool disponivel;
+#include "util/utils.hpp"
+using namespace std;
 
- public:
-  Horario() = default;
+Horario::Horario(long id, long idProfessor, time_t inicio, time_t fim,
+                 bool disponivel)
+    : id(id),
+      idProfessor(idProfessor),
+      inicio(inicio),
+      fim(fim),
+      disponivel(disponivel) {}
 
-  Horario(long id, long idProfessor, const std::string& inicio,
-          const std::string& fim, bool disponivel)
-      : id(id),
-        idProfessor(idProfessor),
-        inicio(inicio),
-        fim(fim),
-        disponivel(disponivel) {}
+long Horario::getId() const {
+    return id;
+}
+long Horario::getProfessorId() const {
+    return idProfessor;
+}
+time_t Horario::getInicio() const {
+    return inicio;
+}
+time_t Horario::getFim() const {
+    return fim;
+}
+bool Horario::isDisponivel() const {
+    return disponivel;
+}
 
-  long getId() const { return id; }
-  long getProfessorId() const { return idProfessor; }
-  const std::string& getInicio() const { return inicio; }
-  const std::string& getFim() const { return fim; }
-  bool isDisponivel() const { return disponivel; }
+std::string Horario::getInicioStr() const {
+    return time_to_string(inicio);
+}
 
-  void setId(long id) { this->id = id; }
-  void setProfessorId(long idProfessor) { this->idProfessor = idProfessor; }
-  void setInicio(const std::string& inicio) { this->inicio = inicio; }
-  void setFim(const std::string& fim) { this->fim = fim; }
-  void setDisponivel(bool disponivel) { this->disponivel = disponivel; }
-};
+std::string Horario::getFimStr() const {
+    return time_to_string(fim);
+}
 
-#endif
+void Horario::setId(long id) {
+    this->id = id;
+}
+void Horario::setProfessorId(long idProfessor) {
+    this->idProfessor = idProfessor;
+}
+void Horario::setInicio(time_t inicio) {
+    this->inicio = inicio;
+}
+void Horario::setFim(time_t fim) {
+    this->fim = fim;
+}
+void Horario::setDisponivel(bool disponivel) {
+    this->disponivel = disponivel;
+}

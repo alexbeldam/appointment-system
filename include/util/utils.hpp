@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <ctime>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -71,5 +72,11 @@ inline bool check(const std::string& cypher, const std::string& pwd) {
 }
 
 int read_integer_range(const std::string& prompt, int min_val, int max_val);
+
+void desenhar_relogio();
+
+std::string time_to_string(std::time_t tt);
+
+std::time_t string_to_time(const std::string& date_str);
 
 #endif

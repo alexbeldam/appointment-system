@@ -20,9 +20,8 @@ using namespace std;
 // Construtor: Inicializa todas as dependências de forma segura (Injeção de
 // Dependência).
 ProfessorService::ProfessorService(const MockConnection& connection,
-                                   EventBus& bus, const ProfessorMapper& mapper,
-                                   const HorarioService& service)
-    : connection(connection), bus(bus), mapper(mapper), service(service) {}
+                                   EventBus& bus, const HorarioService& service)
+    : connection(connection), bus(bus), service(service) {}
 
 // --- MÉTODOS PRIVADOS/AUXILIARES ---
 
@@ -31,22 +30,26 @@ ProfessorService::ProfessorService(const MockConnection& connection,
 Professor ProfessorService::mapAndInjectHorarios(const string& csv_line) const {
     Professor professor;
 
-    // 1. Mapeamento CSV -> Model (Mapper lança erro se o formato dos dados for
-    // inválido).
-    try {
-        professor = mapper.fromCsvLine(csv_line);
-    } catch (const invalid_argument& e) {
-        // Promove o erro de mapeamento para runtime_error (indicando falha na
-        // integridade do registro).
-        throw runtime_error("Falha ao processar registro CSV: " +
-                            string(e.what()));
+    stringstream ss(csv_line);
+    string item;
+    vector<string> tokens;
+
+    while (getline(ss, item, ',')) {
+        tokens.push_back(item);
     }
 
-    // 2. Injeção de Horarios (Consulta a serviço externo/outra entidade)
-    // Busca a lista de horários do professor por meio do
-    // HorarioService.
+    if (tokens.size() < 5) {
+        throw runtime_error("Registro CSV inválido: " + csv_line);
+    }
+
+    professor.setId(stol(tokens[0]));
+    professor.setNome(tokens[1]);
+    professor.setEmail(tokens[2]);
+    professor.setSenha(tokens[3]);
+    professor.setDisciplina(tokens[4]);
+
     vector<Horario> horarios = service.listByIdProfessor(professor.getId());
-    // Usa std::move para transferência eficiente do vetor de Horarios.
+
     professor.setHorarios(move(horarios));
 
     return professor;
@@ -107,15 +110,19 @@ bool ProfessorService::existsByEmailAndIdNot(string email, long id) const {
 // --- MÉTODOS PÚBLICOS (CRUD) ---
 
 // CREATE
-Professor ProfessorService::save(const ProfessorDTO& professor) const {
+Professor ProfessorService::save(const string& nome, const string& email,
+                                 const string& senha,
+                                 const string& disciplina) const {
     // 1. VALIDAÇÃO DE NEGÓCIO (Unicidade de Email)
-    if (existsByEmail(professor.getEmail())) {
-        throw invalid_argument("O email '" + professor.getEmail() +
+    if (existsByEmail(email)) {
+        throw invalid_argument("O email '" + email +
                                "' já está em uso por outro professor.");
     }
 
     // 2. DAL WRITE
-    string data_csv = mapper.toCsvData(professor);
+    stringstream dados;
+    dados << nome << "," << email << "," << senha << "," << disciplina;
+    string data_csv = dados.str();
     // Persiste os dados e obtém o novo ID (lança runtime_error em I/O).
     long id = connection.insert(PROFESSOR_TABLE, data_csv);
 
@@ -189,15 +196,18 @@ vector<Professor> ProfessorService::listAll() const {
 
 // UPDATE
 optional<Professor> ProfessorService::updateById(
-    long id, const ProfessorDTO& professor) const {
+    long id, const string& nome, const string& email, const string& senha,
+    const string& disciplina) const {
     // 1. VALIDAÇÃO DE NEGÓCIO (Unicidade para UPDATE, excluindo o próprio ID)
-    if (existsByEmailAndIdNot(professor.getEmail(), id)) {
-        throw invalid_argument("O email '" + professor.getEmail() +
+    if (existsByEmailAndIdNot(email, id)) {
+        throw invalid_argument("O email '" + email +
                                "' já está em uso por outro professor.");
     }
 
     // 2. DAL WRITE (Atualiza a linha no arquivo)
-    string data_csv = mapper.toCsvData(professor);
+    stringstream dados;
+    dados << nome << "," << email << "," << senha << "," << disciplina;
+    string data_csv = dados.str();
     string updated_csv;
 
     try {

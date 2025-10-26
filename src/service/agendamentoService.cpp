@@ -42,21 +42,19 @@ AgendamentoService::AgendamentoService(const MockConnection& connection,
 /**
  * @brief Salva um novo agendamento, aplicando as regras de negócio.
  */
-Agendamento AgendamentoService::save(const Agendamento& agendamento) const {
-    if (!horarioService.isDisponivelById(agendamento.getHorarioId())) {
+Agendamento AgendamentoService::save(long alunoId, long horarioId) const {
+    if (!horarioService.isDisponivelById(horarioId)) {
         throw std::runtime_error(
             "Este horário não está aberto para agendamentos.");
     }
 
     // AC 1 (Registro): Salvar o agendamento (com status "PENDENTE")
     stringstream dados;
-    dados << agendamento.getAlunoId() << "," << agendamento.getHorarioId()
-          << "," << agendamento.getStatus();  // status será "PENDENTE"
+    dados << alunoId << "," << horarioId << "," << "PENDENTE";
 
     long newId = connection.insert(AGENDAMENTO_TABLE, dados.str());
 
-    Agendamento salvo(newId, agendamento.getAlunoId(),
-                      agendamento.getHorarioId(), agendamento.getStatus());
+    Agendamento salvo(newId, alunoId, horarioId, "PENDENTE");
 
     // AC 1 (Notificar)
     this->bus.publish(AgendamentoCreatedEvent(salvo));
@@ -106,16 +104,13 @@ vector<Agendamento> AgendamentoService::listAll() const {
 }
 
 std::optional<Agendamento> AgendamentoService::updateById(
-    long id, const Agendamento& agendamento) const {
+    long id, long alunoId, long horarioId, const std::string& status) const {
     try {
         stringstream dados;
-        dados << agendamento.getAlunoId() << "," << agendamento.getHorarioId()
-              << "," << agendamento.getStatus();
+        dados << alunoId << "," << horarioId << "," << status;
 
         connection.update(AGENDAMENTO_TABLE, id, dados.str());
-        Agendamento agendamentoAtualizado(id, agendamento.getAlunoId(),
-                                          agendamento.getHorarioId(),
-                                          agendamento.getStatus());
+        Agendamento agendamentoAtualizado(id, alunoId, horarioId, status);
         this->bus.publish(AgendamentoUpdatedEvent(agendamentoAtualizado));
         return agendamentoAtualizado;
     } catch (const invalid_argument& e) {

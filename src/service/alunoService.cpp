@@ -21,9 +21,8 @@ using namespace std;
 // Construtor: Inicializa todas as dependências de forma segura (Injeção de
 // Dependência). A ordem é crucial para membros const e referências.
 AlunoService::AlunoService(const MockConnection& connection, EventBus& bus,
-                           const AlunoMapper& mapper,
                            const AgendamentoService& service)
-    : connection(connection), bus(bus), mapper(mapper), service(service) {}
+    : connection(connection), bus(bus), service(service) {}
 
 // --- MÉTODOS PRIVADOS/AUXILIARES ---
 
@@ -31,21 +30,26 @@ AlunoService::AlunoService(const MockConnection& connection, EventBus& bus,
 Aluno AlunoService::mapAndInjectAgendamentos(const string& csv_line) const {
     Aluno aluno;
 
-    // 1. Mapeamento CSV -> Model (Mapper lança erro se o formato dos dados for
-    // inválido).
-    try {
-        aluno = mapper.fromCsvLine(csv_line);
-    } catch (const invalid_argument& e) {
-        // Promove o erro de mapeamento para runtime_error (falha na integridade
-        // do registro).
-        throw runtime_error("Falha ao processar registro CSV: " +
-                            string(e.what()));
+    stringstream ss(csv_line);
+    string item;
+    vector<string> tokens;
+
+    while (getline(ss, item, ',')) {
+        tokens.push_back(item);
     }
 
-    // 2. Injeção de Agendamentos (Consulta a serviço externo para dados
-    // relacionados).
+    if (tokens.size() < 5) {
+        throw runtime_error("Registro CSV inválido: " + csv_line);
+    }
+
+    aluno.setId(stol(tokens[0]));
+    aluno.setNome(tokens[1]);
+    aluno.setEmail(tokens[2]);
+    aluno.setSenha(tokens[3]);
+    aluno.setMatricula(stol(tokens[4]));
+
     vector<Agendamento> agendamentos = service.listByIdAluno(aluno.getId());
-    // Usa std::move para transferência eficiente do vetor.
+
     aluno.setAgendamentos(move(agendamentos));
 
     return aluno;
@@ -152,31 +156,26 @@ bool AlunoService::existsByMatriculaAndIdNot(long matricula, long id) const {
 // --- MÉTODOS PÚBLICOS (CRUD) ---
 
 // CREATE
-Aluno AlunoService::save(const AlunoDTO& aluno) const {
-    // 1. VALIDAÇÃO DE NEGÓCIO (Unicidade)
-    if (existsByEmail(aluno.getEmail())) {
-        throw invalid_argument("O email '" + aluno.getEmail() +
+Aluno AlunoService::save(const std::string& nome, const std::string& email,
+                         const std::string& senha, long matricula) const {
+    if (existsByEmail(email)) {
+        throw invalid_argument("O email '" + email +
                                "' já está em uso por outro aluno.");
     }
-    if (existsByMatricula(aluno.getMatricula())) {
-        throw invalid_argument("A matrícula '" +
-                               to_string(aluno.getMatricula()) +
+    if (existsByMatricula(matricula)) {
+        throw invalid_argument("A matrícula '" + to_string(matricula) +
                                "' já está registrada.");
     }
 
-    // 2. DAL WRITE
-    string data_csv = mapper.toCsvData(aluno);
-    // Chama o método INSERT do MockConnection, especificando a tabela.
-    long id = connection.insert(ALUNO_TABLE, data_csv);
+    stringstream dados;
+    dados << nome << "," << email << "," << senha << "," << matricula;
+    long id = connection.insert(ALUNO_TABLE, dados.str());
 
-    // 3. MONTAGEM DO MODELO (Evita leitura desnecessária)
-    string new_record_csv = to_string(id) + "," + data_csv;
+    string new_record_csv = to_string(id) + "," + dados.str();
 
     try {
-        // Mapeia, injeta Agendamentos e retorna o Model completo.
         return mapAndInjectAgendamentos(new_record_csv);
     } catch (const runtime_error& e) {
-        // Erro crítico: a escrita foi bem-sucedida, mas o processamento falhou.
         throw runtime_error(
             "Inserção bem-sucedida (ID: " + to_string(id) +
             "), mas falha ao processar o registro: " + string(e.what()));
@@ -238,28 +237,31 @@ vector<Aluno> AlunoService::listAll() const {
 }
 
 // UPDATE
-optional<Aluno> AlunoService::updateById(long id, const AlunoDTO& aluno) const {
+optional<Aluno> AlunoService::updateById(long id, const std::string& nome,
+                                         const std::string& email,
+                                         const std::string& senha,
+                                         long matricula) const {
     // 1. VALIDAÇÃO DE NEGÓCIO (Unicidade para UPDATE, excluindo o próprio ID)
-    if (existsByEmailAndIdNot(aluno.getEmail(), id)) {
-        throw invalid_argument("O email '" + aluno.getEmail() +
+    if (existsByEmailAndIdNot(email, id)) {
+        throw invalid_argument("O email '" + email +
                                "' já está em uso por outro aluno.");
     }
-    if (existsByMatriculaAndIdNot(aluno.getMatricula(), id)) {
-        throw invalid_argument("A matrícula '" +
-                               to_string(aluno.getMatricula()) +
+    if (existsByMatriculaAndIdNot(matricula, id)) {
+        throw invalid_argument("A matrícula '" + to_string(matricula) +
                                "' já está registrada por outro aluno.");
     }
 
     // 2. DAL WRITE (Atualiza a linha no arquivo)
-    string data_csv = mapper.toCsvData(aluno);
+    stringstream dados;
+    dados << nome << "," << email << "," << senha << "," << matricula;
     string updated_csv;
 
     try {
         // update() lança invalid_argument se ID não existe.
-        connection.update(ALUNO_TABLE, id, data_csv);
+        connection.update(ALUNO_TABLE, id, dados.str());
 
         // Constrói a linha CSV completa do registro atualizado.
-        updated_csv = to_string(id) + "," + data_csv;
+        updated_csv = to_string(id) + "," + dados.str();
     } catch (const invalid_argument& e) {
         // Captura "ID não existe" e retorna optional vazio.
         return nullopt;
