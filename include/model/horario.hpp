@@ -1,38 +1,40 @@
 #ifndef HORARIO_HPP
 #define HORARIO_HPP
 
+#include <ctime>
 #include <string>
 
 /**
  * @brief Representa a entidade Horário de disponibilidade de um professor.
  */
 class Horario {
- private:
-  long id;
-  long idProfessor;
-  std::string inicio;
-  std::string fim;
-  bool disponivel;
+   private:
+    long id;
+    long idProfessor;
+    std::time_t inicio;
+    std::time_t fim;
+    bool disponivel;
 
- public:
-  Horario() = default;
+   public:
+    Horario() = default;
 
-    Horario(long id, long idProf, const std::string& inicio,
-            const std::string& fim, bool disp)
-        : id(id), idProfessor(idProf), inicio(inicio), fim(fim), disponivel(disp) {}
+    Horario(long id, long idProf, std::time_t inicio, std::time_t fim,
+            bool disp);
 
+    long getId() const;
+    long getProfessorId() const;
+    std::time_t getInicio() const;
+    std::time_t getFim() const;
+    bool isDisponivel() const;
 
-  long getId() const { return id; }
-  long getProfessorId() const { return idProfessor; }
-  const std::string& getInicio() const { return inicio; }
-  const std::string& getFim() const { return fim; }
-  bool isDisponivel() const { return disponivel; }
+    std::string getInicioStr() const;
+    std::string getFimStr() const;
 
-  void setId(long id) { this->id = id; }
-  void setProfessorId(long idProfessor) { this->idProfessor = idProfessor; }
-  void setInicio(const std::string& inicio) { this->inicio = inicio; }
-  void setFim(const std::string& fim) { this->fim = fim; }
-  void setDisponivel(bool disponivel) { this->disponivel = disponivel; }
+    void setId(long id);
+    void setProfessorId(long idProfessor);
+    void setInicio(std::time_t inicio);
+    void setFim(std::time_t fim);
+    void setDisponivel(bool disponivel);
 };
 
 #endif

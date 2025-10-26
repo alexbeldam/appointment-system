@@ -4,8 +4,8 @@ HorarioController::HorarioController(const HorarioService& service)
     : service(service) {}
 
 Horario HorarioController::cadastrarHorario(long idProfessor,
-                                            const std::string& inicio,
-                                            const std::string& fim) const {
+                                            std::time_t inicio,
+                                            std::time_t fim) const {
     try {
         return service.save(idProfessor, inicio, fim);
     } catch (const std::exception& e) {

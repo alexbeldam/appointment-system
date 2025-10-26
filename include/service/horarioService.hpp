@@ -52,8 +52,7 @@ class HorarioService {
     /**
      * @brief Salva um novo horário para um professor.
      */
-    Horario save(long idProfessor, const std::string& inicio,
-                 const std::string& fim) const;
+    Horario save(long idProfessor, std::time_t inicio, std::time_t fim) const;
 
     // --- MÉTODOS ADICIONADOS PARA SUPORTE AO AGENDAMENTO ---
 

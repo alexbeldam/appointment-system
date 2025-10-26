@@ -14,8 +14,8 @@ class HorarioController {
    public:
     HorarioController(const HorarioService& service);
 
-    Horario cadastrarHorario(long idProfessor, const std::string& inicio,
-                             const std::string& fim) const;
+    Horario cadastrarHorario(long idProfessor, std::time_t inicio,
+                             std::time_t fim) const;
 
     bool excluirTodosPorProfessor(long idProfessor) const;
     bool excluirPorId(long idHorario) const;

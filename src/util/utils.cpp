@@ -1,5 +1,6 @@
 #include "util/utils.hpp"
 
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -42,4 +43,52 @@ int read_integer_range(const string& prompt, int min_val, int max_val) {
         cin.get();
         cout << "\n";
     }
+}
+
+void desenhar_relogio() {
+    cout << "*-------------------------------*" << endl;
+    cout << "|       AGENDAMENTO DE          |" << endl;
+    cout << "|           HORARIOS            |" << endl;
+    cout << "|           .---.               |" << endl;
+    cout << "|          /   / \\              |" << endl;
+    cout << "|         |   o   |             |" << endl;
+    cout << "|          \\ | /                |" << endl;
+    cout << "|           '---'               |" << endl;
+    cout << "*-------------------------------*" << endl;
+    cout << endl;
+}
+
+string time_to_string(time_t tt) {
+    tm tm_struct = *localtime(&tt);
+
+    ostringstream ss;
+    ss << put_time(&tm_struct, "%d/%m %H:%M");
+    return ss.str();
+}
+
+time_t string_to_time(const string& timeStr) {
+    tm tm_struct = {};
+    istringstream ss(timeStr);
+
+    ss >> get_time(&tm_struct, "%d/%m %H:%M");
+
+    if (ss.fail()) {
+        return (time_t)-1;
+    }
+
+    int original_day = tm_struct.tm_mday;
+    int original_mon = tm_struct.tm_mon;
+
+    const int ANO_BASE = 2025;
+    tm_struct.tm_year = ANO_BASE - 1900;
+    tm_struct.tm_isdst = -1;
+
+    time_t result = mktime(&tm_struct);
+
+    if (result == (time_t)-1 || tm_struct.tm_mday != original_day ||
+        tm_struct.tm_mon != original_mon) {
+        return (time_t)-1;
+    }
+
+    return result;
 }
