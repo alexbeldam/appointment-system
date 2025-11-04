@@ -21,7 +21,7 @@ class ProfessorUI : public ConsoleUI {
     const ProfessorController& professorController;
     const HorarioController& horarioController;
     const AgendamentoController& agendamentoController;
-    EventBus& bus;
+
     SessionManager& sessionManager;
 
     /**
@@ -53,8 +53,7 @@ class ProfessorUI : public ConsoleUI {
 
    public:
     ProfessorUI(const ProfessorController& pc, const HorarioController& hc,
-                const AgendamentoController& ac, EventBus& bus,
-                SessionManager& sm);
+                const AgendamentoController& ac, SessionManager& sm);
 
     virtual bool show() const override;
 };
