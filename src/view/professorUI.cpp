@@ -1,22 +1,26 @@
 #include "view/professorUI.hpp"
 
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 
+#include "event/events.hpp"
 #include "util/utils.hpp"
 using namespace std;
 
 static void imprimir_menu();
-
 static void imprimir_confirmacao();
 
 ProfessorUI::ProfessorUI(const ProfessorController& pc,
                          const HorarioController& hc,
-                         const AgendamentoController& ac, SessionManager& sm)
+                         const AgendamentoController& ac, EventBus& bus,
+                         SessionManager& sm)
     : ConsoleUI(sm),
       professorController(pc),
       horarioController(hc),
-      agendamentoController(ac) {}
+      agendamentoController(ac),
+      bus(bus),
+      sessionManager(sm) {}
 
 void ProfessorUI::cadastro_horario() const {
     string inicioStr, fimStr;
@@ -190,12 +194,60 @@ void ProfessorUI::excluir_todos_horarios() const {
     }
 }
 
+void ProfessorUI::atualizar_perfil() const {
+    try {
+        Professor current = sessionManager.getCurrentProfessor();
+        long professorId = current.getId();
+
+        cout << "\n--- Atualizar Perfil (Professor) ---" << endl;
+        cout << "Deixe em branco para manter o valor atual." << endl;
+
+        // Nome
+        cout << "Nome atual: " << current.getNome() << endl;
+        cout << "Novo nome: ";
+        string novoNome;
+        std::getline(cin, novoNome);
+
+        // Email
+        cout << "Email atual: " << current.getEmail() << endl;
+        cout << "Novo email: ";
+        string novoEmail;
+        std::getline(cin, novoEmail);
+
+        // Disciplina
+        cout << "Disciplina atual: " << current.getDisciplina() << endl;
+        cout << "Nova disciplina: ";
+        string novaDisciplina;
+        std::getline(cin, novaDisciplina);
+
+        // Senha
+        cout << "Nova senha: ";
+        string novaSenha;
+        std::getline(cin, novaSenha);
+
+        Professor updated = professorController.update(
+            professorId, novoNome, novoEmail, novaSenha, novaDisciplina);
+
+        std::shared_ptr<Usuario> user_ptr =
+            std::make_shared<Professor>(updated);
+        bus.publish(UsuarioUpdatedEvent(user_ptr));
+
+        cout << "\n✅ Perfil atualizado com sucesso!" << endl;
+        cout << "Nome: " << updated.getNome() << endl;
+        cout << "Email: " << updated.getEmail() << endl;
+        cout << "Disciplina: " << updated.getDisciplina() << endl;
+
+    } catch (const exception& e) {
+        cout << "\n>> ERRO ao atualizar perfil: " << e.what() << endl;
+    }
+}
+
 bool ProfessorUI::show() const {
     while (sessionManager.isProfessor()) {
         desenhar_relogio();
         imprimir_menu();
 
-        int opcao = read_integer_range("Escolha uma opcao: ", 0, 5);
+        int opcao = read_integer_range("Escolha uma opcao: ", 0, 6);
 
         switch (opcao) {
             case 0:
@@ -215,6 +267,9 @@ bool ProfessorUI::show() const {
             case 5:
                 excluir_horario();
                 break;
+            case 6:
+                atualizar_perfil();
+                break;
         }
 
         cout << "\nPressione Enter para continuar...";
@@ -231,6 +286,7 @@ void imprimir_menu() {
     cout << "3 - Listar meus horários" << endl;
     cout << "4 - Excluir todos meus horários" << endl;
     cout << "5 - Excluir um horário" << endl;
+    cout << "6 - Atualizar Perfil" << endl;
     cout << "0 - Sair do programa" << endl;
 }
 

@@ -1,9 +1,11 @@
 #include "view/alunoUI.hpp"
 
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <vector>
 
+#include "event/events.hpp"
 #include "util/utils.hpp"
 using namespace std;
 
@@ -11,12 +13,14 @@ static void imprimir_menu();
 
 AlunoUI::AlunoUI(const AlunoController& ac, const ProfessorController& pc,
                  const HorarioController& hc, const AgendamentoController& agc,
-                 SessionManager& sm)
+                 EventBus& bus, SessionManager& sm)
     : ConsoleUI(sm),
       alunoController(ac),
       professorController(pc),
       horarioController(hc),
-      agendamentoController(agc) {}
+      agendamentoController(agc),
+      bus(bus),
+      sessionManager(sm) {}
 
 void AlunoUI::agendar_horario() const {
     cout << "\n--- Professores ---" << endl;
@@ -97,6 +101,65 @@ void AlunoUI::agendar_horario() const {
     }
 }
 
+void AlunoUI::atualizar_perfil() const {
+    try {
+        Aluno current = sessionManager.getCurrentAluno();
+        long alunoId = current.getId();
+
+        cout << "\n--- Atualizar Perfil ---" << endl;
+        cout << "Deixe em branco para manter o valor atual." << endl;
+
+        // Nome
+        cout << "Nome atual: " << current.getNome() << endl;
+        cout << "Novo nome: ";
+        string novoNome;
+        std::getline(cin, novoNome);
+
+        // Email
+        cout << "Email atual: " << current.getEmail() << endl;
+        cout << "Novo email: ";
+        string novoEmail;
+        std::getline(cin, novoEmail);
+
+        // Matrícula
+        cout << "Matrícula atual: " << current.getMatricula() << endl;
+        cout << "Nova matrícula (0 para manter): ";
+        string matriculaInput;
+        std::getline(cin, matriculaInput);
+        long novaMatricula = 0;
+        if (!matriculaInput.empty()) {
+            try {
+                novaMatricula = std::stol(matriculaInput);
+            } catch (...) {
+                cout << "Entrada de matrícula inválida. Mantendo a antiga."
+                     << endl;
+                novaMatricula = 0;
+            }
+        }
+
+        // Senha
+        cout << "Nova senha: ";
+        string novaSenha;
+        std::getline(cin, novaSenha);
+
+        // Chama o controller para atualizar (fará validações)
+        Aluno updated = alunoController.update(alunoId, novoNome, novoEmail,
+                                               novaSenha, novaMatricula);
+
+        // Cria shared_ptr<Usuario> no heap e publica UsuarioUpdatedEvent
+        std::shared_ptr<Usuario> user_ptr = std::make_shared<Aluno>(updated);
+        bus.publish(UsuarioUpdatedEvent(user_ptr));
+
+        cout << "\n✅ Perfil atualizado com sucesso!" << endl;
+        cout << "Nome: " << updated.getNome() << endl;
+        cout << "Email: " << updated.getEmail() << endl;
+        cout << "Matrícula: " << updated.getMatricula() << endl;
+
+    } catch (const exception& e) {
+        cout << "\n>> ERRO ao atualizar perfil: " << e.what() << endl;
+    }
+}
+
 bool AlunoUI::show() const {
     int opcao = -1;
 
@@ -104,7 +167,7 @@ bool AlunoUI::show() const {
         desenhar_relogio();
         imprimir_menu();
 
-        opcao = read_integer_range("Escolha uma opcao: ", 0, 2);
+        opcao = read_integer_range("Escolha uma opcao: ", 0, 3);
 
         switch (opcao) {
             case 0:
@@ -114,6 +177,9 @@ bool AlunoUI::show() const {
                 break;
             case 2:
                 agendar_horario();
+                break;
+            case 3:
+                atualizar_perfil();
                 break;
         }
 
@@ -128,5 +194,6 @@ void imprimir_menu() {
     cout << "MENU ALUNO:" << endl;
     cout << "1 - Logout" << endl;
     cout << "2 - Agendar Horário" << endl;
+    cout << "3 - Atualizar Perfil" << endl;
     cout << "0 - Sair do programa" << endl;
 }

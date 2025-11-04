@@ -4,6 +4,8 @@
 #include "controller/agendamentoController.hpp"
 #include "controller/horarioController.hpp"
 #include "controller/professorController.hpp"
+#include "event/bus.hpp"
+#include "service/sessionManager.hpp"
 #include "view/consoleUI.hpp"
 
 /**
@@ -19,6 +21,8 @@ class ProfessorUI : public ConsoleUI {
     const ProfessorController& professorController;
     const HorarioController& horarioController;
     const AgendamentoController& agendamentoController;
+    EventBus& bus;
+    SessionManager& sessionManager;
 
     /**
      * @brief Gerencia o fluxo de I/O e delega o cadastro de um novo horário
@@ -42,9 +46,15 @@ class ProfessorUI : public ConsoleUI {
      */
     void excluir_todos_horarios() const;
 
+    /**
+     * @brief Atualiza o perfil do professor logado.
+     */
+    void atualizar_perfil() const;
+
    public:
     ProfessorUI(const ProfessorController& pc, const HorarioController& hc,
-                const AgendamentoController& ac, SessionManager& sm);
+                const AgendamentoController& ac, EventBus& bus,
+                SessionManager& sm);
 
     virtual bool show() const override;
 };
