@@ -5,9 +5,9 @@
 #include "controller/alunoController.hpp"
 #include "controller/horarioController.hpp"
 #include "controller/professorController.hpp"
-#include "view/consoleUI.hpp"
-#include "event/bus.hpp" // EventBus
+#include "event/bus.hpp"  // EventBus
 #include "service/sessionManager.hpp"
+#include "view/consoleUI.hpp"
 
 /**
  * @brief Classe da Interface de Usuário (Presentation Layer) para Alunos via
@@ -29,7 +29,7 @@ class AlunoUI : public ConsoleUI {
      * @brief Gerencia o fluxo de I/O e delega o agendamento de um horário.
      */
     void agendar_horario() const;
-    void atualizar_perfil();
+    void atualizar_perfil() const;
 
    public:
     AlunoUI(const AlunoController& ac, const ProfessorController& pc,

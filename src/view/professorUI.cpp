@@ -1,8 +1,8 @@
 #include "view/professorUI.hpp"
 
 #include <iostream>
-#include <stdexcept>
 #include <memory>
+#include <stdexcept>
 
 #include "event/events.hpp"
 #include "util/utils.hpp"
@@ -194,7 +194,7 @@ void ProfessorUI::excluir_todos_horarios() const {
     }
 }
 
-void ProfessorUI::atualizar_perfil() {
+void ProfessorUI::atualizar_perfil() const {
     try {
         Professor current = sessionManager.getCurrentProfessor();
         long professorId = current.getId();
@@ -214,20 +214,19 @@ void ProfessorUI::atualizar_perfil() {
         string novoEmail;
         std::getline(cin, novoEmail);
 
-        // Senha
-        cout << "Nova senha (deixe em branco para manter): ";
-        string novaSenha;
-        std::getline(cin, novaSenha);
-
         // Disciplina
         cout << "Disciplina atual: " << current.getDisciplina() << endl;
-        cout << "Nova disciplina (deixe em branco para manter): ";
+        cout << "Nova disciplina: ";
         string novaDisciplina;
         std::getline(cin, novaDisciplina);
 
-        Professor updated = professorController.update(professorId, novoNome,
-                                                       novoEmail, novaSenha,
-                                                       novaDisciplina);
+        // Senha
+        cout << "Nova senha: ";
+        string novaSenha;
+        std::getline(cin, novaSenha);
+
+        Professor updated = professorController.update(
+            professorId, novoNome, novoEmail, novaSenha, novaDisciplina);
 
         std::shared_ptr<Usuario> user_ptr =
             std::make_shared<Professor>(updated);
@@ -242,7 +241,6 @@ void ProfessorUI::atualizar_perfil() {
         cout << "\n>> ERRO ao atualizar perfil: " << e.what() << endl;
     }
 }
-
 
 bool ProfessorUI::show() const {
     while (sessionManager.isProfessor()) {
@@ -269,8 +267,8 @@ bool ProfessorUI::show() const {
             case 5:
                 excluir_horario();
                 break;
-                case 6:
-                const_cast<ProfessorUI*>(this)->atualizar_perfil();
+            case 6:
+                atualizar_perfil();
                 break;
         }
 
