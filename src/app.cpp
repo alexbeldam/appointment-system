@@ -28,9 +28,9 @@ App::App()
       authUI(alunoController, professorController, loginController,
              sessionManager),
       alunoUI(alunoController, professorController, horarioController,
-              agendamentoController, bus, sessionManager),
+              agendamentoController, sessionManager),
       professorUI(professorController, horarioController, agendamentoController,
-                  bus, sessionManager) {}
+                  sessionManager) {}
 
 void App::run() {
     bool keepRunning = true;
