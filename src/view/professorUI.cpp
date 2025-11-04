@@ -1,7 +1,6 @@
 #include "view/professorUI.hpp"
 
 #include <iostream>
-#include <memory>
 #include <stdexcept>
 
 #include "event/events.hpp"
@@ -13,13 +12,11 @@ static void imprimir_confirmacao();
 
 ProfessorUI::ProfessorUI(const ProfessorController& pc,
                          const HorarioController& hc,
-                         const AgendamentoController& ac, EventBus& bus,
-                         SessionManager& sm)
+                         const AgendamentoController& ac, SessionManager& sm)
     : ConsoleUI(sm),
       professorController(pc),
       horarioController(hc),
       agendamentoController(ac),
-      bus(bus),
       sessionManager(sm) {}
 
 void ProfessorUI::cadastro_horario() const {
@@ -227,10 +224,6 @@ void ProfessorUI::atualizar_perfil() const {
 
         Professor updated = professorController.update(
             professorId, novoNome, novoEmail, novaSenha, novaDisciplina);
-
-        std::shared_ptr<Usuario> user_ptr =
-            std::make_shared<Professor>(updated);
-        bus.publish(UsuarioUpdatedEvent(user_ptr));
 
         cout << "\n✅ Perfil atualizado com sucesso!" << endl;
         cout << "Nome: " << updated.getNome() << endl;

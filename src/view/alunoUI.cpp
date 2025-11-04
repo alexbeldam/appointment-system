@@ -1,7 +1,6 @@
 #include "view/alunoUI.hpp"
 
 #include <iostream>
-#include <memory>
 #include <stdexcept>
 #include <vector>
 
@@ -13,13 +12,12 @@ static void imprimir_menu();
 
 AlunoUI::AlunoUI(const AlunoController& ac, const ProfessorController& pc,
                  const HorarioController& hc, const AgendamentoController& agc,
-                 EventBus& bus, SessionManager& sm)
+                 SessionManager& sm)
     : ConsoleUI(sm),
       alunoController(ac),
       professorController(pc),
       horarioController(hc),
       agendamentoController(agc),
-      bus(bus),
       sessionManager(sm) {}
 
 void AlunoUI::agendar_horario() const {
@@ -145,10 +143,6 @@ void AlunoUI::atualizar_perfil() const {
         // Chama o controller para atualizar (fará validações)
         Aluno updated = alunoController.update(alunoId, novoNome, novoEmail,
                                                novaSenha, novaMatricula);
-
-        // Cria shared_ptr<Usuario> no heap e publica UsuarioUpdatedEvent
-        std::shared_ptr<Usuario> user_ptr = std::make_shared<Aluno>(updated);
-        bus.publish(UsuarioUpdatedEvent(user_ptr));
 
         cout << "\n✅ Perfil atualizado com sucesso!" << endl;
         cout << "Nome: " << updated.getNome() << endl;

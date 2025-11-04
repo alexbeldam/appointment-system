@@ -23,7 +23,7 @@ class AlunoUI : public ConsoleUI {
     const ProfessorController& professorController;
     const HorarioController& horarioController;
     const AgendamentoController& agendamentoController;
-    EventBus& bus;
+
     SessionManager& sessionManager;
     /**
      * @brief Gerencia o fluxo de I/O e delega o agendamento de um horário.
@@ -34,7 +34,7 @@ class AlunoUI : public ConsoleUI {
    public:
     AlunoUI(const AlunoController& ac, const ProfessorController& pc,
             const HorarioController& hc, const AgendamentoController& agc,
-            EventBus& bus, SessionManager& sm);
+            SessionManager& sm);
 
     virtual bool show() const override;
 };
