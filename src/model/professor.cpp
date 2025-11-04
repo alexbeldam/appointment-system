@@ -38,18 +38,27 @@ const vector<Horario>& Professor::getHorariosDisponiveis() const {
 
 void Professor::setHorarios(const vector<Horario>& horarios) {
     this->horarios = horarios;
+
+    sort(this->horarios.begin(), this->horarios.end());
 }
 
 void Professor::addHorario(const Horario& horario) {
-    this->horarios.push_back(horario);
+    auto it = lower_bound(horarios.begin(), horarios.end(), horario);
+
+    horarios.insert(it, horario);
 }
 
 void Professor::updateHorario(const Horario& horario) {
-    for (Horario& h : this->horarios) {
-        if (h.getId() == horario.getId()) {
-            h = horario;
-            return;
-        }
+    auto it = std::find_if(
+        this->horarios.begin(), this->horarios.end(),
+        [&horario](const Horario& h) { return h.getId() == horario.getId(); });
+
+    if (it != this->horarios.end()) {
+        this->horarios.erase(it);
+
+        auto insert_it = std::lower_bound(this->horarios.begin(),
+                                          this->horarios.end(), horario);
+        this->horarios.insert(insert_it, horario);
     }
 }
 

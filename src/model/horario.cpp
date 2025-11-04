@@ -52,3 +52,9 @@ void Horario::setFim(time_t fim) {
 void Horario::setDisponivel(bool disponivel) {
     this->disponivel = disponivel;
 }
+
+bool Horario::operator<(const Horario& other) const {
+    if (this->inicio != other.inicio)
+        return this->inicio < other.inicio;
+    return this->fim < other.fim;
+}

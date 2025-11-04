@@ -1,5 +1,6 @@
 #include "service/horarioService.hpp"
 
+#include <algorithm>
 #include <sstream>
 #include <stdexcept>
 
@@ -7,6 +8,7 @@
 
 using std::invalid_argument;
 using std::runtime_error;
+using std::sort;
 using std::string;
 using std::to_string;
 using std::vector;
@@ -110,6 +112,8 @@ std::vector<Horario> HorarioService::listDisponivelByIdProfessor(
         }
     }
 
+    sort(horariosDisponiveis.begin(), horariosDisponiveis.end());
+
     return horariosDisponiveis;
 }
 
@@ -130,6 +134,9 @@ std::vector<Horario> HorarioService::listByIdProfessor(long id) const {
                               std::stol(inicio), std::stol(fim),
                               disponivelStr == "1");
     }
+
+    std::sort(horarios.begin(), horarios.end());
+
     return horarios;
 }
 
