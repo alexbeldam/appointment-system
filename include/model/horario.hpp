@@ -35,6 +35,8 @@ class Horario {
     void setInicio(std::time_t inicio);
     void setFim(std::time_t fim);
     void setDisponivel(bool disponivel);
+
+    bool operator<(const Horario& other) const;
 };
 
 #endif
