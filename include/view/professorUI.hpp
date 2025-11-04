@@ -4,9 +4,9 @@
 #include "controller/agendamentoController.hpp"
 #include "controller/horarioController.hpp"
 #include "controller/professorController.hpp"
-#include "view/consoleUI.hpp"
-#include "event/bus.hpp"           
+#include "event/bus.hpp"
 #include "service/sessionManager.hpp"
+#include "view/consoleUI.hpp"
 
 /**
  * @brief Classe da Interface de Usuário (Presentation Layer) para Professores
@@ -46,10 +46,10 @@ class ProfessorUI : public ConsoleUI {
      */
     void excluir_todos_horarios() const;
 
-     /**
+    /**
      * @brief Atualiza o perfil do professor logado.
      */
-    void atualizar_perfil();
+    void atualizar_perfil() const;
 
    public:
     ProfessorUI(const ProfessorController& pc, const HorarioController& hc,

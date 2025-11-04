@@ -1,9 +1,9 @@
 #include "view/alunoUI.hpp"
 
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <vector>
-#include <memory>
 
 #include "event/events.hpp"
 #include "util/utils.hpp"
@@ -101,7 +101,7 @@ void AlunoUI::agendar_horario() const {
     }
 }
 
-void AlunoUI::atualizar_perfil() {
+void AlunoUI::atualizar_perfil() const {
     try {
         Aluno current = sessionManager.getCurrentAluno();
         long alunoId = current.getId();
@@ -121,11 +121,6 @@ void AlunoUI::atualizar_perfil() {
         string novoEmail;
         std::getline(cin, novoEmail);
 
-        // Senha
-        cout << "Nova senha (deixe em branco para manter): ";
-        string novaSenha;
-        std::getline(cin, novaSenha);
-
         // Matrícula
         cout << "Matrícula atual: " << current.getMatricula() << endl;
         cout << "Nova matrícula (0 para manter): ";
@@ -136,10 +131,16 @@ void AlunoUI::atualizar_perfil() {
             try {
                 novaMatricula = std::stol(matriculaInput);
             } catch (...) {
-                cout << "Entrada de matrícula inválida. Mantendo a antiga." << endl;
+                cout << "Entrada de matrícula inválida. Mantendo a antiga."
+                     << endl;
                 novaMatricula = 0;
             }
         }
+
+        // Senha
+        cout << "Nova senha: ";
+        string novaSenha;
+        std::getline(cin, novaSenha);
 
         // Chama o controller para atualizar (fará validações)
         Aluno updated = alunoController.update(alunoId, novoNome, novoEmail,
@@ -178,9 +179,8 @@ bool AlunoUI::show() const {
                 agendar_horario();
                 break;
             case 3:
-                const_cast<AlunoUI*>(this)->atualizar_perfil();
+                atualizar_perfil();
                 break;
-        
         }
 
         cout << "\nPressione Enter para continuar...";
