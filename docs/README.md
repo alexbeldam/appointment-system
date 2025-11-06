@@ -6,7 +6,6 @@ Grupo: Alex Beldam Souza, Amanda Santos Rosa, Bernardo Sabino de Souza Alves, Ju
 ---
 
 ## 🚀 User Stories  
-
 ### 1. Cadastrar Usuário  
 **História:**  
 Como usuário, quero criar meu login e perfil, para que eu possa acessar o sistema.  
@@ -17,93 +16,93 @@ Como usuário, quero criar meu login e perfil, para que eu possa acessar o siste
 
 ---
 
-### 2. Cadastrar Horário  
+### 2. Autenticar Usuário  
 **História:**  
-Como professor, quero cadastrar meus horários disponíveis, para que os usuários possam agendar reuniões.  
+Como usuário, quero realizar login no sistema, para que eu possa acessar minhas funcionalidades de acordo com meu perfil.  
 
 **Critérios de Aceitação:**  
-1. Dado que o professor esteja logado, quando ele selecionar um intervalo de data e hora, então o sistema deve salvar o horário disponível.  
-2. Dado que já existe um horário cadastrado no mesmo período, então o sistema deve exibir uma mensagem de conflito.  
+1. Dado que o usuário tenha uma conta válida, quando ele informar e-mail e senha corretos, então o sistema deve autenticar o usuário e permitir o acesso.  
+2. Dado que o usuário informe credenciais inválidas, então o sistema deve exibir uma mensagem de erro informando que e-mail ou senha estão incorretos.  
 
 ---
 
-### 3. Pesquisar Usuário  
+### 3. Deletar Usuário  
 **História:**  
-Como usuário, quero pesquisar outros usuários pelo ID, para encontrá-los rapidamente.  
+Como usuário, quero excluir meu perfil, para que eu possa remover meus dados do sistema.  
 
 **Critérios de Aceitação:**  
-1. Dado que o usuário digite um ID válido, então o sistema deve exibir os dados do usuário correspondente.  
-2. Dado que o usuário digite um ID inexistente, então o sistema deve informar que não encontrou resultados.  
+1. Dado que o usuário esteja autenticado, quando solicitar a exclusão de sua conta, então o sistema deve remover o perfil e todos os dados associados.  
+2. Dado que o usuário tente excluir uma conta inexistente, então o sistema deve exibir uma mensagem informando que o usuário não foi encontrado.  
 
 ---
 
-### 4. Agendar Horário  
+### 4. Cadastrar Horário Disponível  
 **História:**  
-Como aluno, quero agendar um horário disponível com um professor, para marcar uma reunião.  
+Como professor, quero cadastrar horários disponíveis, para que alunos possam agendar atendimentos.  
 
 **Critérios de Aceitação:**  
-1. Dado que o aluno selecione um horário disponível, então o sistema deve registrar o agendamento e notificar o professor.  
-2. Dado que o horário já esteja reservado, então o sistema deve impedir o agendamento e exibir mensagem de indisponibilidade.  
+1. Dado que o professor esteja autenticado, quando cadastrar uma data, hora e duração válidas, então o sistema deve registrar o horário como disponível.  
+2. Dado que o professor tente cadastrar um horário que conflite com outro já existente, então o sistema deve impedir o cadastro e exibir uma mensagem de aviso.  
 
 ---
 
-### 5. Cancelar Agendamento  
+### 5. Deletar Horário  
 **História:**  
-Como usuário, quero cancelar um agendamento, para liberar o horário em caso de imprevisto.  
+Como professor, quero excluir um horário cadastrado, para que ele não esteja mais disponível para agendamento.  
 
 **Critérios de Aceitação:**  
-1. Dado que o usuário esteja logado e tenha um agendamento, quando ele clicar em "Cancelar", então o sistema deve remover a reserva.  
-2. Dado que o horário já tenha passado, então o sistema não deve permitir o cancelamento.  
+1. Dado que o horário ainda não tenha sido agendado, quando o professor solicitar a exclusão, então o sistema deve removê-lo com sucesso.  
+2. Dado que o horário já tenha um agendamento, então o sistema deve impedir a exclusão e exibir uma mensagem informando que há agendamentos vinculados.  
 
 ---
 
-### 6. Visualizar Histórico  
+### 6. Listar Todos os Horários do Professor  
 **História:**  
-Como aluno, quero visualizar o histórico dos meus agendamentos, para consultar reuniões passadas.  
+Como professor, quero visualizar todos os meus horários cadastrados, para que eu possa gerenciar minhas disponibilidades.  
 
 **Critérios de Aceitação:**  
-1. Dado que o usuário acesse a seção de histórico, então o sistema deve exibir todos os agendamentos concluídos e cancelados.  
-2. Dado que o usuário não tenha agendamentos anteriores, então o sistema deve exibir a mensagem “Nenhum histórico encontrado”.  
+1. Dado que o professor esteja autenticado, quando acessar a lista de horários, então o sistema deve exibir todos os horários cadastrados com data e hora.  
+2. Dado que o professor não tenha horários cadastrados, então o sistema deve exibir uma mensagem informando que não há horários disponíveis.  
 
 ---
 
-### 7. Atualizar Perfil  
+### 7. Avaliar Agendamentos Pendentes  
 **História:**  
-Como usuário, quero atualizar minhas informações de perfil (nome, e-mail), para manter meus dados corretos no sistema.  
+Como professor, quero avaliar se vou confirmar ou recusar agendamentos pendentes, para controlar meus atendimentos.  
 
 **Critérios de Aceitação:**  
-1. Dado que o usuário esteja logado, quando ele acessar a tela de perfil, então deve poder editar nome, e-mail e telefone.  
-2. Dado que o usuário salve os dados, então o sistema deve atualizar imediatamente as informações.  
+1. Dado que o professor tenha agendamentos pendentes, quando ele confirmar ou recusar, então o sistema deve atualizar o status do agendamento.  
+2. Dado que o professor tente avaliar um agendamento inexistente ou já confirmado/recusado, então o sistema deve exibir uma mensagem de erro.  
 
 ---
 
-### 8. Visualizar Agendamentos  
+### 8. Agendar Horário  
 **História:**  
-Como professor, quero visualizar o total de agendamentos por dia/semana, para planejar melhor minha agenda.  
+Como aluno, quero agendar um horário disponível, para que eu possa marcar um atendimento com o professor.  
 
 **Critérios de Aceitação:**  
-1. Dado que o professor acesse o painel de agendamentos, então o sistema deve exibir um resumo tabelado por dia e semana.  
-2. Dado que não haja agendamentos, então o sistema deve mostrar “Nenhum agendamento encontrado”.  
+1. Dado que o aluno esteja autenticado, quando selecionar um horário disponível e confirmar o agendamento, então o sistema deve registrar o agendamento com sucesso.  
+2. Dado que o aluno tente agendar um horário já ocupado, então o sistema deve impedir o agendamento e exibir uma mensagem de erro.  
 
 ---
 
-### 9. Visualizar Menu  
+### 9. Cancelar Agendamento  
 **História:**  
-Como usuário, quero ver um menu principal, para escolher entre opções do sistema.  
+Como aluno, quero cancelar um agendamento, para que eu possa liberar o horário e ajustar minha agenda.  
 
 **Critérios de Aceitação:**  
-1. Dado que o usuário abra o sistema, então o terminal deve exibir opções: “1- Cadastrar horário, 2- Agendar, 3- Ver histórico, 4- Sair”.
-2. O usuário deve sempre ter a opção de voltar para o menu.
+1. Dado que o aluno tenha um agendamento ativo, quando solicitar o cancelamento, então o sistema deve remover o agendamento e liberar o horário.  
+2. Dado que o aluno tente cancelar um agendamento inexistente ou já cancelado, então o sistema deve exibir uma mensagem de erro.  
 
 ---
 
-### 10. Receber Instruções  
+### 10. Listar Agendamentos  
 **História:**  
-Como usuário, quero ver instruções de como usar o sistema, para entender todas as funcionalidades disponíveis.  
+Como aluno, quero visualizar todos os meus agendamentos, para que eu possa acompanhar meus horários e status.  
 
 **Critérios de Aceitação:**  
-1. Dado que o usuário seleciona a opção “Ajuda/Instruções”, então o terminal deve listar todas as opções do menu com explicação breve.  
-2. As instruções devem ser exibidas quando o usuário realizar alguma ação indisponível no sistema.
+1. Dado que o aluno esteja autenticado, quando acessar a lista de agendamentos, então o sistema deve exibir todos os agendamentos com data, hora, status e nome do professor.  
+2. Dado que o aluno não tenha agendamentos, então o sistema deve exibir uma mensagem informando que não há agendamentos registrados.  
 
 ---
 
