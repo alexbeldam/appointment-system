@@ -8,6 +8,7 @@ using namespace std;
 
 static void imprimir_menu();
 static void imprimir_menu_login();
+static void imprimir_menu_signup();
 
 AuthUI::AuthUI(const AlunoController& ac, const ProfessorController& pc,
                const LoginController& lc, SessionManager& sm)
@@ -30,6 +31,23 @@ void AuthUI::fazer_login() const {
             break;
         case 2:
             login_professor();
+    }
+}
+
+void AuthUI::fazer_cadastro() const {
+    imprimir_menu_signup();
+
+    int opcao = read_integer_range("Escolha uma opcao: ", 0, 2);
+
+    switch (opcao) {
+        case 0:
+            cout << "\n>> Operação cancelada." << endl;
+            return;
+        case 1:
+            cadastro_aluno();
+            break;
+        case 2:
+            cadastro_professor();
     }
 }
 
@@ -191,13 +209,10 @@ bool AuthUI::show() const {
             case 0:
                 return false;
             case 1:
-                cadastro_aluno();
+                fazer_login();
                 break;
             case 2:
-                cadastro_professor();
-                break;
-            case 3:
-                fazer_login();
+                fazer_cadastro();
         }
 
         cout << "\nPressione Enter para continuar...";
@@ -209,9 +224,8 @@ bool AuthUI::show() const {
 
 void imprimir_menu() {
     cout << "MENU PRINCIPAL:" << endl;
-    cout << "1 - Criar Novo Aluno (Cadastro)" << endl;
-    cout << "2 - Criar Novo Professor (Cadastro)" << endl;
-    cout << "3 - Fazer Login" << endl;
+    cout << "1 - Fazer Login" << endl;
+    cout << "2 - Fazer cadastro" << endl;
     cout << "0 - Sair do programa" << endl;
 }
 
@@ -219,5 +233,12 @@ void imprimir_menu_login() {
     cout << "\nMENU DE OPCOES:" << endl;
     cout << "1 - Entrar como aluno" << endl;
     cout << "2 - Entrar como professor" << endl;
+    cout << "0 - Voltar ao menu principal" << endl;
+}
+
+void imprimir_menu_signup() {
+    cout << "\nMENU DE OPCOES:" << endl;
+    cout << "1 - Cadastar aluno" << endl;
+    cout << "2 - Cadastrar professor" << endl;
     cout << "0 - Voltar ao menu principal" << endl;
 }

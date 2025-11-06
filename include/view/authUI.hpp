@@ -25,6 +25,11 @@ class AuthUI : public ConsoleUI {
     void fazer_login() const;
 
     /**
+     * @brief Gerencia o fluxo de I/O e delega o cadastro de um usuário.
+     */
+    void fazer_cadastro() const;
+
+    /**
      * @brief Gerencia o fluxo de I/O e delega a autenticação de um Aluno.
      */
     void login_aluno() const;
