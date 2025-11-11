@@ -30,3 +30,12 @@ bool HorarioController::excluirPorId(long idHorario) const {
         return false;
     }
 }
+
+Horario HorarioController::pegarHorario(long id) const {
+     try {
+        return service.getById(id);
+    } catch (const std::exception& e) {
+        handle_controller_exception(e, "resgatar horário");
+        throw;
+    }
+}

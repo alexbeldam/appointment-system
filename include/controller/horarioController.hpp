@@ -21,6 +21,8 @@ class HorarioController {
     bool excluirPorId(long idHorario) const;
 
     std::vector<Horario> listarPorProfessor(long idProfessor) const;
+
+    Horario pegarHorario(long id) const;
 };
 
 #endif

@@ -235,12 +235,45 @@ void ProfessorUI::atualizar_perfil() const {
     }
 }
 
+void ProfessorUI::deletar_perfil() const {
+    cout << "\n--- Deletar perfil ---" << endl;
+
+    imprimir_confirmacao();
+    int confirm = read_integer_range("Escolha uma opcao: ", 0, 1);
+
+    if (confirm == 0) {
+        cout << "\n>> Exclusão cancelada." << endl;
+        return;
+    }
+
+    const auto& professor = sessionManager.getCurrentProfessor();
+
+    try {
+        professorController.destroy(professor.getId());
+
+        cout << "\n==================================================" << endl;
+        cout << "✅ SUCESSO! Perfil deletado!" << endl;
+        cout << "==================================================" << endl;
+    } catch (const std::invalid_argument& e) {
+        cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
+        cout << ">> Tente novamente com dados válidos." << endl;
+    } catch (const std::runtime_error& e) {
+        cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao deletar professor."
+            << endl;
+        cout << ">> Detalhes do Erro: " << e.what() << endl;
+    } catch (...) {
+        cout << "\n>> ERRO DESCONHECIDO: Ocorreu uma falha inesperada durante "
+                "a exclusão."
+            << endl;
+    }
+}
+
 bool ProfessorUI::show() const {
     while (sessionManager.isProfessor()) {
         desenhar_relogio();
         imprimir_menu();
 
-        int opcao = read_integer_range("Escolha uma opcao: ", 0, 6);
+        int opcao = read_integer_range("Escolha uma opcao: ", 0, 7);
 
         switch (opcao) {
             case 0:
@@ -263,6 +296,9 @@ bool ProfessorUI::show() const {
             case 6:
                 atualizar_perfil();
                 break;
+            case 7:
+                deletar_perfil();
+                break;
         }
 
         cout << "\nPressione Enter para continuar...";
@@ -280,6 +316,7 @@ void imprimir_menu() {
     cout << "4 - Excluir todos meus horários" << endl;
     cout << "5 - Excluir um horário" << endl;
     cout << "6 - Atualizar Perfil" << endl;
+    cout << "7 - Deletar Perfil" << endl;
     cout << "0 - Sair do programa" << endl;
 }
 
