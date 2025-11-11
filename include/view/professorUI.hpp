@@ -51,6 +51,8 @@ class ProfessorUI : public ConsoleUI {
      */
     void atualizar_perfil() const;
 
+    void deletar_perfil() const;
+
    public:
     ProfessorUI(const ProfessorController& pc, const HorarioController& hc,
                 const AgendamentoController& ac, SessionManager& sm);

@@ -30,6 +30,8 @@ class AlunoUI : public ConsoleUI {
      */
     void agendar_horario() const;
     void atualizar_perfil() const;
+    void visualizar_agendamentos() const;
+    void deletar_perfil() const;
 
    public:
     AlunoUI(const AlunoController& ac, const ProfessorController& pc,

@@ -9,6 +9,7 @@
 using namespace std;
 
 static void imprimir_menu();
+static void imprimir_confirmacao();
 
 AlunoUI::AlunoUI(const AlunoController& ac, const ProfessorController& pc,
                  const HorarioController& hc, const AgendamentoController& agc,
@@ -154,6 +155,73 @@ void AlunoUI::atualizar_perfil() const {
     }
 }
 
+void AlunoUI::visualizar_agendamentos() const {
+    const auto& aluno = sessionManager.getCurrentAluno();
+    const auto& agendamentos = aluno.getAgendamentos();
+
+    cout << "\n--- Meus Agendamentos ---" << endl;
+
+    if (agendamentos.empty()) {
+        cout << ">> Nenhum agendamento cadastrado." << endl;
+        return;
+    }
+
+    for (const auto& a : agendamentos) {
+        try {
+            Horario h = horarioController.pegarHorario(a.getHorarioId());
+
+            cout << "Início: " << h.getInicioStr()
+            << " | Fim: " << h.getFimStr()
+            << " | Status: " << a.getStatus()
+            << endl;
+        } catch (const std::invalid_argument& e) {
+            cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
+            cout << ">> Tente novamente com dados válidos." << endl;
+        } catch (const std::runtime_error& e) {
+            cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao resgatar o horário."
+                << endl;
+            cout << ">> Detalhes do Erro: " << e.what() << endl;
+        } catch (...) {
+            cout << "\n>> ERRO DESCONHECIDO: Ocorreu uma falha inesperada durante "
+                    "a listagem."
+                << endl;
+        }
+    }
+}
+
+void AlunoUI::deletar_perfil() const {
+    cout << "\n--- Deletar perfil ---" << endl;
+
+    imprimir_confirmacao();
+    int confirm = read_integer_range("Escolha uma opcao: ", 0, 1);
+
+    if (confirm == 0) {
+        cout << "\n>> Exclusão cancelada." << endl;
+        return;
+    }
+
+    const auto& aluno = sessionManager.getCurrentAluno();
+
+    try {
+        alunoController.destroy(aluno.getId());
+
+        cout << "\n==================================================" << endl;
+        cout << "✅ SUCESSO! Perfil deletado!" << endl;
+        cout << "==================================================" << endl;
+    } catch (const std::invalid_argument& e) {
+        cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
+        cout << ">> Tente novamente com dados válidos." << endl;
+    } catch (const std::runtime_error& e) {
+        cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao deletar aluno."
+            << endl;
+        cout << ">> Detalhes do Erro: " << e.what() << endl;
+    } catch (...) {
+        cout << "\n>> ERRO DESCONHECIDO: Ocorreu uma falha inesperada durante "
+                "a exclusão."
+            << endl;
+    }
+}
+
 bool AlunoUI::show() const {
     int opcao = -1;
 
@@ -161,7 +229,7 @@ bool AlunoUI::show() const {
         desenhar_relogio();
         imprimir_menu();
 
-        opcao = read_integer_range("Escolha uma opcao: ", 0, 3);
+        opcao = read_integer_range("Escolha uma opcao: ", 0, 5);
 
         switch (opcao) {
             case 0:
@@ -174,6 +242,12 @@ bool AlunoUI::show() const {
                 break;
             case 3:
                 atualizar_perfil();
+                break;
+            case 4:
+                visualizar_agendamentos();
+                break;
+            case 5 :
+                deletar_perfil();
                 break;
         }
 
@@ -189,5 +263,14 @@ void imprimir_menu() {
     cout << "1 - Logout" << endl;
     cout << "2 - Agendar Horário" << endl;
     cout << "3 - Atualizar Perfil" << endl;
+    cout << "4 - Listar meus agendamentos" << endl;
+    cout << "5 - Deletar perfil" << endl;
     cout << "0 - Sair do programa" << endl;
+}
+
+void imprimir_confirmacao() {
+    cout << "Essa operação é irreversível. ";
+    cout << "Tem certeza que deseja continuar?" << endl;
+    cout << "0 - Não" << endl;
+    cout << "1 - Sim" << endl;
 }
