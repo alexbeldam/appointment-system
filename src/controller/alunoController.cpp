@@ -40,26 +40,20 @@ Aluno AlunoController::create(const string& nome, const string& email,
                 "A matrícula deve ser um número positivo.");
         }
 
-        // 2. PREPARAÇÃO DO DTO
-        AlunoDTO dto;
-        dto.setEmail(email);
-        dto.setNome(nome);
-        dto.setSenha(encrypt(
-            senha));  // Criptografia da senha antes de enviar ao Service
-        dto.setMatricula(matricula);
-
-        // 3. DELEGAÇÃO PARA O SERVICE (Service trata unicidade e persistência)
-        return service.save(dto);
+        return service.save(nome, email, encrypt(senha), matricula);
 
         // 4. TRATAMENTO DE ERROS
     } catch (const std::invalid_argument& e) {
         // Captura erros de validação (formato e unicidade do Service)
         handle_controller_exception(e, "validar novos dados do Aluno");
+
+        throw;
     } catch (const std::runtime_error& e) {
         // Captura erros de I/O ou falhas críticas do Service
         handle_controller_exception(e, "criar Aluno no serviço");
+
+        throw;
     }
-    throw;
 }
 
 // READ: Busca um Aluno pelo ID.
@@ -82,12 +76,14 @@ Aluno AlunoController::read(long id) const {
         handle_controller_exception(e,
                                     "ler Aluno pelo ID " + std::to_string(id));
 
+        throw;
     } catch (const std::runtime_error& e) {
         // Captura I/O ou erros críticos.
         handle_controller_exception(e,
                                     "ler Aluno pelo ID " + std::to_string(id));
+
+        throw;
     }
-    throw;
 }
 
 // LIST: Retorna todos os Alunos.
@@ -98,8 +94,9 @@ vector<Aluno> AlunoController::list() const {
     } catch (const std::runtime_error& e) {
         // Captura I/O ou erros críticos.
         handle_controller_exception(e, "listar todos os Alunos");
+
+        throw;
     }
-    throw;
 }
 
 // UPDATE: Atualiza um registro existente com lógica de "patch" (parcial).
@@ -115,17 +112,12 @@ Aluno AlunoController::update(long id, const string& nome, const string& email,
         }
         Aluno existingAluno = existingAluno_opt.value();
 
-        // 2. MONTA DTO USANDO LÓGICA DE PATCH
-        AlunoDTO dto;
-        dto.setId(id);
-
         // a. Nome: Usa o novo valor se não for vazio. Valida o resultado.
         string newNome = nome.empty() ? existingAluno.getNome() : nome;
         if (newNome.length() < 3) {
             throw std::invalid_argument(
                 "O nome deve ter pelo menos 3 caracteres.");
         }
-        dto.setNome(newNome);
 
         // b. Email: Usa o novo valor se não for vazio. Valida o resultado.
         string newEmail = email.empty() ? existingAluno.getEmail() : email;
@@ -133,12 +125,12 @@ Aluno AlunoController::update(long id, const string& nome, const string& email,
             newEmail.find('.') == std::string::npos) {
             throw std::invalid_argument("Formato de email inválido.");
         }
-        dto.setEmail(newEmail);
 
         // c. Senha: Se vazia, mantém a senha antiga. Caso contrário, valida e
         // criptografa a nova.
+        string newSenha;
         if (senha.empty()) {
-            dto.setSenha(existingAluno.getSenha());
+            newSenha = existingAluno.getSenha();
         } else {
             if (senha.length() < 4) {
                 throw std::invalid_argument(
@@ -148,17 +140,17 @@ Aluno AlunoController::update(long id, const string& nome, const string& email,
                 throw std::invalid_argument(
                     "A nova senha deve conter apenas letras e números...");
             }
-            dto.setSenha(encrypt(senha));
+            newSenha = encrypt(senha);
         }
 
         // d. Matrícula: Usa a matrícula nova se for positiva. Caso contrário,
         // mantém a antiga.
         long newMatricula =
             (matricula <= 0) ? existingAluno.getMatricula() : matricula;
-        dto.setMatricula(newMatricula);
 
         // 3. SERVICE CALL (Service verifica unicidade final e persiste)
-        optional<Aluno> updatedAluno_opt = service.updateById(id, dto);
+        optional<Aluno> updatedAluno_opt =
+            service.updateById(id, newNome, newEmail, newSenha, newMatricula);
 
         // Se o Service retornar nullopt, algo falhou internamente no Service
         // após o getById.
@@ -176,12 +168,15 @@ Aluno AlunoController::update(long id, const string& nome, const string& email,
         // encontrado (Service)
         handle_controller_exception(
             e, "validar dados de atualização para o ID " + std::to_string(id));
+
+        throw;
     } catch (const std::runtime_error& e) {
         // Captura I/O ou erros críticos.
         handle_controller_exception(
             e, "atualizar Aluno com ID " + std::to_string(id));
+
+        throw;
     }
-    throw;
 }
 
 // DESTROY: Deleta um registro pelo ID.
@@ -193,6 +188,6 @@ bool AlunoController::destroy(long id) const {
         // Captura I/O ou erros críticos.
         handle_controller_exception(
             e, "excluir Aluno com ID " + std::to_string(id));
+        throw;
     }
-    throw;
 }

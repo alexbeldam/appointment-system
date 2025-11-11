@@ -41,26 +41,20 @@ Professor ProfessorController::create(const string& nome, const string& email,
                 "A disciplina deve ter pelo menos 3 caracteres.");
         }
 
-        // 2. PREPARAÇÃO DO DTO
-        ProfessorDTO dto;
-        dto.setEmail(email);
-        dto.setNome(nome);
-        dto.setSenha(encrypt(
-            senha));  // Criptografia da senha antes de enviar ao Service
-        dto.setDisciplina(disciplina);
-
-        // 3. DELEGAÇÃO PARA O SERVICE (Service trata unicidade e persistência)
-        return service.save(dto);
+        return service.save(nome, email, encrypt(senha), disciplina);
 
         // 4. TRATAMENTO DE ERROS
     } catch (const std::invalid_argument& e) {
         // Captura erros de validação (formato e unicidade do Service)
         handle_controller_exception(e, "validar novos dados do Professor");
+
+        throw;
     } catch (const std::runtime_error& e) {
         // Captura erros de I/O ou falhas críticas do Service
         handle_controller_exception(e, "criar Professor no serviço");
+
+        throw;
     }
-    throw;
 }
 
 // READ: Busca um Professor pelo ID.
@@ -83,12 +77,14 @@ Professor ProfessorController::read(long id) const {
         handle_controller_exception(
             e, "ler Professor pelo ID " + std::to_string(id));
 
+        throw;
     } catch (const std::runtime_error& e) {
         // Captura I/O ou erros críticos.
         handle_controller_exception(
             e, "ler Professor pelo ID " + std::to_string(id));
+
+        throw;
     }
-    throw;
 }
 
 // LIST: Retorna todos os Professors.
@@ -99,8 +95,9 @@ vector<Professor> ProfessorController::list() const {
     } catch (const std::runtime_error& e) {
         // Captura I/O ou erros críticos.
         handle_controller_exception(e, "listar todos os Professors");
+
+        throw;
     }
-    throw;
 }
 
 // UPDATE: Atualiza um registro existente com lógica de "patch" (parcial).
@@ -118,17 +115,12 @@ Professor ProfessorController::update(long id, const string& nome,
         }
         Professor existingProfessor = existingProfessor_opt.value();
 
-        // 2. MONTA DTO USANDO LÓGICA DE PATCH
-        ProfessorDTO dto;
-        dto.setId(id);
-
         // a. Nome: Usa o novo valor se não for vazio. Valida o resultado.
         string newNome = nome.empty() ? existingProfessor.getNome() : nome;
         if (newNome.length() < 3) {
             throw std::invalid_argument(
                 "O nome deve ter pelo menos 3 caracteres.");
         }
-        dto.setNome(newNome);
 
         // b. Email: Usa o novo valor se não for vazio. Valida o resultado.
         string newEmail = email.empty() ? existingProfessor.getEmail() : email;
@@ -136,12 +128,12 @@ Professor ProfessorController::update(long id, const string& nome,
             newEmail.find('.') == std::string::npos) {
             throw std::invalid_argument("Formato de email inválido.");
         }
-        dto.setEmail(newEmail);
 
         // c. Senha: Se vazia, mantém a senha antiga. Caso contrário, valida e
         // criptografa a nova.
+        string newSenha;
         if (senha.empty()) {
-            dto.setSenha(existingProfessor.getSenha());
+            newSenha = existingProfessor.getSenha();
         } else {
             if (senha.length() < 4) {
                 throw std::invalid_argument(
@@ -151,7 +143,7 @@ Professor ProfessorController::update(long id, const string& nome,
                 throw std::invalid_argument(
                     "A nova senha deve conter apenas letras e números...");
             }
-            dto.setSenha(encrypt(senha));
+            newSenha = encrypt(senha);
         }
 
         // d. Disciplina: Usa o novo valor se não for vazio. Valida o resultado.
@@ -161,10 +153,10 @@ Professor ProfessorController::update(long id, const string& nome,
             throw std::invalid_argument(
                 "O nome deve ter pelo menos 3 caracteres.");
         }
-        dto.setNome(newDisciplina);
 
         // 3. SERVICE CALL (Service verifica unicidade final e persiste)
-        optional<Professor> updatedProfessor_opt = service.updateById(id, dto);
+        optional<Professor> updatedProfessor_opt =
+            service.updateById(id, newNome, newEmail, newSenha, newDisciplina);
 
         // Se o Service retornar nullopt, algo falhou internamente no Service
         // após o getById.
@@ -182,12 +174,15 @@ Professor ProfessorController::update(long id, const string& nome,
         // encontrado (Service)
         handle_controller_exception(
             e, "validar dados de atualização para o ID " + std::to_string(id));
+
+        throw;
     } catch (const std::runtime_error& e) {
         // Captura I/O ou erros críticos.
         handle_controller_exception(
             e, "atualizar Professor com ID " + std::to_string(id));
+
+        throw;
     }
-    throw;
 }
 
 // DESTROY: Deleta um registro pelo ID.
@@ -199,6 +194,7 @@ bool ProfessorController::destroy(long id) const {
         // Captura I/O ou erros críticos.
         handle_controller_exception(
             e, "excluir Professor com ID " + std::to_string(id));
+
+        throw;
     }
-    throw;
 }

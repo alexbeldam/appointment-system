@@ -1,36 +1,42 @@
 #ifndef HORARIO_HPP
 #define HORARIO_HPP
 
+#include <ctime>
+#include <string>
+
 /**
- * @brief CLASSE PLACEHOLDER. Representa a entidade Horário.
- *
- * Esta definição é incompleta e serve unicamente para resolver dependências de
- * compilação em outras classes (ex: Professor). Atributos e métodos de domínio
- * devem ser adicionados posteriormente.
+ * @brief Representa a entidade Horário de disponibilidade de um professor.
  */
 class Horario {
+   private:
+    long id;
+    long idProfessor;
+    std::time_t inicio;
+    std::time_t fim;
+    bool disponivel;
+
    public:
-    /**
-     * @brief Obtém o identificador único (ID) do Horário.
-     * * @return O ID do Horário.
-     */
+    Horario() = default;
+
+    Horario(long id, long idProf, std::time_t inicio, std::time_t fim,
+            bool disp);
+
     long getId() const;
-
-    /**
-     * @brief Obtém o ID do Professor associado a este horário.
-     * @return O ID único do Professor.
-     */
     long getProfessorId() const;
+    std::time_t getInicio() const;
+    std::time_t getFim() const;
+    bool isDisponivel() const;
 
-    // --- NÃO APAGAR ---
+    std::string getInicioStr() const;
+    std::string getFimStr() const;
 
-    /**
-     * @brief Construtor de cópia (copy constructor).
-     *
-     * Habilitado explicitamente para permitir que objetos Horario sejam
-     * copiados por valor (necessário para std::vector e eventos).
-     */
-    Horario(const Horario& other) = default;
+    void setId(long id);
+    void setProfessorId(long idProfessor);
+    void setInicio(std::time_t inicio);
+    void setFim(std::time_t fim);
+    void setDisponivel(bool disponivel);
+
+    bool operator<(const Horario& other) const;
 };
 
 #endif
