@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <unordered_map>
 #include <vector>
 
 #include "event/events.hpp"
@@ -158,6 +159,7 @@ void AlunoUI::atualizar_perfil() const {
 void AlunoUI::visualizar_agendamentos() const {
     const auto& aluno = sessionManager.getCurrentAluno();
     const auto& agendamentos = aluno.getAgendamentos();
+    unordered_map<long, Professor&> professores;
 
     cout << "\n--- Meus Agendamentos ---" << endl;
 
@@ -169,22 +171,33 @@ void AlunoUI::visualizar_agendamentos() const {
     for (const auto& a : agendamentos) {
         try {
             Horario h = horarioController.pegarHorario(a.getHorarioId());
+            long idProfessor = h.getId();
+            Professor p;
 
-            cout << "Início: " << h.getInicioStr()
-            << " | Fim: " << h.getFimStr()
-            << " | Status: " << a.getStatus()
-            << endl;
+            const auto& it = professores.find(idProfessor);
+            if (it != professores.end()) {
+                p = it->second;
+            } else {
+                p = professorController.read(idProfessor);
+                professores.emplace(idProfessor, p);
+            }
+
+            cout << "Professor: " << p.getNome()
+                 << " | Início: " << h.getInicioStr()
+                 << " | Fim: " << h.getFimStr()
+                 << " | Status: " << a.getStatus() << endl;
         } catch (const std::invalid_argument& e) {
             cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
             cout << ">> Tente novamente com dados válidos." << endl;
         } catch (const std::runtime_error& e) {
             cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao resgatar o horário."
-                << endl;
+                 << endl;
             cout << ">> Detalhes do Erro: " << e.what() << endl;
         } catch (...) {
-            cout << "\n>> ERRO DESCONHECIDO: Ocorreu uma falha inesperada durante "
+            cout << "\n>> ERRO DESCONHECIDO: Ocorreu uma falha inesperada "
+                    "durante "
                     "a listagem."
-                << endl;
+                 << endl;
         }
     }
 }
@@ -212,13 +225,12 @@ void AlunoUI::deletar_perfil() const {
         cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
         cout << ">> Tente novamente com dados válidos." << endl;
     } catch (const std::runtime_error& e) {
-        cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao deletar aluno."
-            << endl;
+        cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao deletar aluno." << endl;
         cout << ">> Detalhes do Erro: " << e.what() << endl;
     } catch (...) {
         cout << "\n>> ERRO DESCONHECIDO: Ocorreu uma falha inesperada durante "
                 "a exclusão."
-            << endl;
+             << endl;
     }
 }
 
@@ -246,7 +258,7 @@ bool AlunoUI::show() const {
             case 4:
                 visualizar_agendamentos();
                 break;
-            case 5 :
+            case 5:
                 deletar_perfil();
                 break;
         }
