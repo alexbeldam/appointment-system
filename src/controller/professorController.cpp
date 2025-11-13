@@ -41,7 +41,7 @@ Professor ProfessorController::create(const string& nome, const string& email,
                 "A disciplina deve ter pelo menos 3 caracteres.");
         }
 
-        return service.save(nome, email, encrypt(senha), disciplina);
+        return service.save(nome, email, mock_bcrypt(senha), disciplina);
 
         // 4. TRATAMENTO DE ERROS
     } catch (const std::invalid_argument& e) {
@@ -143,7 +143,7 @@ Professor ProfessorController::update(long id, const string& nome,
                 throw std::invalid_argument(
                     "A nova senha deve conter apenas letras e números...");
             }
-            newSenha = encrypt(senha);
+            newSenha = mock_bcrypt(senha);
         }
 
         // d. Disciplina: Usa o novo valor se não for vazio. Valida o resultado.

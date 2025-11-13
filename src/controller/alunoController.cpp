@@ -40,7 +40,7 @@ Aluno AlunoController::create(const string& nome, const string& email,
                 "A matrícula deve ser um número positivo.");
         }
 
-        return service.save(nome, email, encrypt(senha), matricula);
+        return service.save(nome, email, mock_bcrypt(senha), matricula);
 
         // 4. TRATAMENTO DE ERROS
     } catch (const std::invalid_argument& e) {
@@ -140,7 +140,7 @@ Aluno AlunoController::update(long id, const string& nome, const string& email,
                 throw std::invalid_argument(
                     "A nova senha deve conter apenas letras e números...");
             }
-            newSenha = encrypt(senha);
+            newSenha = mock_bcrypt(senha);
         }
 
         // d. Matrícula: Usa a matrícula nova se for positiva. Caso contrário,

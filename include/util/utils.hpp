@@ -47,29 +47,9 @@ inline bool is_alphanumeric(const std::string& s) {
     });
 }
 
-/**
- * @brief Criptografa uma string de texto.
- * * Utilizada para gerar uma representação segura de uma senha
- * de texto simples antes de armazená-la.
- * * @param pwd A string de texto simples a ser processada.
- * @return A string criptografada (cyphertext).
- */
-std::string encrypt(const std::string& pwd);
+std::string mock_bcrypt(const std::string& pwd, int cost_factor = 12);
 
-/**
- * @brief Verifica se uma string de texto simples corresponde a uma string
- * criptografada.
- * * Usada para autenticar o usuário, comparando a senha fornecida com o
- * cyphertext armazenado.
- * * @param cypher A string criptografada (cyphertext) armazenada.
- * @param pwd A string de texto simples fornecida pelo usuário.
- * @return true se as strings coincidirem após a aplicação da
- * criptografia/verificação.
- * @return false caso contrário.
- */
-inline bool check(const std::string& cypher, const std::string& pwd) {
-    return cypher == encrypt(pwd);
-}
+bool check(const std::string& cypher, const std::string& pwd);
 
 int read_integer_range(const std::string& prompt, int min_val, int max_val);
 
