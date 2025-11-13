@@ -111,7 +111,9 @@ class AgendamentoService {
 
     bool atualizarConfirmado(long id) const;
 
-    vector<Agendamento>listPendenteByIdHorario(long id) const;
+    std::vector<Agendamento> listPendenteByIdHorario(long id) const;
+
+    std::vector<Agendamento> listPendenteByIdProfessor(long id) const;
 
 };
 

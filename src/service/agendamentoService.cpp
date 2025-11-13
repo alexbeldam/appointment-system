@@ -265,6 +265,19 @@ vector<Agendamento> AgendamentoService::listPendenteByIdHorario(long id) const{
     return agendamentosPendentes;
 }
 
+vector<Agendamento> AgendamentoService::listPendenteByIdProfessor(long id) const {
+    vector<Horario> horarios = horarioService.listDisponivelByIdProfessor(id);
+    vector<Agendamento> agendamentos;
+
+    for (const auto& h : horarios) {
+        vector<Agendamento> buffer = listPendenteByIdHorario(h.getId());
+
+        agendamentos.insert(agendamentos.end(), buffer.begin(), buffer.end());        
+    }
+
+    return agendamentos;
+}
+
 bool AgendamentoService::atualizarRecusado(long id) const {
     try{
         const auto& agendamentoOpt = getById(id);
