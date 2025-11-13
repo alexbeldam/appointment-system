@@ -160,7 +160,7 @@ void AlunoUI::atualizar_perfil() const {
 void AlunoUI::visualizar_agendamentos() const {
     const auto& aluno = sessionManager.getCurrentAluno();
     const auto& agendamentos = aluno.getAgendamentos();
-    unordered_map<long, Professor&> professores;
+    unordered_map<long, Professor> professores;
 
     cout << "\n--- Meus Agendamentos ---" << endl;
 
@@ -206,7 +206,7 @@ void AlunoUI::visualizar_agendamentos() const {
 void AlunoUI::cancelar_agendamento() const {
     const auto& aluno = sessionManager.getCurrentAluno();
     const auto& agendamentos = aluno.getAgendamentos();
-    unordered_map<long, Professor&> professores;
+    unordered_map<long, Professor> professores;
     vector<Agendamento> pendentes;
     for (const auto& a : agendamentos) {
         if (a.getStatus() == "PENDENTE") {
