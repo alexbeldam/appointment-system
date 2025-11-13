@@ -202,6 +202,54 @@ void AlunoUI::visualizar_agendamentos() const {
     }
 }
 
+void AlunoUI::cancelar_agendamento() const {
+    const auto& aluno = sessionManager.getCurrentAluno();
+    const auto& agendamentos = aluno.getAgendamentos();
+    unordered_map<long, Professor&> professores;
+    vector<Agendamento> pendentes;
+    for (const auto& a : agendamentos) {
+        if (a.getStatus() == "PENDENTE") {
+            pendentes.push_back(a);
+        }
+    }
+    if (pendentes.empty()) {
+        std::cout << "\n>> Você não tem agendamentos pendentes para cancelar." << std::endl;
+        return;
+    }
+    std::cout << "\n--- Cancelar Agendamento ---" << std::endl;
+    for (size_t i = 0; i < pendentes.size(); ++i) {
+        const auto& a = pendentes[i];
+        Horario h = horarioController.pegarHorario(a.getHorarioId());
+        long idProfessor = h.getId();
+        Professor p;
+        const auto& it = professores.find(idProfessor);
+        if (it != professores.end()) {
+            p = it->second;
+        } else {
+            p = professorController.read(idProfessor);
+            professores.emplace(idProfessor, p);
+        }
+        std::cout << (i + 1) << " - Professor: " << p.getNome()
+                  << " | Início: " << h.getInicioStr()
+                  << " | Fim: " << h.getFimStr()
+                  << " | Status: " << a.getStatus() << std::endl;
+    }
+    size_t escolha = read_integer_range(
+        "Escolha um agendamento pendente para cancelar (0 para sair): ",
+        0, pendentes.size());
+    if (escolha == 0) {
+        std::cout << "\n>> Operação cancelada." << std::endl;
+        return;
+    }
+    const auto& selecionado = pendentes[escolha - 1];
+    try {
+        agendamentoController.cancelar(selecionado.getId());
+        std::cout << "\n✅ Agendamento cancelado com sucesso!" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "\n>> Erro ao cancelar agendamento: " << e.what() << std::endl;
+    }
+}
+
 void AlunoUI::deletar_perfil() const {
     cout << "\n--- Deletar perfil ---" << endl;
 
@@ -241,7 +289,7 @@ bool AlunoUI::show() const {
         desenhar_relogio();
         imprimir_menu();
 
-        opcao = read_integer_range("Escolha uma opcao: ", 0, 5);
+        opcao = read_integer_range("Escolha uma opcao: ", 0, 6);
 
         switch (opcao) {
             case 0:
@@ -259,6 +307,9 @@ bool AlunoUI::show() const {
                 visualizar_agendamentos();
                 break;
             case 5:
+                cancelar_agendamento();  // nova função
+                break;
+            case 6:
                 deletar_perfil();
                 break;
         }
@@ -276,7 +327,8 @@ void imprimir_menu() {
     cout << "2 - Agendar Horário" << endl;
     cout << "3 - Atualizar Perfil" << endl;
     cout << "4 - Listar meus agendamentos" << endl;
-    cout << "5 - Deletar perfil" << endl;
+    cout << "5 - Cancelar agendamento" << endl;
+    cout << "6 - Deletar perfil" << endl;
     cout << "0 - Sair do programa" << endl;
 }
 

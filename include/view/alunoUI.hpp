@@ -32,6 +32,7 @@ class AlunoUI : public ConsoleUI {
     void atualizar_perfil() const;
     void visualizar_agendamentos() const;
     void deletar_perfil() const;
+    void cancelar_agendamento() const;
 
    public:
     AlunoUI(const AlunoController& ac, const ProfessorController& pc,
