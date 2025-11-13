@@ -41,6 +41,12 @@ class AgendamentoService {
      */
     Agendamento save(long alunoId, long horarioId) const;
 
+      /**
+     * @brief Cancela um agendamento e libera o horário correspondente.
+     * @param agendamentoId ID do agendamento a ser cancelado.
+     */
+    void cancelar(long agendamentoId) const;
+    
     /**
      * @brief Busca um agendamento pelo seu ID único.
      * @param id O ID do agendamento.
