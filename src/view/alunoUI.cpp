@@ -146,11 +146,12 @@ void AlunoUI::atualizar_perfil() const {
         Aluno updated = alunoController.update(alunoId, novoNome, novoEmail,
                                                novaSenha, novaMatricula);
 
-        cout << "\n✅ Perfil atualizado com sucesso!" << endl;
-        cout << "Nome: " << updated.getNome() << endl;
-        cout << "Email: " << updated.getEmail() << endl;
-        cout << "Matrícula: " << updated.getMatricula() << endl;
-
+        cout << "\n=========================================" << endl;
+        cout << "✅ SUCESSO! Perfil atualizado:" << endl;
+        cout << "   Nome: " << updated.getNome() << endl;
+        cout << "   Email: " << updated.getEmail() << endl;
+        cout << "   Matrícula: " << updated.getMatricula() << endl;
+        cout << "=========================================" << endl;
     } catch (const exception& e) {
         cout << "\n>> ERRO ao atualizar perfil: " << e.what() << endl;
     }
@@ -213,7 +214,8 @@ void AlunoUI::cancelar_agendamento() const {
         }
     }
     if (pendentes.empty()) {
-        std::cout << "\n>> Você não tem agendamentos pendentes para cancelar." << std::endl;
+        std::cout << "\n>> Você não tem agendamentos pendentes para cancelar."
+                  << std::endl;
         return;
     }
     std::cout << "\n--- Cancelar Agendamento ---" << std::endl;
@@ -229,14 +231,12 @@ void AlunoUI::cancelar_agendamento() const {
             p = professorController.read(idProfessor);
             professores.emplace(idProfessor, p);
         }
-        std::cout << (i + 1) << " - Professor: " << p.getNome()
+        std::cout << '#' << (i + 1) << " | Professor: " << p.getNome()
                   << " | Início: " << h.getInicioStr()
-                  << " | Fim: " << h.getFimStr()
-                  << " | Status: " << a.getStatus() << std::endl;
+                  << " | Fim: " << h.getFimStr() << std::endl;
     }
     size_t escolha = read_integer_range(
-        "Escolha um agendamento pendente para cancelar (0 para sair): ",
-        0, pendentes.size());
+        "Escolha um agendamento (0 para sair): ", 0, pendentes.size());
     if (escolha == 0) {
         std::cout << "\n>> Operação cancelada." << std::endl;
         return;
@@ -244,9 +244,20 @@ void AlunoUI::cancelar_agendamento() const {
     const auto& selecionado = pendentes[escolha - 1];
     try {
         agendamentoController.cancelar(selecionado.getId());
-        std::cout << "\n✅ Agendamento cancelado com sucesso!" << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "\n>> Erro ao cancelar agendamento: " << e.what() << std::endl;
+        cout << "\n====================================" << endl;
+        cout << "✅ SUCESSO! Agendamento cancelado!" << endl;
+        cout << "====================================" << endl;
+    } catch (const std::invalid_argument& e) {
+        cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
+        cout << ">> Tente novamente com dados válidos." << endl;
+    } catch (const std::runtime_error& e) {
+        cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao cancelar agendamento."
+             << endl;
+        cout << ">> Detalhes do Erro: " << e.what() << endl;
+    } catch (...) {
+        cout << "\n>> ERRO DESCONHECIDO: Ocorreu uma falha inesperada "
+                "durante o cancelamento."
+             << endl;
     }
 }
 

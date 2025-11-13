@@ -225,11 +225,12 @@ void ProfessorUI::atualizar_perfil() const {
         Professor updated = professorController.update(
             professorId, novoNome, novoEmail, novaSenha, novaDisciplina);
 
-        cout << "\n✅ Perfil atualizado com sucesso!" << endl;
-        cout << "Nome: " << updated.getNome() << endl;
-        cout << "Email: " << updated.getEmail() << endl;
-        cout << "Disciplina: " << updated.getDisciplina() << endl;
-
+        cout << "\n=========================================" << endl;
+        cout << "✅ SUCESSO! Perfil atualizado:" << endl;
+        cout << "   Nome: " << updated.getNome() << endl;
+        cout << "   Email: " << updated.getEmail() << endl;
+        cout << "   Disciplina: " << updated.getDisciplina() << endl;
+        cout << "=========================================" << endl;
     } catch (const exception& e) {
         cout << "\n>> ERRO ao atualizar perfil: " << e.what() << endl;
     }
@@ -259,12 +260,12 @@ void ProfessorUI::deletar_perfil() const {
         cout << ">> Tente novamente com dados válidos." << endl;
     } catch (const std::runtime_error& e) {
         cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao deletar professor."
-            << endl;
+             << endl;
         cout << ">> Detalhes do Erro: " << e.what() << endl;
     } catch (...) {
         cout << "\n>> ERRO DESCONHECIDO: Ocorreu uma falha inesperada durante "
                 "a exclusão."
-            << endl;
+             << endl;
     }
 }
 
