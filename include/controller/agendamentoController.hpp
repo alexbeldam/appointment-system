@@ -47,6 +47,8 @@ class AgendamentoController {
 
     void confirmar(long id) const;
 
+    void recusar(long id) const;
+
 };
 
 #endif

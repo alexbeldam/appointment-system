@@ -74,5 +74,14 @@ void AgendamentoController::confirmar(long agendamentoId) const{
             e, "confirmar agendamento com ID " + std::to_string(agendamentoId));
         throw;
     }
-    
+}
+
+void AgendamentoController::recusar(long agendamentoId) const{
+    try{
+        agendamentoService.atualizarRecusado(agendamentoId);
+    } catch (const std::runtime_error& e) {
+        handle_controller_exception(
+            e, "recusar agendamento com ID " + std::to_string(agendamentoId));
+        throw;
+    }
 }
