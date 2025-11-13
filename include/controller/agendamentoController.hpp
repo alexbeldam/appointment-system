@@ -36,6 +36,13 @@ class AgendamentoController {
      * @param horarioId O ID do horário que o usuário selecionou na UI.
      */
     void agendarHorario(long alunoID, long horarioId) const;
+
+     /**
+     * @brief Cancela um agendamento existente e libera o horário correspondente.
+     * @param agendamentoId ID do agendamento a ser cancelado.
+     */
+    void cancelar(long agendamentoId) const;
+
 };
 
 #endif
