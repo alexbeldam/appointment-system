@@ -209,7 +209,7 @@ bool AgendamentoService::deleteByIdAluno(long id) const {
 bool AgendamentoService::deleteByIdHorario(long id) const {
     try {
         vector<Agendamento> agendamentos =
-            listByIdHorario(this->connection, id);
+            listByIdHorario(id);
         if (agendamentos.empty())
             return false;
         connection.deleteByColumn(AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX,
@@ -232,8 +232,7 @@ bool AgendamentoService::deleteByIdHorario(long id) const {
  * @param id O id do horario.
  * @return vector<Agendamento>
  */
-vector<Agendamento> AgendamentoService::listByIdHorario(
-    const MockConnection& connection, long id) const {
+vector<Agendamento> AgendamentoService::listByIdHorario(long id) const {
     vector<Agendamento> agendamentos;
     try {
         auto linhas = connection.selectByColumn(
@@ -253,6 +252,17 @@ vector<Agendamento> AgendamentoService::listByIdHorario(
     } catch (const runtime_error& e) {
         throw;
     }
+}
+
+vector<Agendamento> AgendamentoService::listPendenteByIdHorario(long id) const{
+    std::vector<Agendamento> todosAgendamentos = listByIdHorario(id);
+    std::vector<Agendamento> agendamentosPendentes;
+    for (const auto& agendamento : todosAgendamentos){
+        if (agendamento.getStatus() == "PENDENTE"){
+            agendamentosPendentes.push_back(agendamento);
+        }
+    }
+    return agendamentosPendentes;
 }
 
 bool AgendamentoService::atualizarRecusado(long id) const {
