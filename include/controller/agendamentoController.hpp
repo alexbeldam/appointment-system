@@ -49,6 +49,9 @@ class AgendamentoController {
 
     void recusar(long id) const;
 
+    std::vector<Agendamento> listarAgendamentosPendentes(long professorID) const;
+
+
 };
 
 #endif

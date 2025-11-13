@@ -85,3 +85,14 @@ void AgendamentoController::recusar(long agendamentoId) const{
         throw;
     }
 }
+
+std::vector<Agendamento> AgendamentoController::listarAgendamentosPendentes(long professorID) const{
+    try{
+        std::vector<Agendamento> agendamentos = agendamentoService.listPendenteByIdProfessor(professorID);
+        return agendamentos;
+    }catch(const std::runtime_error &e){
+        handle_controller_exception(
+            e, "listar agendamento pendente com ID " + std::to_string(professorID));
+        throw;
+    }
+} 
