@@ -55,8 +55,10 @@ void AgendamentoController::agendarHorario(long alunoID, long horarioId) const {
 void AgendamentoController::cancelar(long agendamentoId) const {
     try {
         agendamentoService.cancelar(agendamentoId);
-        std::cout << "✅ Agendamento cancelado com sucesso!" << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "❌ Erro ao cancelar agendamento: " << e.what() << std::endl;
+    } catch (const std::runtime_error& e) {
+        handle_controller_exception(
+            e, "cancelar agendamento com ID " + std::to_string(agendamentoId));
+
+        throw;
     }
 }
