@@ -108,6 +108,8 @@ class AgendamentoService {
     bool deleteByIdHorario(long id) const;
 
     bool atualizarRecusado(long id) const;
+
+    bool atualizarConfirmado(long id) const;
 };
 
 #endif

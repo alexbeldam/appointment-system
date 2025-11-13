@@ -292,3 +292,21 @@ bool AgendamentoService::atualizarRecusado(long id) const {
     }
 }
 
+bool AgendamentoService::atualizarConfirmado(long id) const {
+    try{
+        const auto& agendamentoOpt = getById(id);
+        if (!agendamentoOpt.has_value()){
+            return false;
+        }
+        
+        auto& agendamento = agendamentoOpt.value();
+        updateById(id, agendamento.getAlunoId(), 
+        agendamento.getHorarioId(), "CONFIRMADO");
+    }
+    catch (const invalid_argument& e) {
+        return false;
+    } catch (const runtime_error& e) {
+        throw;
+    }
+}
+
