@@ -106,6 +106,8 @@ class AgendamentoService {
      * @throws std::runtime_error Em caso de falha crítica de I/O.
      */
     bool deleteByIdHorario(long id) const;
+
+    bool atualizarRecusado(long id) const;
 };
 
 #endif

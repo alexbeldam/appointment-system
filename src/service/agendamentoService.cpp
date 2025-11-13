@@ -254,3 +254,41 @@ vector<Agendamento> AgendamentoService::listByIdHorario(
         throw;
     }
 }
+
+bool AgendamentoService::atualizarRecusado(long id) const {
+    try{
+        const auto& agendamentoOpt = getById(id);
+        if (!agendamentoOpt.has_value()){
+            return false;
+        }
+        
+        auto& agendamento = agendamentoOpt.value();
+        updateById(id, agendamento.getAlunoId(), 
+        agendamento.getHorarioId(), "RECUSADO");
+        return true;
+    }
+    catch (const invalid_argument& e) {
+        return false;
+    } catch (const runtime_error& e) {
+        throw;
+    }
+}
+
+bool AgendamentoService::atualizarRecusado(long id) const {
+    try{
+        const auto& agendamentoOpt = getById(id);
+        if (!agendamentoOpt.has_value()){
+            return false;
+        }
+        
+        auto& agendamento = agendamentoOpt.value();
+        updateById(id, agendamento.getAlunoId(), 
+        agendamento.getHorarioId(), "RECUSADO");
+    }
+    catch (const invalid_argument& e) {
+        return false;
+    } catch (const runtime_error& e) {
+        throw;
+    }
+}
+
