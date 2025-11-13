@@ -2,6 +2,7 @@
 #define AGENDAMENTO_CONTROLLER_HPP
 
 #include "service/agendamentoService.hpp"
+#include "service/horarioService.hpp"
 
 /**
  * @brief Camada de Controle para o caso de uso "Agendar Horário".
@@ -15,13 +16,14 @@ class AgendamentoController {
      * @brief Referência constante ao serviço de agendamento.
      */
     const AgendamentoService& agendamentoService;
+    const HorarioService& horarioService;
 
    public:
     /**
      * @brief Construtor para injeção de dependência.
      * @param service Referência constante para o serviço de agendamento.
      */
-    AgendamentoController(const AgendamentoService& service);
+    AgendamentoController(const AgendamentoService& service, const HorarioService &horarioservice);
 
     /**
      * @brief Orquestra a ação de agendar um horário.
@@ -42,6 +44,8 @@ class AgendamentoController {
      * @param agendamentoId ID do agendamento a ser cancelado.
      */
     void cancelar(long agendamentoId) const;
+
+    void confirmar(long id) const;
 
 };
 

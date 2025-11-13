@@ -14,8 +14,8 @@
  * @param service Referência constante para o serviço de agendamento.
  */
 
-AgendamentoController::AgendamentoController(const AgendamentoService& service)
-    : agendamentoService(service) {
+AgendamentoController::AgendamentoController(const AgendamentoService& service, const HorarioService& horarioservice)
+    : agendamentoService(service),  horarioService(horarioservice){
     // Lista de inicialização de membros faz todo o trabalho.
 }
 
@@ -61,4 +61,18 @@ void AgendamentoController::cancelar(long agendamentoId) const {
 
         throw;
     }
+}
+
+void AgendamentoController::confirmar(long agendamentoId) const{
+    try{
+        if(agendamentoService.atualizarConfirmado(agendamentoId)){
+            const auto& agendamento = agendamentoService.getById(agendamentoId).value();
+            horarioService.marcarComoReservado(agendamento.getHorarioId());
+        };
+    } catch (const std::runtime_error& e) {
+        handle_controller_exception(
+            e, "confirmar agendamento com ID " + std::to_string(agendamentoId));
+        throw;
+    }
+    
 }
