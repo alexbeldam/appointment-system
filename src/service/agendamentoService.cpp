@@ -1,7 +1,7 @@
 #include "service/agendamentoService.hpp"
 
-#include <optional>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -75,23 +75,11 @@ void AgendamentoService::cancelar(long agendamentoId) const {
 
         // 2️⃣ Atualiza o status do agendamento para "CANCELADO"
         stringstream dados;
-        dados << agendamento.getAlunoId() << ","
-              << agendamento.getHorarioId() << ","
+        dados << agendamento.getAlunoId() << "," << agendamento.getHorarioId()
+              << ","
               << "CANCELADO";
 
         connection.update(AGENDAMENTO_TABLE, agendamento.getId(), dados.str());
-
-        // 3️⃣ Libera o horário correspondente (marca como disponível)
-        long horarioId = agendamento.getHorarioId();
-        Horario horario = horarioService.getById(horarioId);
-        if (!horario.isDisponivel()) {
-            std::stringstream dadosHorario;
-            dadosHorario << horario.getProfessorId() << ","
-                         << horario.getInicio() << ","
-                         << horario.getFim() << ","
-                         << "1"; // disponível
-            connection.update("horarios", horario.getId(), dadosHorario.str());
-        }
 
         // 4️⃣ Publica evento de atualização
         this->bus.publish(AgendamentoUpdatedEvent(
@@ -99,14 +87,15 @@ void AgendamentoService::cancelar(long agendamentoId) const {
                         agendamento.getHorarioId(), "CANCELADO")));
 
     } catch (const std::invalid_argument& e) {
-       std::cerr << "[ERRO] Falha ao cancelar agendamento: " << e.what() << std::endl;
+        std::cerr << "[ERRO] Falha ao cancelar agendamento: " << e.what()
+                  << std::endl;
         throw;
     } catch (const std::runtime_error& e) {
-        std::cerr << "[ERRO] Falha ao cancelar agendamento: " << e.what() << std::endl;
+        std::cerr << "[ERRO] Falha ao cancelar agendamento: " << e.what()
+                  << std::endl;
         throw;
     }
 }
-
 
 std::optional<Agendamento> AgendamentoService::getById(long id) const {
     try {
