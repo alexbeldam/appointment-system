@@ -8,15 +8,18 @@
 using namespace std;
 
 static void imprimir_menu();
+static void imprimir_opcoes();
 static void imprimir_confirmacao();
 
 ProfessorUI::ProfessorUI(const ProfessorController& pc,
                          const HorarioController& hc,
-                         const AgendamentoController& ac, SessionManager& sm)
+                         const AgendamentoController& ac, 
+                         const AlunoController& alc, SessionManager& sm)
     : ConsoleUI(sm),
       professorController(pc),
       horarioController(hc),
       agendamentoController(ac),
+      alunoController(alc),
       sessionManager(sm) {}
 
 void ProfessorUI::cadastro_horario() const {
@@ -269,12 +272,97 @@ void ProfessorUI::deletar_perfil() const {
     }
 }
 
+void ProfessorUI::avaliar_agendamentos() const {
+    const auto& professor = sessionManager.getCurrentProfessor();
+    unordered_map<long, Aluno> alunos;
+    unordered_map<long, Horario> horarios;
+    cout << "\n--- Avaliar Agendamentos Pendentes ---" << endl;
+
+    vector<Agendamento> agendamentos;
+    try {
+        agendamentos =
+            agendamentoController.listarAgendamentosPendentes(professor.getId());
+    } catch (const exception& e) {
+        cout << "\n>> ERRO ao listar agendamentos: " << e.what() << endl;
+        return;
+    }
+    while (true) {
+        if (agendamentos.empty()) {
+            cout << ">> Nenhum agendamento pendente." << endl;
+            return; 
+        }
+
+        cout << "\nAgendamentos aguardando sua avaliação:" << endl;
+        for (size_t i = 0; i < agendamentos.size(); i++) {
+            const auto& agt = agendamentos[i];
+            long idAluno = agt.getAlunoId();
+            long idHorario = agt.getHorarioId();
+            Aluno aluno;
+            Horario h;
+            auto itAluno = alunos.find(idAluno);
+            if (itAluno != alunos.end()) {
+                aluno = itAluno->second;
+            } else {
+                aluno = alunoController.read(idAluno);
+                alunos.emplace(idAluno, aluno);
+            }
+            auto itHorario = horarios.find(idHorario);
+            if (itHorario != horarios.end()) {
+                h = itHorario->second;
+            } else {
+                h = horarioController.pegarHorario(idHorario);
+                horarios.emplace(idHorario, h);
+            }
+
+            cout << '#' << (i + 1) << " | Aluno: " << aluno.getNome()
+                 << " | Início: " << h.getInicioStr()
+                 << " | Fim: " << h.getFimStr() << endl;
+        }
+        size_t agtIdx = read_integer_range(
+            "\nEscolha um agendamento para avaliar (0 para voltar): ", 0,
+            agendamentos.size());
+
+        if (agtIdx == 0) {
+            cout << "\n>> Voltando ao menu principal." << endl;
+            return;
+        }
+        size_t vectorIndex = agtIdx - 1;
+        const auto& agendamento = agendamentos[vectorIndex];
+
+        imprimir_opcoes(); 
+        int escolha = read_integer_range("Escolha uma opção: ", 0, 2);
+
+        if (escolha == 0) {
+            cout << "\n>> Seleção cancelada. Voltando à lista..." << endl;
+            continue; 
+        }
+        try {
+            if (escolha == 1) {
+                agendamentoController.confirmar(agendamento.getId());
+                cout << "\n=========================================" << endl;
+                cout << "✅ SUCESSO! Agendamento CONFIRMADO." << endl;
+                cout << "=========================================" << endl;
+            } else if (escolha == 2) {
+                agendamentoController.recusar(agendamento.getId());
+                cout << "\n=========================================" << endl;
+                cout << "✅ SUCESSO! Agendamento RECUSADO." << endl;
+                cout << "=========================================" << endl;
+            }
+            agendamentos.erase(agendamentos.begin() + vectorIndex);
+
+        } catch (const std::exception& e) {
+            cout << "\n>> ERRO AO PROCESSAR AGENDAMENTO: " << e.what() << endl;
+            cout << ">> Tente novamente." << endl;
+        }
+    }
+}
+
 bool ProfessorUI::show() const {
     while (sessionManager.isProfessor()) {
         desenhar_relogio();
         imprimir_menu();
 
-        int opcao = read_integer_range("Escolha uma opcao: ", 0, 7);
+        int opcao = read_integer_range("Escolha uma opcao: ", 0, 8);
 
         switch (opcao) {
             case 0:
@@ -300,6 +388,8 @@ bool ProfessorUI::show() const {
             case 7:
                 deletar_perfil();
                 break;
+            case 8:
+                avaliar_agendamentos();
         }
 
         cout << "\nPressione Enter para continuar...";
@@ -318,7 +408,15 @@ void imprimir_menu() {
     cout << "5 - Excluir um horário" << endl;
     cout << "6 - Atualizar Perfil" << endl;
     cout << "7 - Deletar Perfil" << endl;
+    cout << "8 - Avaliar Agendamentos" << endl;
     cout << "0 - Sair do programa" << endl;
+}
+
+void imprimir_opcoes() {
+    cout << "MENU DE OPCOES:" << endl;
+    cout << "1 - Confirmar" << endl;
+    cout << "2 - Recusar" << endl;
+    cout << "0 - Voltar" << endl;
 }
 
 void imprimir_confirmacao() {
