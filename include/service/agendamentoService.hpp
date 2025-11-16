@@ -41,12 +41,12 @@ class AgendamentoService {
      */
     Agendamento save(long alunoId, long horarioId) const;
 
-      /**
+    /**
      * @brief Cancela um agendamento e libera o horário correspondente.
      * @param agendamentoId ID do agendamento a ser cancelado.
      */
     void cancelar(long agendamentoId) const;
-    
+
     /**
      * @brief Busca um agendamento pelo seu ID único.
      * @param id O ID do agendamento.
@@ -70,7 +70,7 @@ class AgendamentoService {
      * @return std::optional<Agendamento>
      */
     std::optional<Agendamento> updateById(long id, long alunoId, long horarioId,
-                                          const std::string& status) const;
+                                          const Status& status) const;
 
     std::vector<Agendamento> listByIdHorario(long id) const;
 

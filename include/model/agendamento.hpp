@@ -3,6 +3,25 @@
 
 #include <string>
 
+enum class Status { PENDENTE, CANCELADO, RECUSADO, CONFIRMADO };
+
+Status parseStatus(const std::string& str);
+
+constexpr const std::string_view stringify(const Status& stts) {
+    switch (stts) {
+        case Status::PENDENTE:
+            return "PENDENTE";
+        case Status::CANCELADO:
+            return "CANCELADO";
+        case Status::RECUSADO:
+            return "RECUSADO";
+        case Status::CONFIRMADO:
+            return "CONFIRMADO";
+        default:
+            return "";
+    }
+}
+
 /**
  * @brief Representa a entidade Agendamento.
  */
@@ -12,10 +31,9 @@ class Agendamento {
     long id;
     long alunoId;
     long horarioId;
-    std::string status;
+    Status status;
 
    public:
-
     /**
      * @brief Construtor para criar um novo agendamento (antes de salvar no DB).
      * @param alunoId ID do aluno.
@@ -23,7 +41,7 @@ class Agendamento {
      * @param status O status inicial (ex: "CONFIRMADO").
      */
 
-    Agendamento(long alunoId, long horarioId, const std::string& status);
+    Agendamento(long alunoId, long horarioId, const Status& status);
 
     /**
      * @brief Construtor para carregar um agendamento do DB (já com ID).
@@ -33,7 +51,7 @@ class Agendamento {
      * @param status O status lido do CSV.
      */
 
-    Agendamento(long id, long alunoId, long horarioId, const std::string& status);
+    Agendamento(long id, long alunoId, long horarioId, const Status& status);
 
     /**
      * @brief Obtém o identificador único (ID) do Agendamento.
@@ -60,14 +78,16 @@ class Agendamento {
      * @return O status.
      */
 
-    std::string getStatus() const;
+    const Status& getStatus() const;
+
+    const std::string_view getStatusStr() const;
 
     // --- NÃO APAGAR ---
 
     /**
      * @brief Construtor de cópia (copy constructor).
      */
-    
+
     Agendamento(const Agendamento& other) = default;
 };
 

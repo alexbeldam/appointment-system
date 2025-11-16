@@ -186,7 +186,7 @@ void AlunoUI::visualizar_agendamentos() const {
             cout << "Professor: " << p.getNome()
                  << " | Início: " << h.getInicioStr()
                  << " | Fim: " << h.getFimStr()
-                 << " | Status: " << a.getStatus() << endl;
+                 << " | Status: " << a.getStatusStr() << endl;
         } catch (const std::invalid_argument& e) {
             cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
             cout << ">> Tente novamente com dados válidos." << endl;
@@ -209,7 +209,7 @@ void AlunoUI::cancelar_agendamento() const {
     unordered_map<long, Professor> professores;
     vector<Agendamento> pendentes;
     for (const auto& a : agendamentos) {
-        if (a.getStatus() == "PENDENTE") {
+        if (a.getStatus() == Status::PENDENTE) {
             pendentes.push_back(a);
         }
     }

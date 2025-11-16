@@ -55,7 +55,7 @@ Agendamento AgendamentoService::save(long alunoId, long horarioId) const {
 
     long newId = connection.insert(AGENDAMENTO_TABLE, dados.str());
 
-    Agendamento salvo(newId, alunoId, horarioId, "PENDENTE");
+    Agendamento salvo(newId, alunoId, horarioId, Status::PENDENTE);
 
     // AC 1 (Notificar)
     this->bus.publish(AgendamentoCreatedEvent(salvo));
@@ -84,7 +84,7 @@ void AgendamentoService::cancelar(long agendamentoId) const {
         // 4️⃣ Publica evento de atualização
         this->bus.publish(AgendamentoUpdatedEvent(
             Agendamento(agendamento.getId(), agendamento.getAlunoId(),
-                        agendamento.getHorarioId(), "CANCELADO")));
+                        agendamento.getHorarioId(), Status::CANCELADO)));
 
     } catch (const std::invalid_argument& e) {
         std::cerr << "[ERRO] Falha ao cancelar agendamento: " << e.what()
@@ -108,7 +108,7 @@ std::optional<Agendamento> AgendamentoService::getById(long id) const {
         getline(ss, statusStr, ',');
 
         return Agendamento(stol(idStr), stol(alunoIdStr), stol(horarioIdStr),
-                           statusStr);
+                           parseStatus(statusStr));
 
     } catch (const invalid_argument& e) {
         return std::nullopt;
@@ -130,7 +130,8 @@ vector<Agendamento> AgendamentoService::listAll() const {
             getline(ss, statusStr, ',');
 
             agendamentos.emplace_back(stol(idStr), stol(alunoIdStr),
-                                      stol(horarioIdStr), statusStr);
+                                      stol(horarioIdStr),
+                                      parseStatus(statusStr));
         }
         return agendamentos;
     } catch (const runtime_error& e) {
@@ -139,10 +140,10 @@ vector<Agendamento> AgendamentoService::listAll() const {
 }
 
 std::optional<Agendamento> AgendamentoService::updateById(
-    long id, long alunoId, long horarioId, const std::string& status) const {
+    long id, long alunoId, long horarioId, const Status& status) const {
     try {
         stringstream dados;
-        dados << alunoId << "," << horarioId << "," << status;
+        dados << alunoId << "," << horarioId << "," << stringify(status);
 
         connection.update(AGENDAMENTO_TABLE, id, dados.str());
         Agendamento agendamentoAtualizado(id, alunoId, horarioId, status);
@@ -181,7 +182,8 @@ vector<Agendamento> AgendamentoService::listByIdAluno(long id) const {
             getline(ss, statusStr, ',');
 
             agendamentos.emplace_back(stol(idStr), stol(alunoIdStr),
-                                      stol(horarioIdStr), statusStr);
+                                      stol(horarioIdStr),
+                                      parseStatus(statusStr));
         }
         return agendamentos;
     } catch (const runtime_error& e) {
@@ -208,8 +210,7 @@ bool AgendamentoService::deleteByIdAluno(long id) const {
 
 bool AgendamentoService::deleteByIdHorario(long id) const {
     try {
-        vector<Agendamento> agendamentos =
-            listByIdHorario(id);
+        vector<Agendamento> agendamentos = listByIdHorario(id);
         if (agendamentos.empty())
             return false;
         connection.deleteByColumn(AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX,
@@ -246,7 +247,8 @@ vector<Agendamento> AgendamentoService::listByIdHorario(long id) const {
             getline(ss, statusStr, ',');
 
             agendamentos.emplace_back(stol(idStr), stol(alunoIdStr),
-                                      stol(horarioIdStr), statusStr);
+                                      stol(horarioIdStr),
+                                      parseStatus(statusStr));
         }
         return agendamentos;
     } catch (const runtime_error& e) {
@@ -254,43 +256,43 @@ vector<Agendamento> AgendamentoService::listByIdHorario(long id) const {
     }
 }
 
-vector<Agendamento> AgendamentoService::listPendenteByIdHorario(long id) const{
+vector<Agendamento> AgendamentoService::listPendenteByIdHorario(long id) const {
     std::vector<Agendamento> todosAgendamentos = listByIdHorario(id);
     std::vector<Agendamento> agendamentosPendentes;
-    for (const auto& agendamento : todosAgendamentos){
-        if (agendamento.getStatus() == "PENDENTE"){
+    for (const auto& agendamento : todosAgendamentos) {
+        if (agendamento.getStatus() == Status::PENDENTE) {
             agendamentosPendentes.push_back(agendamento);
         }
     }
     return agendamentosPendentes;
 }
 
-vector<Agendamento> AgendamentoService::listPendenteByIdProfessor(long id) const {
+vector<Agendamento> AgendamentoService::listPendenteByIdProfessor(
+    long id) const {
     vector<Horario> horarios = horarioService.listDisponivelByIdProfessor(id);
     vector<Agendamento> agendamentos;
 
     for (const auto& h : horarios) {
         vector<Agendamento> buffer = listPendenteByIdHorario(h.getId());
 
-        agendamentos.insert(agendamentos.end(), buffer.begin(), buffer.end());        
+        agendamentos.insert(agendamentos.end(), buffer.begin(), buffer.end());
     }
 
     return agendamentos;
 }
 
 bool AgendamentoService::atualizarRecusado(long id) const {
-    try{
+    try {
         const auto& agendamentoOpt = getById(id);
-        if (!agendamentoOpt.has_value()){
+        if (!agendamentoOpt.has_value()) {
             return false;
         }
-        
+
         auto& agendamento = agendamentoOpt.value();
-        updateById(id, agendamento.getAlunoId(), 
-        agendamento.getHorarioId(), "RECUSADO");
+        updateById(id, agendamento.getAlunoId(), agendamento.getHorarioId(),
+                   Status::RECUSADO);
         return true;
-    }
-    catch (const invalid_argument& e) {
+    } catch (const invalid_argument& e) {
         return false;
     } catch (const runtime_error& e) {
         throw;
@@ -298,21 +300,19 @@ bool AgendamentoService::atualizarRecusado(long id) const {
 }
 
 bool AgendamentoService::atualizarConfirmado(long id) const {
-    try{
+    try {
         const auto& agendamentoOpt = getById(id);
-        if (!agendamentoOpt.has_value()){
+        if (!agendamentoOpt.has_value()) {
             return false;
         }
-        
+
         auto& agendamento = agendamentoOpt.value();
-        updateById(id, agendamento.getAlunoId(), 
-        agendamento.getHorarioId(), "CONFIRMADO");
+        updateById(id, agendamento.getAlunoId(), agendamento.getHorarioId(),
+                   Status::CONFIRMADO);
         return true;
-    }
-    catch (const invalid_argument& e) {
+    } catch (const invalid_argument& e) {
         return false;
     } catch (const runtime_error& e) {
         throw;
     }
 }
-
