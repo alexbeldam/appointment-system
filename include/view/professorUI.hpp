@@ -2,6 +2,7 @@
 #define PROFESSOR_UI_HPP
 
 #include "controller/agendamentoController.hpp"
+#include "controller/alunoController.hpp"
 #include "controller/horarioController.hpp"
 #include "controller/professorController.hpp"
 #include "event/bus.hpp"
@@ -21,6 +22,7 @@ class ProfessorUI : public ConsoleUI {
     const ProfessorController& professorController;
     const HorarioController& horarioController;
     const AgendamentoController& agendamentoController;
+    const AlunoController& alunoController;
 
     SessionManager& sessionManager;
 
@@ -53,9 +55,12 @@ class ProfessorUI : public ConsoleUI {
 
     void deletar_perfil() const;
 
+    void avaliar_agendamentos() const;
+
    public:
     ProfessorUI(const ProfessorController& pc, const HorarioController& hc,
-                const AgendamentoController& ac, SessionManager& sm);
+                const AgendamentoController& ac, const AlunoController& alc,
+                SessionManager& sm);
 
     virtual bool show() const override;
 };

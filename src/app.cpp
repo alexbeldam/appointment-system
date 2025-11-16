@@ -24,13 +24,13 @@ App::App()
       professorController(professorService),
       horarioController(horarioService),
       loginController(alunoService, professorService, bus),
-      agendamentoController(agendamentoService),
+      agendamentoController(agendamentoService, horarioService),
       authUI(alunoController, professorController, loginController,
              sessionManager),
       alunoUI(alunoController, professorController, horarioController,
               agendamentoController, sessionManager),
       professorUI(professorController, horarioController, agendamentoController,
-                  sessionManager) {}
+                  alunoController, sessionManager) {}
 
 void App::run() {
     bool keepRunning = true;
