@@ -306,22 +306,22 @@ bool AlunoUI::show() const {
             case 0:
                 return false;
             case 1:
-                fazer_logout();
-                break;
-            case 2:
                 agendar_horario();
                 break;
-            case 3:
-                atualizar_perfil();
-                break;
-            case 4:
+            case 2:
                 visualizar_agendamentos();
                 break;
+            case 3:
+                cancelar_agendamento();
+                break;
+            case 4:
+                atualizar_perfil();
+                break;
             case 5:
-                cancelar_agendamento();  // nova função
+                deletar_perfil();
                 break;
             case 6:
-                deletar_perfil();
+                fazer_logout();
                 break;
         }
 
@@ -334,12 +334,12 @@ bool AlunoUI::show() const {
 
 void imprimir_menu() {
     cout << "MENU ALUNO:" << endl;
-    cout << "1 - Logout" << endl;
-    cout << "2 - Agendar Horário" << endl;
-    cout << "3 - Atualizar Perfil" << endl;
-    cout << "4 - Listar meus agendamentos" << endl;
-    cout << "5 - Cancelar agendamento" << endl;
-    cout << "6 - Deletar perfil" << endl;
+    cout << "1 - Agendar Horário" << endl;
+    cout << "2 - Listar meus agendamentos" << endl;
+    cout << "3 - Cancelar agendamento" << endl;
+    cout << "4 - Atualizar Perfil" << endl;
+    cout << "5 - Deletar perfil" << endl;
+    cout << "6 - Logout" << endl;
     cout << "0 - Sair do programa" << endl;
 }
 

@@ -276,7 +276,7 @@ void ProfessorUI::avaliar_agendamentos() const {
     const auto& professor = sessionManager.getCurrentProfessor();
     unordered_map<long, Aluno> alunos;
     unordered_map<long, Horario> horarios;
-    cout << "\n--- Avaliar Agendamentos Pendentes ---" << endl;
+    cout << "\n--- Gerenciar Agendamentos Pendentes ---" << endl;
 
     vector<Agendamento> agendamentos;
     try {
@@ -292,7 +292,7 @@ void ProfessorUI::avaliar_agendamentos() const {
             return;
         }
 
-        cout << "\nAgendamentos aguardando sua avaliação:" << endl;
+        cout << "\nAgendamentos aguardando sua resposta:" << endl;
         for (size_t i = 0; i < agendamentos.size(); i++) {
             const auto& agt = agendamentos[i];
             long idAluno = agt.getAlunoId();
@@ -319,8 +319,9 @@ void ProfessorUI::avaliar_agendamentos() const {
                  << " | Fim: " << h.getFimStr() << endl;
         }
         size_t agtIdx = read_integer_range(
-            "\nEscolha um agendamento para avaliar (0 para voltar): ", 0,
-            agendamentos.size());
+            "\nEscolha um agendamento para confirmar ou recusar (0 para "
+            "voltar): ",
+            0, agendamentos.size());
 
         if (agtIdx == 0) {
             cout << "\n>> Voltando ao menu principal." << endl;
@@ -376,28 +377,30 @@ bool ProfessorUI::show() const {
             case 0:
                 return false;
             case 1:
-                fazer_logout();
+                avaliar_agendamentos();
                 break;
             case 2:
-                cadastro_horario();
                 break;
             case 3:
-                listar_horarios();
+                cadastro_horario();
                 break;
             case 4:
-                excluir_todos_horarios();
+                listar_horarios();
                 break;
             case 5:
                 excluir_horario();
                 break;
             case 6:
-                atualizar_perfil();
+                excluir_todos_horarios();
                 break;
             case 7:
-                deletar_perfil();
+                atualizar_perfil();
                 break;
             case 8:
-                avaliar_agendamentos();
+                deletar_perfil();
+                break;
+            case 9:
+                fazer_logout();
         }
 
         cout << "\nPressione Enter para continuar...";
@@ -409,14 +412,15 @@ bool ProfessorUI::show() const {
 
 void imprimir_menu() {
     cout << "MENU PROFESSOR:" << endl;
-    cout << "1 - Logout" << endl;
-    cout << "2 - Cadastrar horário disponível" << endl;
-    cout << "3 - Listar meus horários" << endl;
-    cout << "4 - Excluir todos meus horários" << endl;
+    cout << "1 - Gerenciar Agendamentos Pendentes" << endl;
+    cout << "2 - Cancelar Agendamentos Confirmados" << endl;
+    cout << "3 - Cadastrar horário disponível" << endl;
+    cout << "4 - Listar meus horários" << endl;
     cout << "5 - Excluir um horário" << endl;
-    cout << "6 - Atualizar Perfil" << endl;
-    cout << "7 - Deletar Perfil" << endl;
-    cout << "8 - Avaliar Agendamentos" << endl;
+    cout << "6 - Excluir todos meus horários" << endl;
+    cout << "7 - Atualizar Perfil" << endl;
+    cout << "8 - Deletar Perfil" << endl;
+    cout << "9 - Logout" << endl;
     cout << "0 - Sair do programa" << endl;
 }
 

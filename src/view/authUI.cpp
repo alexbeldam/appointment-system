@@ -238,7 +238,7 @@ void imprimir_menu_login() {
 
 void imprimir_menu_signup() {
     cout << "\nMENU DE OPCOES:" << endl;
-    cout << "1 - Cadastar aluno" << endl;
+    cout << "1 - Cadastrar aluno" << endl;
     cout << "2 - Cadastrar professor" << endl;
     cout << "0 - Voltar ao menu principal" << endl;
 }
