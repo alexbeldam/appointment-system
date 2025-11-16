@@ -172,7 +172,7 @@ void AlunoUI::visualizar_agendamentos() const {
     for (const auto& a : agendamentos) {
         try {
             Horario h = horarioController.pegarHorario(a.getHorarioId());
-            long idProfessor = h.getId();
+            long idProfessor = h.getProfessorId();
             Professor p;
 
             const auto& it = professores.find(idProfessor);
@@ -222,7 +222,7 @@ void AlunoUI::cancelar_agendamento() const {
     for (size_t i = 0; i < pendentes.size(); ++i) {
         const auto& a = pendentes[i];
         Horario h = horarioController.pegarHorario(a.getHorarioId());
-        long idProfessor = h.getId();
+        long idProfessor = h.getProfessorId();
         Professor p;
         const auto& it = professores.find(idProfessor);
         if (it != professores.end()) {
