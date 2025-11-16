@@ -72,7 +72,7 @@ class AgendamentoService {
     std::optional<Agendamento> updateById(long id, long alunoId, long horarioId,
                                           const std::string& status) const;
 
-    std::vector<Agendamento> listByIdHorario(const MockConnection&, long) const;
+    std::vector<Agendamento> listByIdHorario(long id) const;
 
     /**
      * @brief Deleta um agendamento pelo seu ID.
@@ -106,6 +106,15 @@ class AgendamentoService {
      * @throws std::runtime_error Em caso de falha crítica de I/O.
      */
     bool deleteByIdHorario(long id) const;
+
+    bool atualizarRecusado(long id) const;
+
+    bool atualizarConfirmado(long id) const;
+
+    std::vector<Agendamento> listPendenteByIdHorario(long id) const;
+
+    std::vector<Agendamento> listPendenteByIdProfessor(long id) const;
+
 };
 
 #endif
