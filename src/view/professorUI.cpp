@@ -347,6 +347,62 @@ bool ProfessorUI::avaliar_agendamentos() {
     return true;
 }
 
+void ProfessorUI::cancelar_agendamento() {
+    cout << "\n--- Cancelar Agendamento ---" << endl;
+
+    const auto& professor = sessionService->getProfessor();
+    auto horarios = professor->getHorariosOcupados();
+
+    Horario::AgendamentoVector agendamentos;
+
+    for (const auto& horario : horarios) {
+        auto confirmados = horario->getAgendamentosConfirmados();
+
+        agendamentos.insert(agendamentos.begin(), confirmados.begin(),
+                            confirmados.end());
+    }
+
+    if (agendamentos.empty()) {
+        cout << "\n>> Nenhum agendamento confirmado." << endl;
+        return;
+    }
+
+    for (size_t i = 0; i < agendamentos.size(); i++) {
+        const auto& agt = agendamentos[i];
+        auto aluno = agt->getAluno();
+        auto horario = agt->getHorario();
+
+        cout << '#' << (i + 1) << " | Aluno: " << aluno->getNome()
+             << " | Início: " << horario->getInicioStr()
+             << " | Fim: " << horario->getFimStr() << endl;
+    }
+
+    size_t agtIdx = read_integer_range(
+        "\nEscolha um agendamento cancelar (0 para "
+        "voltar): ",
+        0, agendamentos.size());
+
+    if (agtIdx == 0) {
+        cout << "\n>> Voltando ao menu principal." << endl;
+        return;
+    }
+
+    size_t vectorIndex = agtIdx - 1;
+    const auto& agendamento = agendamentos[vectorIndex];
+
+    try {
+        agendamentoController.cancelar(agendamento->getId());
+
+        cout << "\n==================================================" << endl;
+        cout << "✅ SUCESSO! Agendamento CANCELADO!" << endl;
+        cout << "==================================================" << endl;
+    } catch (const runtime_error& e) {
+        cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao cancelar agendamento."
+             << endl;
+        cout << ">> Detalhes do Erro: " << e.what() << endl;
+    }
+}
+
 bool ProfessorUI::show() {
     while (sessionService->isProfessor()) {
         desenhar_relogio();
@@ -361,6 +417,7 @@ bool ProfessorUI::show() {
                 fazer_avaliacoes();
                 break;
             case 2:
+                cancelar_agendamento();
                 break;
             case 3:
                 cadastro_horario();
@@ -394,7 +451,7 @@ bool ProfessorUI::show() {
 void imprimir_menu() {
     cout << "MENU PROFESSOR:" << endl;
     cout << "1 - Gerenciar Agendamentos Pendentes" << endl;
-    cout << "2 - Cancelar Agendamentos Confirmados" << endl;
+    cout << "2 - Cancelar Agendamento" << endl;
     cout << "3 - Cadastrar horário disponível" << endl;
     cout << "4 - Listar meus horários" << endl;
     cout << "5 - Excluir um horário" << endl;

@@ -56,6 +56,8 @@ class ProfessorUI : public ConsoleUI {
 
     void fazer_avaliacoes();
 
+    void cancelar_agendamento();
+
    public:
     ProfessorUI(ProfessorController& pc, HorarioController& hc,
                 AgendamentoController& ac,
