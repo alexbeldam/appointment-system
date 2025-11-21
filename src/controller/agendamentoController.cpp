@@ -5,6 +5,7 @@
 
 #include "model/agendamento.hpp"
 #include "util/utils.hpp"  // Para handle_controller_exception
+using namespace std;
 
 // --- MÉTODOS PÚBLICOS DA CLASSE AGENDAMENTOCONTROLLER ---
 
@@ -15,10 +16,8 @@
  */
 
 AgendamentoController::AgendamentoController(
-    const AgendamentoService& service, const HorarioService& horarioservice)
-    : agendamentoService(service), horarioService(horarioservice) {
-    // Lista de inicialização de membros faz todo o trabalho.
-}
+    const shared_ptr<AgendamentoService>& service)
+    : agendamentoService(service) {}
 
 /**
  * @brief Orquestra a ação de criar (agendar) um novo horário.
@@ -28,75 +27,58 @@ AgendamentoController::AgendamentoController(
  * @param alunoID O ID do aluno (fornecido pela UI).
  * @param horarioId O ID do horário que o usuário selecionou na UI.
  */
-void AgendamentoController::agendarHorario(long alunoID, long horarioId) const {
+shared_ptr<Agendamento> AgendamentoController::agendarHorario(long alunoID,
+                                                              long horarioId) {
     try {
         // 1. VALIDAÇÃO DE FORMATO
         if (alunoID <= 0) {
-            throw std::invalid_argument(
-                "ID do aluno inválido ou não fornecido.");
+            throw invalid_argument("ID do aluno inválido ou não fornecido.");
         }
         if (horarioId <= 0) {
-            throw std::invalid_argument(
-                "ID do horário inválido ou não fornecido.");
+            throw invalid_argument("ID do horário inválido ou não fornecido.");
         }
 
-        this->agendamentoService.save(alunoID, horarioId);
+        auto agendamento = agendamentoService->save(alunoID, horarioId);
 
-    } catch (const std::invalid_argument& e) {
+        return agendamento;
+    } catch (const invalid_argument& e) {
         handle_controller_exception(e, "validar dados do novo agendamento");
 
         throw;
-    } catch (const std::runtime_error& e) {
+    } catch (const runtime_error& e) {
         handle_controller_exception(e, "criar agendamento no serviço");
 
         throw;
     }
 }
 
-void AgendamentoController::cancelar(long agendamentoId) const {
+void AgendamentoController::cancelar(long agendamentoId) {
     try {
-        agendamentoService.cancelar(agendamentoId);
-    } catch (const std::runtime_error& e) {
+        agendamentoService->updateStatusById(agendamentoId, Status::CANCELADO);
+    } catch (const runtime_error& e) {
         handle_controller_exception(
-            e, "cancelar agendamento com ID " + std::to_string(agendamentoId));
+            e, "cancelar agendamento com ID " + to_string(agendamentoId));
 
         throw;
     }
 }
 
-void AgendamentoController::confirmar(long agendamentoId) const {
+void AgendamentoController::confirmar(long agendamentoId) {
     try {
-        if (agendamentoService.atualizarConfirmado(agendamentoId)) {
-            const auto agendamento =
-                agendamentoService.getById(agendamentoId).value();
-            horarioService.marcarComoReservado(agendamento.getHorarioId());
-        };
-    } catch (const std::runtime_error& e) {
+        agendamentoService->updateStatusById(agendamentoId, Status::CONFIRMADO);
+    } catch (const runtime_error& e) {
         handle_controller_exception(
-            e, "confirmar agendamento com ID " + std::to_string(agendamentoId));
+            e, "confirmar agendamento com ID " + to_string(agendamentoId));
         throw;
     }
 }
 
-void AgendamentoController::recusar(long agendamentoId) const {
+void AgendamentoController::recusar(long agendamentoId) {
     try {
-        agendamentoService.atualizarRecusado(agendamentoId);
-    } catch (const std::runtime_error& e) {
+        agendamentoService->updateStatusById(agendamentoId, Status::RECUSADO);
+    } catch (const runtime_error& e) {
         handle_controller_exception(
-            e, "recusar agendamento com ID " + std::to_string(agendamentoId));
-        throw;
-    }
-}
-
-std::vector<Agendamento> AgendamentoController::listarAgendamentosPendentes(
-    long professorID) const {
-    try {
-        std::vector<Agendamento> agendamentos =
-            agendamentoService.listPendenteByIdProfessor(professorID);
-        return agendamentos;
-    } catch (const std::runtime_error& e) {
-        handle_controller_exception(e, "listar agendamento pendente com ID " +
-                                           std::to_string(professorID));
+            e, "recusar agendamento com ID " + to_string(agendamentoId));
         throw;
     }
 }

@@ -10,30 +10,33 @@
  */
 class ProfessorController {
    private:
-    const ProfessorService& service;
+    const std::shared_ptr<ProfessorService>& service;
 
    public:
-    ProfessorController(const ProfessorService& service);
+    ProfessorController(const std::shared_ptr<ProfessorService>& service);
+
+    ~ProfessorController() = default;
 
     /**
      * @brief Cria um novo registro na tabela, após validações de formato.
      * * @return O professor criado
      */
-    Professor create(const std::string& nome, const std::string& email,
-                     const std::string& senha,
-                     const std::string& disciplina) const;
+    std::shared_ptr<Professor> create(const std::string& nome,
+                                      const std::string& email,
+                                      const std::string& senha,
+                                      const std::string& disciplina);
 
     /**
      * @brief Lê o registro com o id passado.
      * * @return O professor com o id parametro
      */
-    Professor read(long id) const;
+    std::shared_ptr<Professor> read(long id);
 
     /**
      * @brief Lista todos os professors.
      * * @return Um vetor com todos os professors
      */
-    std::vector<Professor> list() const;
+    std::vector<std::shared_ptr<Professor>> list();
 
     /**
      * @brief Atualiza o registro com o id parametro. Implementa lógica de
@@ -41,9 +44,10 @@ class ProfessorController {
      * mantido.
      * * @return O professor atualizado
      */
-    Professor update(long id, const std::string& nome, const std::string& email,
-                     const std::string& senha,
-                     const std::string& disciplina) const;
+    std::shared_ptr<Professor> update(long id, const std::string& nome,
+                                      const std::string& email,
+                                      const std::string& senha,
+                                      const std::string& disciplina);
 
     /**
      * @brief Deleta o registro de id parametro.
@@ -51,7 +55,7 @@ class ProfessorController {
      * encontrado/deletado.
      * @return false se a operação falhar (registro não encontrado).
      */
-    bool destroy(long id) const;
+    bool destroy(long id);
 };
 
 #endif

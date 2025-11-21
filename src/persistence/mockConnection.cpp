@@ -1,4 +1,4 @@
-#include "data/mockConnection.hpp"
+#include "persistence/mockConnection.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -42,7 +42,7 @@ string extractColumnFromLine(const string& line, size_t col) {
 }
 
 // Utilitário: Extrai e converte o ID (coluna 0) para long.
-long extractIdFromLine(const string& line) {
+long getIdFromLine(const string& line) {
     string id_str;
     try {
         // Assume que a coluna 0 é o ID e que existe.
@@ -107,7 +107,7 @@ long MockConnection::insert(const string& table_name,
     // cabeçalho).
     for (size_t i = 1; i < lines.size(); ++i) {
         try {
-            long current_id = extractIdFromLine(lines[i]);
+            long current_id = getIdFromLine(lines[i]);
             if (current_id > max_id) {
                 max_id = current_id;
             }
@@ -145,8 +145,8 @@ string MockConnection::selectOne(const string& table_name, long id) const {
 
     if (lines.empty())
         // ID não encontrado.
-        throw invalid_argument("O ID " + to_string(id) +
-                               " não existe na tabela " + table_name + ".");
+        throw runtime_error("O ID " + to_string(id) + " não existe na tabela " +
+                            table_name + ".");
     else if (lines.size() > 1)
         // Falha de integridade: ID duplicado.
         throw runtime_error("Mais de uma linha com ID " + to_string(id) +
@@ -217,7 +217,7 @@ void MockConnection::update(const string& table_name, long id,
         string& line = lines[i];
 
         try {
-            long current_id = extractIdFromLine(line);
+            long current_id = getIdFromLine(line);
             if (current_id == id) {
                 line = new_record;  // Substitui a linha.
                 updated = true;
@@ -230,9 +230,9 @@ void MockConnection::update(const string& table_name, long id,
 
     if (!updated) {
         // Lança exceção se o ID não foi encontrado.
-        throw invalid_argument("O ID " + to_string(id) +
-                               " não existe para ser atualizado na tabela " +
-                               table_name + ".");
+        throw runtime_error("O ID " + to_string(id) +
+                            " não existe para ser atualizado na tabela " +
+                            table_name + ".");
     }
 
     // 2. Reescreve o arquivo com a linha modificada.

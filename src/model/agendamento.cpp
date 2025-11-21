@@ -1,6 +1,10 @@
 #include "model/agendamento.hpp"
 
-Status parseStatus(const std::string& str) {
+using std::shared_ptr;
+using std::string;
+using std::string_view;
+
+Status parseStatus(const string& str) {
     if (str == "CANCELADO")
         return Status::CANCELADO;
     if (str == "RECUSADO")
@@ -12,19 +16,22 @@ Status parseStatus(const std::string& str) {
 }
 
 /**
- * @brief Construtor para criar um novo agendamento (antes de salvar no DB).
- */
-
-Agendamento::Agendamento(long alunoId, long horarioId, const Status& status)
-    : id(0), alunoId(alunoId), horarioId(horarioId), status(status) {}
-
-/**
  * @brief Construtor para carregar um agendamento do DB (já com ID).
  */
 
 Agendamento::Agendamento(long id, long alunoId, long horarioId,
-                         const Status& status)
-    : id(id), alunoId(alunoId), horarioId(horarioId), status(status) {}
+                         const Status& status,
+                         const LoadFunction<Aluno>& alunoLoader,
+                         const LoadFunction<Horario>& horarioLoader,
+                         Timestamp horarioInicio, Timestamp horarioFim)
+    : id(id),
+      alunoId(alunoId),
+      horarioId(horarioId),
+      status(status),
+      alunoLoader(alunoLoader),
+      horarioLoader(horarioLoader),
+      horarioInicio(horarioInicio),
+      horarioFim(horarioFim) {}
 
 /**
  * @brief Obtém o identificador único (ID) do Agendamento.
@@ -40,6 +47,18 @@ long Agendamento::getId() const {
 
 long Agendamento::getAlunoId() const {
     return this->alunoId;
+}
+
+shared_ptr<Aluno> Agendamento::getAluno() {
+    if (alunoLoader)
+        return alunoLoader(alunoId);
+    return nullptr;
+}
+
+shared_ptr<Horario> Agendamento::getHorario() {
+    if (horarioLoader)
+        return horarioLoader(horarioId);
+    return nullptr;
 }
 
 /**
@@ -58,6 +77,25 @@ const Status& Agendamento::getStatus() const {
     return this->status;
 }
 
-const std::string_view Agendamento::getStatusStr() const {
+const string_view Agendamento::getStatusStr() const {
     return stringify(status);
+}
+
+bool Agendamento::operator<(const Agendamento& other) const {
+    int priorityA = getStatusPriority(this->status);
+    int priorityB = getStatusPriority(other.status);
+
+    if (priorityA != priorityB) {
+        return priorityA < priorityB;
+    }
+
+    if (this->horarioInicio != other.horarioInicio) {
+        return this->horarioInicio > other.horarioInicio;
+    }
+
+    if (this->horarioFim != other.horarioFim) {
+        return this->horarioFim > other.horarioFim;
+    }
+
+    return this->id > other.id;
 }

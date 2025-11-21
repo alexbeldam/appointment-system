@@ -6,7 +6,7 @@
 #include "controller/horarioController.hpp"
 #include "controller/professorController.hpp"
 #include "event/bus.hpp"  // EventBus
-#include "service/sessionManager.hpp"
+#include "service/sessionService.hpp"
 #include "view/consoleUI.hpp"
 
 /**
@@ -19,27 +19,25 @@
  */
 class AlunoUI : public ConsoleUI {
    private:
-    const AlunoController& alunoController;
-    const ProfessorController& professorController;
-    const HorarioController& horarioController;
-    const AgendamentoController& agendamentoController;
+    AlunoController& alunoController;
+    ProfessorController& professorController;
+    AgendamentoController& agendamentoController;
 
-    SessionManager& sessionManager;
     /**
      * @brief Gerencia o fluxo de I/O e delega o agendamento de um horário.
      */
-    void agendar_horario() const;
-    void atualizar_perfil() const;
-    void visualizar_agendamentos() const;
-    void deletar_perfil() const;
-    void cancelar_agendamento() const;
+    void agendar_horario();
+    void atualizar_perfil();
+    void visualizar_agendamentos();
+    void deletar_perfil();
+    void cancelar_agendamento();
 
    public:
-    AlunoUI(const AlunoController& ac, const ProfessorController& pc,
-            const HorarioController& hc, const AgendamentoController& agc,
-            SessionManager& sm);
+    AlunoUI(AlunoController& ac, ProfessorController& pc,
+            AgendamentoController& agc,
+            const std::shared_ptr<SessionService>& ss);
 
-    virtual bool show() const override;
+    virtual bool show() override;
 };
 
 #endif

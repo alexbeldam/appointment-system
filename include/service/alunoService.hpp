@@ -1,10 +1,12 @@
 #ifndef ALUNO_SERVICE_HPP
 #define ALUNO_SERVICE_HPP
 
-#include <optional>
+#include "model/aluno.hpp"
+#include "persistence/entityCache.hpp"
+#include "persistence/entityManager.hpp"
+#include "persistence/mockConnection.hpp"
 
-#include "event/bus.hpp"
-#include "service/agendamentoService.hpp"
+using AlunoCache = EntityCache<Aluno>;
 
 /**
  * @brief Camada de Serviço (Business Logic) para a entidade Aluno.
@@ -15,47 +17,47 @@
  */
 class AlunoService {
    private:
+    EntityManager* manager;
     const MockConnection&
         connection;  ///< Conexão simulada com o banco de dados
     EventBus& bus;   ///< Barramento de eventos;
-                     ///< (conversão DTO<->Model).
-    const AgendamentoService&
-        service;  ///< Referência constante para o Serviço de Agendamentos
-                  ///< (injeção de dependência).
+    AlunoCache cache;
 
-    Aluno mapAndInjectAgendamentos(const std::string& csv_line) const;
+    std::shared_ptr<Aluno> loadAluno(const std::string& line);
 
-    std::vector<Aluno> getByEmail(const std::string& email) const;
+    std::vector<std::shared_ptr<Aluno>> getByEmail(const std::string& email);
 
-    std::vector<Aluno> getByMatricula(long matricula) const;
+    std::vector<std::shared_ptr<Aluno>> getByMatricula(long matricula);
 
-    bool existsByEmail(std::string email) const;
+    bool existsByEmail(std::string email);
 
-    bool existsByEmailAndIdNot(std::string email, long id) const;
+    bool existsByEmailAndIdNot(std::string email, long id);
 
-    bool existsByMatricula(long matricula) const;
+    bool existsByMatricula(long matricula);
 
-    bool existsByMatriculaAndIdNot(long matricula, long id) const;
+    bool existsByMatriculaAndIdNot(long matricula, long id);
 
    public:
-    AlunoService(const MockConnection& connection, EventBus& bus,
-                 const AgendamentoService& service);
+    AlunoService(EntityManager* manager, const MockConnection& connection,
+                 EventBus& bus);
 
-    Aluno save(const std::string& nome, const std::string& email,
-               const std::string& senha, long matricula) const;
+    ~AlunoService() = default;
 
-    std::optional<Aluno> getById(long id) const;
+    std::shared_ptr<Aluno> save(const std::string& nome,
+                                const std::string& email,
+                                const std::string& senha, long matricula);
 
-    std::optional<Aluno> getOneByEmail(const std::string& email) const;
+    std::shared_ptr<Aluno> getById(long id);
 
-    std::vector<Aluno> listAll() const;
+    std::shared_ptr<Aluno> getOneByEmail(const std::string& email);
 
-    std::optional<Aluno> updateById(long id, const std::string& nome,
-                                    const std::string& email,
-                                    const std::string& senha,
-                                    long matricula) const;
+    std::shared_ptr<Aluno> listAll();
 
-    bool deleteById(long id) const;
+    std::shared_ptr<Aluno> updateById(long id, const std::string& nome,
+                                      const std::string& email,
+                                      const std::string& senha, long matricula);
+
+    bool deleteById(long id);
 };
 
 #endif

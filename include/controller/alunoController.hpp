@@ -10,29 +10,26 @@
  */
 class AlunoController {
    private:
-    const AlunoService& service;
+    const std::shared_ptr<AlunoService>& service;
 
    public:
-    AlunoController(const AlunoService& service);
+    AlunoController(const std::shared_ptr<AlunoService>& service);
+
+    ~AlunoController() = default;
 
     /**
      * @brief Cria um novo registro na tabela, após validações de formato.
      * * @return O aluno criado
      */
-    Aluno create(const std::string& nome, const std::string& email,
-                 const std::string& senha, long matricula) const;
+    std::shared_ptr<Aluno> create(const std::string& nome,
+                                  const std::string& email,
+                                  const std::string& senha, long matricula);
 
     /**
      * @brief Lê o registro com o id passado.
      * * @return O aluno com o id parametro
      */
-    Aluno read(long id) const;
-
-    /**
-     * @brief Lista todos os alunos.
-     * * @return Um vetor com todos os alunos
-     */
-    std::vector<Aluno> list() const;
+    std::shared_ptr<Aluno> read(long id);
 
     /**
      * @brief Atualiza o registro com o id parametro. Implementa lógica de
@@ -40,8 +37,9 @@ class AlunoController {
      * mantido.
      * * @return O aluno atualizado
      */
-    Aluno update(long id, const std::string& nome, const std::string& email,
-                 const std::string& senha, long matricula) const;
+    std::shared_ptr<Aluno> update(long id, const std::string& nome,
+                                  const std::string& email,
+                                  const std::string& senha, long matricula);
 
     /**
      * @brief Deleta o registro de id parametro.
@@ -49,7 +47,7 @@ class AlunoController {
      * encontrado/deletado.
      * @return false se a operação falhar (registro não encontrado).
      */
-    bool destroy(long id) const;
+    bool destroy(long id);
 };
 
 #endif

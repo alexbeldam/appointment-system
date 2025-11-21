@@ -9,20 +9,18 @@
  */
 class HorarioController {
    private:
-    const HorarioService& service;
+    const std::shared_ptr<HorarioService>& service;
 
    public:
-    HorarioController(const HorarioService& service);
+    HorarioController(const std::shared_ptr<HorarioService>& service);
 
-    Horario cadastrarHorario(long idProfessor, std::time_t inicio,
-                             std::time_t fim) const;
+    ~HorarioController() = default;
 
-    bool excluirTodosPorProfessor(long idProfessor) const;
-    bool excluirPorId(long idHorario) const;
+    std::shared_ptr<Horario> cadastrarHorario(long idProfessor,
+                                              Timestamp inicio, Timestamp fim);
 
-    std::vector<Horario> listarPorProfessor(long idProfessor) const;
-
-    Horario pegarHorario(long id) const;
+    bool excluirTodosPorProfessor(long idProfessor);
+    bool excluirPorId(long idHorario);
 };
 
 #endif

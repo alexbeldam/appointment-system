@@ -12,7 +12,7 @@
  * O LoginController recebe as credenciais brutas do usuário e delega a
  * validação do e-mail e senha para as camadas de serviço apropriadas
  * (AlunoService ou ProfessorService). É responsável por **criar uma cópia
- * dinâmica** do objeto autenticado e passá-lo para o SessionManager.
+ * dinâmica** do objeto autenticado e passá-lo para o SessionService.
  */
 class LoginController {
    private:
@@ -20,13 +20,13 @@ class LoginController {
      * @brief Referência constante para o Serviço de Aluno.
      * * Usado para validar credenciais de login de Alunos.
      */
-    const AlunoService& alunoService;
+    const std::shared_ptr<AlunoService>& alunoService;
 
     /**
      * @brief Referência constante para o Serviço de Professor.
      * * Usado para validar credenciais de login de Professores.
      */
-    const ProfessorService& professorService;
+    const std::shared_ptr<ProfessorService>& professorService;
 
     /**
      * @brief Referência ao EventBus.
@@ -43,14 +43,17 @@ class LoginController {
      * @param professorService Referência para o ProfessorService.
      * @param bus Referência ao EventBus do sistema.
      */
-    LoginController(const AlunoService& alunoService,
-                    const ProfessorService& professorService, EventBus& bus);
+    LoginController(const std::shared_ptr<AlunoService>& alunoService,
+                    const std::shared_ptr<ProfessorService>& professorService,
+                    EventBus& bus);
+
+    ~LoginController() = default;
 
     /**
      * @brief Tenta autenticar um usuário como Aluno.
      *
      * O método busca o Aluno, verifica a senha e **cria uma cópia dinâmica**
-     * do objeto, compartilhando a posse com o SessionManager.
+     * do objeto, compartilhando a posse com o SessionService.
      * @param email O e-mail fornecido pelo usuário.
      * @param senha A senha fornecida em texto simples.
      * @return Um **std::shared_ptr** para o objeto Aluno autenticado (objeto no
@@ -60,13 +63,13 @@ class LoginController {
      * @throws std::runtime_error Em caso de falha crítica na camada de
      * Serviço/DAL.
      */
-    Aluno loginAluno(std::string email, std::string senha) const;
+    std::shared_ptr<Aluno> loginAluno(std::string email, std::string senha);
 
     /**
      * @brief Tenta autenticar um usuário como Professor.
      *
      * O método busca o Professor, verifica a senha e **cria uma cópia
-     * dinâmica** do objeto, compartilhando a posse com o SessionManager.
+     * dinâmica** do objeto, compartilhando a posse com o SessionService.
      * @param email O e-mail fornecido pelo usuário.
      * @param senha A senha fornecida em texto simples.
      * @return Um **std::shared_ptr** para o objeto Professor autenticado
@@ -76,7 +79,8 @@ class LoginController {
      * @throws std::runtime_error Em caso de falha crítica na camada de
      * Serviço/DAL.
      */
-    Professor loginProfessor(std::string email, std::string senha) const;
+    std::shared_ptr<Professor> loginProfessor(std::string email,
+                                              std::string senha);
 };
 
 #endif

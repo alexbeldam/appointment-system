@@ -6,7 +6,7 @@
 #include "controller/horarioController.hpp"
 #include "controller/professorController.hpp"
 #include "event/bus.hpp"
-#include "service/sessionManager.hpp"
+#include "service/sessionService.hpp"
 #include "view/consoleUI.hpp"
 
 /**
@@ -19,50 +19,49 @@
  */
 class ProfessorUI : public ConsoleUI {
    private:
-    const ProfessorController& professorController;
-    const HorarioController& horarioController;
-    const AgendamentoController& agendamentoController;
-    const AlunoController& alunoController;
-
-    SessionManager& sessionManager;
+    ProfessorController& professorController;
+    HorarioController& horarioController;
+    AgendamentoController& agendamentoController;
 
     /**
      * @brief Gerencia o fluxo de I/O e delega o cadastro de um novo horário
      * disponível.
      */
-    void cadastro_horario() const;
+    void cadastro_horario();
 
     /**
      * @brief Gerencia o fluxo de I/O e delega a listagem de horários.
      */
-    void listar_horarios() const;
+    void listar_horarios();
 
     /**
      * @brief Gerencia o fluxo de I/O e delega a exclusão de um horário.
      */
-    void excluir_horario() const;
+    void excluir_horario();
 
     /**
      * @brief Gerencia o fluxo de I/O e delega a exclusão de todos os horários
      * do professor logado.
      */
-    void excluir_todos_horarios() const;
+    void excluir_todos_horarios();
 
     /**
      * @brief Atualiza o perfil do professor logado.
      */
-    void atualizar_perfil() const;
+    void atualizar_perfil();
 
-    void deletar_perfil() const;
+    void deletar_perfil();
 
-    void avaliar_agendamentos() const;
+    bool avaliar_agendamentos();
+
+    void fazer_avaliacoes();
 
    public:
-    ProfessorUI(const ProfessorController& pc, const HorarioController& hc,
-                const AgendamentoController& ac, const AlunoController& alc,
-                SessionManager& sm);
+    ProfessorUI(ProfessorController& pc, HorarioController& hc,
+                AgendamentoController& ac,
+                const std::shared_ptr<SessionService>& ss);
 
-    virtual bool show() const override;
+    virtual bool show() override;
 };
 
 #endif

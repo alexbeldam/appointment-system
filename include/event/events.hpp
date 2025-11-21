@@ -49,20 +49,19 @@ struct Event {
 
 // --- DEFINIÇÕES CONSOLIDADAS DE EVENTOS ---
 
-// Eventos de Usuário
-DEFINE_EVENT(UsuarioLoggedInEvent, std::shared_ptr<Usuario> usuario, usuario)
-DEFINE_EVENT(UsuarioUpdatedEvent, std::shared_ptr<Usuario> usuario, usuario)
-DEFINE_EVENT(AlunoDeletedEvent, long id, id)
-DEFINE_EVENT(ProfessorDeletedEvent, long id, id)
+// --- EVENTOS DE GESTÃO DE SESSÃO (Login e Reset) ---
 
-// Eventos de Horário
-DEFINE_EVENT(HorarioCreatedEvent, Horario horario, horario)
-DEFINE_EVENT(HorarioUpdatedEvent, Horario horario, horario)
-DEFINE_EVENT(HorarioDeletedEvent, long id, id)
+DEFINE_EVENT(ProfessorLoggedInEvent, long professorId, professorId)
+DEFINE_EVENT(AlunoLoggedInEvent, long alunoId, alunoId)
 
-// Eventos de Agendamento
-DEFINE_EVENT(AgendamentoCreatedEvent, Agendamento agendamento, agendamento)
-DEFINE_EVENT(AgendamentoUpdatedEvent, Agendamento agendamento, agendamento)
-DEFINE_EVENT(AgendamentoDeletedEvent, long id, id)
+// --- EVENTOS DE DELEÇÃO EM CASCATA ---
+
+DEFINE_EVENT(ProfessorDeletedEvent, long professorId, professorId)
+DEFINE_EVENT(AlunoDeletedEvent, long alunoId, alunoId)
+
+// --- EVENTOS DE MUDANÇA DE ESTADO ---
+
+DEFINE_EVENT(HorarioOcupadoEvent, long horarioId, horarioId)
+DEFINE_EVENT(HorarioLiberadoEvent, long horarioId, horarioId)
 
 #endif

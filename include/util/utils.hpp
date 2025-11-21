@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <string>
 
+using Timestamp = std::time_t;
+
 // Funções utilitárias
 
 /**
@@ -55,8 +57,8 @@ int read_integer_range(const std::string& prompt, int min_val, int max_val);
 
 void desenhar_relogio();
 
-std::string time_to_string(std::time_t tt);
+std::string timestamp_to_string(Timestamp tt);
 
-std::time_t string_to_time(const std::string& date_str);
+Timestamp string_to_timestamp(const std::string& date_str);
 
 #endif

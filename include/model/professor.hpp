@@ -3,8 +3,9 @@
 
 #include <vector>
 
-#include "model/horario.hpp"
 #include "model/usuario.hpp"
+
+class Horario;
 
 /**
  * @brief Representa a entidade Professor, que herda as propriedades básicas de
@@ -15,15 +16,13 @@
 class Professor : public Usuario {
    private:
     std::string disciplina;  ///< A dsiciplina do Professor.
-    std::vector<Horario>
+    EntityList<Horario>
         horarios;  ///< Lista de Horarios associados a este Professor.
 
    public:
-    /**
-     * @brief Construtor padrão. Inicializa o objeto Professor com valores
-     * default.
-     */
-    Professor();
+    using HorarioList = EntityList<Horario>;
+    using HorarioVector = HorarioList::EntityVector;
+    using HorariosLoader = ListLoaderFunction<Horario>;
 
     /**
      * @brief Construtor completo do Professor.
@@ -38,7 +37,7 @@ class Professor : public Usuario {
      */
     Professor(long id, const std::string& nome, const std::string& email,
               const std::string& senha, std::string disciplina,
-              const std::vector<Horario>& horarios);
+              const HorariosLoader& loader);
 
     /**
      * @brief Obtém a disciplina do Usuário.
@@ -52,43 +51,17 @@ class Professor : public Usuario {
      */
     void setDisciplina(const std::string& disciplina);
 
-    /**
-     * @brief Obtém a lista de Horarios associados a este Professor.
-     * * @return Uma referência constante para o vetor de Horarios.
-     */
-    const std::vector<Horario>& getHorarios() const;
+    HorarioList& getHorarios();
 
     /**
      * @brief Obtém a lista de Horarios disponíveis associados a este Professor.
      * * @return Uma referência constante para o vetor de Horarios disponíveis.
      */
-    const std::vector<Horario>& getHorariosDisponiveis() const;
+    HorarioVector getHorariosDisponiveis();
 
-    /**
-     * @brief Define a lista de Horarios.
-     * * * Nota: No contexto de mapeamento (mapper), esta lista é frequentemente
-     * preenchida pela camada de Serviço.
-     * * @param horarios O novo vetor de Horarios.
-     */
-    void setHorarios(const std::vector<Horario>& horarios);
+    HorarioVector getHorariosOcupados();
 
-    /**
-     * @brief Adiciona um novo Horario à lista.
-     * @param horario O Horario a ser adicionado.
-     */
-    void addHorario(const Horario& horario);
-
-    /**
-     * @brief Atualiza um Horario existente na lista.
-     * @param horario O Horario com dados atualizados (busca por ID).
-     */
-    void updateHorario(const Horario& horario);
-
-    /**
-     * @brief Remove um Horario da lista.
-     * @param id O id do horario.
-     */
-    void removeHorario(long id);
+    bool operator<(const Professor& other) const;
 };
 
 #endif

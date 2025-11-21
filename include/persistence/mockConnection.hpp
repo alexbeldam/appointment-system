@@ -98,4 +98,6 @@ class MockConnection {
                           const std::string& value) const;
 };
 
+long getIdFromLine(const std::string& line);
+
 #endif

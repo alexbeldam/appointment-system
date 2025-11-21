@@ -1,7 +1,7 @@
 #ifndef CONSOLE_UI_HPP
 #define CONSOLE_UI_HPP
 
-#include "service/sessionManager.hpp"
+#include "service/sessionService.hpp"
 
 /**
  * @brief Classe base para interfaces de usuário no console.
@@ -11,15 +11,15 @@
  */
 class ConsoleUI {
    protected:
-    SessionManager& sessionManager;
+    const std::shared_ptr<SessionService>& sessionService;
 
     /**
      * @brief Realiza o logout do usuário atual.
      */
-    void fazer_logout() const;
+    void fazer_logout();
 
    public:
-    ConsoleUI(SessionManager& sm);
+    ConsoleUI(const std::shared_ptr<SessionService>& ss);
 
     virtual ~ConsoleUI() = default;
 
@@ -28,7 +28,7 @@ class ConsoleUI {
      *
      * @return true se a aplicação deve continuar rodando, false caso contrário.
      */
-    virtual bool show() const = 0;
+    virtual bool show() = 0;
 };
 
 #endif

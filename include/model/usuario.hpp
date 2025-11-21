@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "util/entityList.hpp"
+
 /**
  * @brief Classe base que representa um usuário genérico no sistema.
  * * * Contém os atributos fundamentais de identificação e autenticação comuns

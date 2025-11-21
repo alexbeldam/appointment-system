@@ -15,30 +15,31 @@ using std::cout;
 App::App()
     : connection(),
       bus(),
-      sessionManager(bus),
-      horarioService(connection, bus),
-      agendamentoService(connection, bus, horarioService),
-      alunoService(connection, bus, agendamentoService),
-      professorService(connection, bus, horarioService),
+      manager(connection, bus),
+      horarioService(manager.getHorarioService()),
+      agendamentoService(manager.getAgendamentoService()),
+      alunoService(manager.getAlunoService()),
+      professorService(manager.getProfessorService()),
+      sessionService(manager.getSessionService()),
       alunoController(alunoService),
       professorController(professorService),
       horarioController(horarioService),
       loginController(alunoService, professorService, bus),
-      agendamentoController(agendamentoService, horarioService),
+      agendamentoController(agendamentoService),
       authUI(alunoController, professorController, loginController,
-             sessionManager),
-      alunoUI(alunoController, professorController, horarioController,
-              agendamentoController, sessionManager),
+             sessionService),
+      alunoUI(alunoController, professorController, agendamentoController,
+              sessionService),
       professorUI(professorController, horarioController, agendamentoController,
-                  alunoController, sessionManager) {}
+                  sessionService) {}
 
 void App::run() {
     bool keepRunning = true;
 
     while (keepRunning) {
-        if (sessionManager.isProfessor())
+        if (sessionService->isProfessor())
             keepRunning = professorUI.show();
-        else if (sessionManager.isAluno())
+        else if (sessionService->isAluno())
             keepRunning = alunoUI.show();
         else
             keepRunning = authUI.show();

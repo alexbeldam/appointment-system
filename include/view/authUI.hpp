@@ -15,45 +15,45 @@
  */
 class AuthUI : public ConsoleUI {
    private:
-    const AlunoController& alunoController;
-    const LoginController& loginController;
-    const ProfessorController& professorController;
+    AlunoController& alunoController;
+    LoginController& loginController;
+    ProfessorController& professorController;
 
     /**
      * @brief Gerencia o fluxo de I/O e delega a autenticação do usuário.
      */
-    void fazer_login() const;
+    void fazer_login();
 
     /**
      * @brief Gerencia o fluxo de I/O e delega o cadastro de um usuário.
      */
-    void fazer_cadastro() const;
+    void fazer_cadastro();
 
     /**
      * @brief Gerencia o fluxo de I/O e delega a autenticação de um Aluno.
      */
-    void login_aluno() const;
+    void login_aluno();
 
     /**
      * @brief Gerencia o fluxo de I/O e delega a autenticação de um Professor.
      */
-    void login_professor() const;
+    void login_professor();
 
     /**
      * @brief Gerencia o fluxo de I/O e delega o cadastro de um Aluno.
      */
-    void cadastro_aluno() const;
+    void cadastro_aluno();
 
     /**
      * @brief Gerencia o fluxo de I/O e delega o cadastro de um Professor.
      */
-    void cadastro_professor() const;
+    void cadastro_professor();
 
    public:
-    AuthUI(const AlunoController& ac, const ProfessorController& pc,
-           const LoginController& lc, SessionManager& sm);
+    AuthUI(AlunoController& ac, ProfessorController& pc, LoginController& lc,
+           const std::shared_ptr<SessionService>& ss);
 
-    virtual bool show() const override;
+    virtual bool show() override;
 };
 
 #endif

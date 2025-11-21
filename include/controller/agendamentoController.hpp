@@ -15,16 +15,16 @@ class AgendamentoController {
     /**
      * @brief Referência constante ao serviço de agendamento.
      */
-    const AgendamentoService& agendamentoService;
-    const HorarioService& horarioService;
+    const std::shared_ptr<AgendamentoService>& agendamentoService;
 
    public:
     /**
      * @brief Construtor para injeção de dependência.
      * @param service Referência constante para o serviço de agendamento.
      */
-    AgendamentoController(const AgendamentoService& service,
-                          const HorarioService& horarioservice);
+    AgendamentoController(const std::shared_ptr<AgendamentoService>& service);
+
+    ~AgendamentoController() = default;
 
     /**
      * @brief Orquestra a ação de agendar um horário.
@@ -38,21 +38,18 @@ class AgendamentoController {
      * @param alunoID O ID do aluno (fornecido pela UI).
      * @param horarioId O ID do horário que o usuário selecionou na UI.
      */
-    void agendarHorario(long alunoID, long horarioId) const;
+    std::shared_ptr<Agendamento> agendarHorario(long alunoID, long horarioId);
 
     /**
      * @brief Cancela um agendamento existente e libera o horário
      * correspondente.
-     * @param agendamentoId ID do agendamento a ser cancelado.
+     * @param agendamentoId ID do agvoidendamento a ser cancelado.
      */
-    void cancelar(long agendamentoId) const;
+    void cancelar(long agendamentoId);
 
-    void confirmar(long id) const;
+    void confirmar(long id);
 
-    void recusar(long id) const;
-
-    std::vector<Agendamento> listarAgendamentosPendentes(
-        long professorID) const;
+    void recusar(long id);
 };
 
 #endif

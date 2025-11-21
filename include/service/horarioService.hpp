@@ -1,22 +1,24 @@
 #ifndef HORARIO_SERVICE_HPP
 #define HORARIO_SERVICE_HPP
 
-#include <optional>
-#include <string>
-#include <vector>
-
-#include "data/mockConnection.hpp"
-#include "event/bus.hpp"
-#include "event/events.hpp"
 #include "model/horario.hpp"
+#include "persistence/entityCache.hpp"
+#include "persistence/entityManager.hpp"
+#include "persistence/mockConnection.hpp"
+
+using HorarioCache = EntityCache<Horario>;
 
 /**
  * @brief Camada de Serviço (Business Logic) para Horario.
  */
 class HorarioService {
    private:
+    EntityManager* manager;
     const MockConnection& connection;
     EventBus& bus;
+    HorarioCache cache;
+
+    std::shared_ptr<Horario> loadHorario(const std::string& line);
 
    public:
     /**
@@ -24,35 +26,34 @@ class HorarioService {
      * @param connection Referência para a conexão com o banco de dados.
      * @param bus Referência para o Barramento de Eventos.
      */
-    HorarioService(const MockConnection& connection, EventBus& bus);
+    HorarioService(EntityManager* manager, const MockConnection& connection,
+                   EventBus& bus);
 
-    /**
-     * @brief Lista todos os Horarios disponíveis associados a um Professor.
-     */
-    std::vector<Horario> listDisponivelByIdProfessor(long id) const;
+    ~HorarioService() = default;
 
     /**
      * @brief Lista todos os Horarios associados a um Professor.
      */
-    std::vector<Horario> listByIdProfessor(long id) const;
+    std::vector<std::shared_ptr<Horario>> listByIdProfessor(long id);
 
     /**
      * @brief Deleta todos os horários que tenham a coluna id_professor igual ao
      * parametro.
      */
-    bool deleteByIdProfessor(long id) const;
+    bool deleteByIdProfessor(long id);
 
     /**
      * @brief Deleta um horário específico pelo seu ID.
      * @param id O ID do horário a ser deletado.
      * @return true se foi deletado, false se não foi encontrado.
      */
-    bool deleteById(long id) const;
+    bool deleteById(long id);
 
     /**
      * @brief Salva um novo horário para um professor.
      */
-    Horario save(long idProfessor, std::time_t inicio, std::time_t fim) const;
+    std::shared_ptr<Horario> save(long idProfessor, Timestamp inicio,
+                                  Timestamp fim);
 
     // --- MÉTODOS ADICIONADOS PARA SUPORTE AO AGENDAMENTO ---
 
@@ -64,23 +65,20 @@ class HorarioService {
      * @return O objeto Horario.
      * @throws std::runtime_error Se o horário não for encontrado.
      */
-    Horario getById(long id) const;
+    std::shared_ptr<Horario> getById(long id);
 
-    /**
-     * @brief Atualiza o status de um horário para "indisponível" (reservado).
-     * Necessário para AgendamentoService após criar um agendamento (AC 1).
-     *
-     * @param id O ID do horário a ser atualizado.
-     * @throws std::runtime_error Se o horário não for encontrado.
-     */
-    void marcarComoReservado(long id) const;
+    std::shared_ptr<Horario> updateById(long id, long idProfessor,
+                                        Timestamp inicio, Timestamp fim,
+                                        bool disponivel);
+
+    std::shared_ptr<Horario> updateDisponivelById(long id, bool disponivel);
 
     /**
      * @brief Verifica se um horário está disponível pelo seu ID.
      * @param id O ID do horário.
      * @return true se estiver disponível, false caso contrário.
      */
-    bool isDisponivelById(long id) const;
+    bool isDisponivelById(long id);
 };
 
 #endif

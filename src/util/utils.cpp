@@ -142,7 +142,7 @@ void desenhar_relogio() {
     cout << endl;
 }
 
-string time_to_string(time_t tt) {
+string timestamp_to_string(Timestamp tt) {
     tm tm_struct = *localtime(&tt);
 
     ostringstream ss;
@@ -150,14 +150,14 @@ string time_to_string(time_t tt) {
     return ss.str();
 }
 
-time_t string_to_time(const string& timeStr) {
+Timestamp string_to_timestamp(const string& timeStr) {
     tm tm_struct = {};
     istringstream ss(timeStr);
 
     ss >> get_time(&tm_struct, "%d/%m %H:%M");
 
     if (ss.fail()) {
-        return (time_t)-1;
+        return (Timestamp)-1;
     }
 
     int original_day = tm_struct.tm_mday;
@@ -167,11 +167,11 @@ time_t string_to_time(const string& timeStr) {
     tm_struct.tm_year = ANO_BASE - 1900;
     tm_struct.tm_isdst = -1;
 
-    time_t result = mktime(&tm_struct);
+    Timestamp result = mktime(&tm_struct);
 
-    if (result == (time_t)-1 || tm_struct.tm_mday != original_day ||
+    if (result == (Timestamp)-1 || tm_struct.tm_mday != original_day ||
         tm_struct.tm_mon != original_mon) {
-        return (time_t)-1;
+        return (Timestamp)-1;
     }
 
     return result;

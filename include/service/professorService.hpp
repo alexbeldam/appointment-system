@@ -1,10 +1,12 @@
 #ifndef PROFESSOR_SERVICE_HPP
 #define PROFESSOR_SERVICE_HPP
 
-#include <optional>
+#include "model/professor.hpp"
+#include "persistence/entityCache.hpp"
+#include "persistence/entityManager.hpp"
+#include "persistence/mockConnection.hpp"
 
-#include "event/bus.hpp"
-#include "service/horarioService.hpp"
+using ProfessorCache = EntityCache<Professor>;
 
 /**
  * @brief Camada de Serviço (Business Logic) para a entidade Professor.
@@ -15,19 +17,20 @@
  */
 class ProfessorService {
    private:
+    EntityManager* manager;
     const MockConnection&
-        connection;                 ///< Conexão simulada com o banco de dados
-    EventBus& bus;                  ///< Barramento de eventos
-    const HorarioService& service;  ///< Referência constante para o Serviço de
-                                    ///< Horarios (injeção de dependência).
+        connection;  ///< Conexão simulada com o banco de dados
+    EventBus& bus;   ///< Barramento de eventos
+    ProfessorCache cache;
 
-    Professor mapAndInjectHorarios(const std::string& csv_line) const;
+    std::shared_ptr<Professor> loadProfessor(const std::string& line);
 
-    std::vector<Professor> getByEmail(const std::string& email) const;
+    std::vector<std::shared_ptr<Professor>> getByEmail(
+        const std::string& email);
 
-    bool existsByEmail(std::string email) const;
+    bool existsByEmail(std::string email);
 
-    bool existsByEmailAndIdNot(std::string email, long id) const;
+    bool existsByEmailAndIdNot(std::string email, long id);
 
    public:
     /**
@@ -36,23 +39,26 @@ class ProfessorService {
      * @param bus Referência para o EventBus.
      * @param service Referência para o HorarioService.
      */
-    ProfessorService(const MockConnection& connection, EventBus& bus,
-                     const HorarioService& service);
+    ProfessorService(EntityManager* manager, const MockConnection& connection,
+                     EventBus& bus);
 
-    Professor save(const std::string& nome, const std::string& email,
-                   const std::string& senha,
-                   const std::string& disciplina) const;
+    ~ProfessorService() = default;
 
-    std::optional<Professor> getById(long id) const;
+    std::shared_ptr<Professor> save(const std::string& nome,
+                                    const std::string& email,
+                                    const std::string& senha,
+                                    const std::string& disciplina);
 
-    std::optional<Professor> getOneByEmail(const std::string& email) const;
+    std::shared_ptr<Professor> getById(long id);
 
-    std::vector<Professor> listAll() const;
+    std::shared_ptr<Professor> getOneByEmail(const std::string& email);
 
-    std::optional<Professor> updateById(long id, const std::string& nome,
-                                        const std::string& email,
-                                        const std::string& senha,
-                                        const std::string& disciplina) const;
+    std::vector<std::shared_ptr<Professor>> listAll();
+
+    std::shared_ptr<Professor> updateById(long id, const std::string& nome,
+                                          const std::string& email,
+                                          const std::string& senha,
+                                          const std::string& disciplina);
 
     /**
      * @brief Deleta um registro de Professor pelo ID.
@@ -61,7 +67,7 @@ class ProfessorService {
      * não foi encontrado.
      * @throws std::runtime_error Em caso de falha crítica de I/O.
      */
-    bool deleteById(long id) const;
+    bool deleteById(long id);
 };
 
 #endif

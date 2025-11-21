@@ -1,7 +1,12 @@
 #ifndef AGENDAMENTO_HPP
 #define AGENDAMENTO_HPP
 
+#include <ctime>
 #include <string>
+
+#include "util/entityList.hpp"
+
+using Timestamp = std::time_t;
 
 enum class Status { PENDENTE, CANCELADO, RECUSADO, CONFIRMADO };
 
@@ -22,6 +27,24 @@ constexpr const std::string_view stringify(const Status& stts) {
     }
 }
 
+constexpr int getStatusPriority(const Status& stts) {
+    switch (stts) {
+        case Status::CONFIRMADO:
+            return 0;
+        case Status::PENDENTE:
+            return 1;
+        case Status::RECUSADO:
+            return 2;
+        case Status::CANCELADO:
+            return 3;
+        default:
+            return 4;
+    }
+}
+
+class Aluno;
+class Horario;
+
 /**
  * @brief Representa a entidade Agendamento.
  */
@@ -32,17 +55,13 @@ class Agendamento {
     long alunoId;
     long horarioId;
     Status status;
+    const LoadFunction<Aluno>& alunoLoader;
+    const LoadFunction<Horario>& horarioLoader;
+
+    Timestamp horarioInicio;
+    Timestamp horarioFim;
 
    public:
-    /**
-     * @brief Construtor para criar um novo agendamento (antes de salvar no DB).
-     * @param alunoId ID do aluno.
-     * @param horarioId ID do horário.
-     * @param status O status inicial (ex: "CONFIRMADO").
-     */
-
-    Agendamento(long alunoId, long horarioId, const Status& status);
-
     /**
      * @brief Construtor para carregar um agendamento do DB (já com ID).
      * @param id ID do agendamento.
@@ -51,7 +70,10 @@ class Agendamento {
      * @param status O status lido do CSV.
      */
 
-    Agendamento(long id, long alunoId, long horarioId, const Status& status);
+    Agendamento(long id, long alunoId, long horarioId, const Status& status,
+                const LoadFunction<Aluno>& alunoLoader,
+                const LoadFunction<Horario>& horarioLoader,
+                Timestamp horarioInicio, Timestamp horarioFim);
 
     /**
      * @brief Obtém o identificador único (ID) do Agendamento.
@@ -82,6 +104,10 @@ class Agendamento {
 
     const std::string_view getStatusStr() const;
 
+    std::shared_ptr<Aluno> getAluno();
+
+    std::shared_ptr<Horario> getHorario();
+
     // --- NÃO APAGAR ---
 
     /**
@@ -89,6 +115,8 @@ class Agendamento {
      */
 
     Agendamento(const Agendamento& other) = default;
+
+    bool operator<(const Agendamento& other) const;
 };
 
 #endif

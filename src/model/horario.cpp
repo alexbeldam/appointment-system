@@ -2,16 +2,20 @@
 
 #include <string>
 
+#include "model/agendamento.hpp"
 #include "util/utils.hpp"
 using namespace std;
 
-Horario::Horario(long id, long idProfessor, time_t inicio, time_t fim,
-                 bool disponivel)
+Horario::Horario(long id, long idProfessor, Timestamp inicio, Timestamp fim,
+                 bool disponivel, const ProfessorLoader& profLoader,
+                 const AgendamentosLoader& agLoader)
     : id(id),
       idProfessor(idProfessor),
       inicio(inicio),
       fim(fim),
-      disponivel(disponivel) {}
+      disponivel(disponivel),
+      professorLoader(profLoader),
+      agendamentos(agLoader, id) {}
 
 long Horario::getId() const {
     return id;
@@ -19,22 +23,53 @@ long Horario::getId() const {
 long Horario::getProfessorId() const {
     return idProfessor;
 }
-time_t Horario::getInicio() const {
+Timestamp Horario::getInicio() const {
     return inicio;
 }
-time_t Horario::getFim() const {
+Timestamp Horario::getFim() const {
     return fim;
 }
 bool Horario::isDisponivel() const {
     return disponivel;
 }
 
-std::string Horario::getInicioStr() const {
-    return time_to_string(inicio);
+string Horario::getInicioStr() const {
+    return timestamp_to_string(inicio);
 }
 
-std::string Horario::getFimStr() const {
-    return time_to_string(fim);
+string Horario::getFimStr() const {
+    return timestamp_to_string(fim);
+}
+
+shared_ptr<Professor> Horario::getProfessor() {
+    if (professorLoader)
+        return professorLoader(idProfessor);
+    return nullptr;
+}
+
+Horario::AgendamentoVector Horario::getAgendamentosPendentes() {
+    AgendamentoVector pendentes(agendamentos.begin(), agendamentos.end());
+
+    pendentes.erase(remove_if(pendentes.begin(), pendentes.end(),
+                              [](shared_ptr<Agendamento> ag) {
+                                  return ag->getStatus() != Status::PENDENTE;
+                              }),
+                    pendentes.end());
+
+    return pendentes;
+}
+
+Horario::AgendamentoVector Horario::getAgendamentosConfirmados() {
+    AgendamentoVector confirmados(agendamentos.begin(), agendamentos.end());
+
+    confirmados.erase(remove_if(confirmados.begin(), confirmados.end(),
+                                [](shared_ptr<Agendamento> ag) {
+                                    return ag->getStatus() !=
+                                           Status::CONFIRMADO;
+                                }),
+                      confirmados.end());
+
+    return confirmados;
 }
 
 void Horario::setId(long id) {
@@ -43,10 +78,10 @@ void Horario::setId(long id) {
 void Horario::setProfessorId(long idProfessor) {
     this->idProfessor = idProfessor;
 }
-void Horario::setInicio(time_t inicio) {
+void Horario::setInicio(Timestamp inicio) {
     this->inicio = inicio;
 }
-void Horario::setFim(time_t fim) {
+void Horario::setFim(Timestamp fim) {
     this->fim = fim;
 }
 void Horario::setDisponivel(bool disponivel) {

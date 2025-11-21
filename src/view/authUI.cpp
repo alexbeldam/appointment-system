@@ -10,14 +10,14 @@ static void imprimir_menu();
 static void imprimir_menu_login();
 static void imprimir_menu_signup();
 
-AuthUI::AuthUI(const AlunoController& ac, const ProfessorController& pc,
-               const LoginController& lc, SessionManager& sm)
-    : ConsoleUI(sm),
+AuthUI::AuthUI(AlunoController& ac, ProfessorController& pc,
+               LoginController& lc, const shared_ptr<SessionService>& ss)
+    : ConsoleUI(ss),
       alunoController(ac),
       loginController(lc),
       professorController(pc) {}
 
-void AuthUI::fazer_login() const {
+void AuthUI::fazer_login() {
     imprimir_menu_login();
 
     int opcao = read_integer_range("Escolha uma opcao: ", 0, 2);
@@ -34,7 +34,7 @@ void AuthUI::fazer_login() const {
     }
 }
 
-void AuthUI::fazer_cadastro() const {
+void AuthUI::fazer_cadastro() {
     imprimir_menu_signup();
 
     int opcao = read_integer_range("Escolha uma opcao: ", 0, 2);
@@ -51,7 +51,7 @@ void AuthUI::fazer_cadastro() const {
     }
 }
 
-void AuthUI::login_aluno() const {
+void AuthUI::login_aluno() {
     string email, senha;
 
     cout << "\n--- Entrar Aluno ---" << endl;
@@ -65,13 +65,13 @@ void AuthUI::login_aluno() const {
         const auto& aluno = loginController.loginAluno(email, senha);
 
         cout << "\n==================================================" << endl;
-        cout << "✅ SUCESSO! Seja bem vinda(o) " << aluno.getNome() << endl;
+        cout << "✅ SUCESSO! Seja bem vinda(o) " << aluno->getNome() << endl;
         cout << "==================================================" << endl;
 
-    } catch (const std::invalid_argument& e) {
+    } catch (const invalid_argument& e) {
         cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
         cout << ">> Tente novamente com dados válidos." << endl;
-    } catch (const std::runtime_error& e) {
+    } catch (const runtime_error& e) {
         cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao logar aluno." << endl;
         cout << ">> Detalhes do Erro: " << e.what() << endl;
     } catch (...) {
@@ -81,7 +81,7 @@ void AuthUI::login_aluno() const {
     }
 }
 
-void AuthUI::login_professor() const {
+void AuthUI::login_professor() {
     string email, senha;
 
     cout << "\n--- Entrar Professor ---" << endl;
@@ -95,13 +95,14 @@ void AuthUI::login_professor() const {
         const auto& professor = loginController.loginProfessor(email, senha);
 
         cout << "\n==================================================" << endl;
-        cout << "✅ SUCESSO! Seja bem vinda(o) " << professor.getNome() << endl;
+        cout << "✅ SUCESSO! Seja bem vinda(o) " << professor->getNome()
+             << endl;
         cout << "==================================================" << endl;
 
-    } catch (const std::invalid_argument& e) {
+    } catch (const invalid_argument& e) {
         cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
         cout << ">> Tente novamente com dados válidos." << endl;
-    } catch (const std::runtime_error& e) {
+    } catch (const runtime_error& e) {
         cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao logar professor."
              << endl;
         cout << ">> Detalhes do Erro: " << e.what() << endl;
@@ -112,7 +113,7 @@ void AuthUI::login_professor() const {
     }
 }
 
-void AuthUI::cadastro_aluno() const {
+void AuthUI::cadastro_aluno() {
     string nome, email, senha;
     long matricula;
 
@@ -142,14 +143,14 @@ void AuthUI::cadastro_aluno() const {
 
         cout << "\n==================================================" << endl;
         cout << "✅ SUCESSO! Aluno cadastrado:" << endl;
-        cout << "     Nome: " << novo_aluno.getNome() << endl;
-        cout << "     Matrícula: " << novo_aluno.getMatricula() << endl;
+        cout << "     Nome: " << novo_aluno->getNome() << endl;
+        cout << "     Matrícula: " << novo_aluno->getMatricula() << endl;
         cout << "==================================================" << endl;
 
-    } catch (const std::invalid_argument& e) {
+    } catch (const invalid_argument& e) {
         cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
         cout << ">> Tente novamente com dados válidos." << endl;
-    } catch (const std::runtime_error& e) {
+    } catch (const runtime_error& e) {
         cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao salvar o Aluno."
              << endl;
         cout << ">> Detalhes do Erro: " << e.what() << endl;
@@ -160,7 +161,7 @@ void AuthUI::cadastro_aluno() const {
     }
 }
 
-void AuthUI::cadastro_professor() const {
+void AuthUI::cadastro_professor() {
     string nome, email, senha, disciplina;
 
     cout << "\n--- Cadastrar Novo Professor ---" << endl;
@@ -180,14 +181,14 @@ void AuthUI::cadastro_professor() const {
 
         cout << "\n==================================================" << endl;
         cout << "✅ SUCESSO! Professor cadastrado:" << endl;
-        cout << "   Nome: " << novo_professor.getNome() << endl;
-        cout << "   Disciplina: " << disciplina << endl;
+        cout << "   Nome: " << novo_professor->getNome() << endl;
+        cout << "   Disciplina: " << novo_professor->getDisciplina() << endl;
         cout << "==================================================" << endl;
 
-    } catch (const std::invalid_argument& e) {
+    } catch (const invalid_argument& e) {
         cout << "\n>> ERRO DE VALIDAÇÃO: " << e.what() << endl;
         cout << ">> Tente novamente com dados válidos." << endl;
-    } catch (const std::runtime_error& e) {
+    } catch (const runtime_error& e) {
         cout << "\n>> ERRO INTERNO DO SISTEMA: Falha ao salvar o Professor."
              << endl;
         cout << ">> Detalhes do Erro: " << e.what() << endl;
@@ -198,8 +199,8 @@ void AuthUI::cadastro_professor() const {
     }
 }
 
-bool AuthUI::show() const {
-    while (!sessionManager.isLogged()) {
+bool AuthUI::show() {
+    while (!sessionService->isLogged()) {
         desenhar_relogio();
         imprimir_menu();
 

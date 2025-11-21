@@ -3,8 +3,9 @@
 
 #include <vector>
 
-#include "model/agendamento.hpp"
 #include "model/usuario.hpp"
+
+class Agendamento;
 
 /**
  * @brief Representa a entidade Aluno, que herda as propriedades básicas de
@@ -15,14 +16,13 @@
 class Aluno : public Usuario {
    private:
     long matricula;  ///< Número de matrícula único do Aluno.
-    std::vector<Agendamento>
+    EntityList<Agendamento>
         agendamentos;  ///< Lista de Agendamentos associados a este Aluno.
 
    public:
-    /**
-     * @brief Construtor padrão. Inicializa o objeto Aluno com valores default.
-     */
-    Aluno();
+    using AgendamentoList = EntityList<Agendamento>;
+    using AgendamentoVector = AgendamentoList::EntityVector;
+    using AgendamentosLoader = ListLoaderFunction<Agendamento>;
 
     /**
      * @brief Construtor completo do Aluno.
@@ -37,7 +37,7 @@ class Aluno : public Usuario {
      */
     Aluno(long id, const std::string& nome, const std::string& email,
           const std::string& senha, long matricula,
-          const std::vector<Agendamento>& agendamentos);
+          const AgendamentosLoader& loader);
 
     /**
      * @brief Obtém o número de matrícula do Aluno.
@@ -55,33 +55,9 @@ class Aluno : public Usuario {
      * @brief Obtém a lista de Agendamentos associados a este Aluno.
      * * @return Uma referência constante para o vetor de Agendamentos.
      */
-    const std::vector<Agendamento>& getAgendamentos() const;
+    AgendamentoList& getAgendamentos();
 
-    /**
-     * @brief Define a lista de Agendamentos.
-     * * * Nota: No contexto de mapeamento (mapper), esta lista é frequentemente
-     * preenchida pela camada de Serviço.
-     * * @param agendamentos O novo vetor de Agendamentos.
-     */
-    void setAgendamentos(const std::vector<Agendamento>& agendamentos);
-
-    /**
-     * @brief Adiciona um novo Agendamento à lista.
-     * @param agendamento O Agendamento a ser adicionado.
-     */
-    void addAgendamento(const Agendamento& agendamento);
-
-    /**
-     * @brief Atualiza um Agendamento existente na lista.
-     * @param agendamento O Agendamento com dados atualizados (busca por ID).
-     */
-    void updateAgendamento(const Agendamento& agendamento);
-
-    /**
-     * @brief Remove um Agendamento da lista.
-     * @param id O id do agendamento.
-     */
-    void removeAgendamento(long id);
+    AgendamentoVector getAgendamentosCancelaveis();
 };
 
 #endif

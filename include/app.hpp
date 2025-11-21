@@ -9,13 +9,14 @@
 #include "controller/professorController.hpp"
 
 // Includes dos Serviços e Mappers
-#include "data/mockConnection.hpp"
 #include "event/bus.hpp"
+#include "persistence/entityManager.hpp"
+#include "persistence/mockConnection.hpp"
 #include "service/agendamentoService.hpp"
 #include "service/alunoService.hpp"
 #include "service/horarioService.hpp"
 #include "service/professorService.hpp"
-#include "service/sessionManager.hpp"
+#include "service/sessionService.hpp"
 #include "view/alunoUI.hpp"
 #include "view/authUI.hpp"
 #include "view/professorUI.hpp"
@@ -29,13 +30,14 @@ class App {
     // 1. Membros de baixo nível
     MockConnection connection;
     EventBus bus;
-    SessionManager sessionManager;
+    EntityManager manager;
 
     // 2. Membros de nível intermediário (Serviços)
-    HorarioService horarioService;
-    AgendamentoService agendamentoService;
-    AlunoService alunoService;
-    ProfessorService professorService;
+    const std::shared_ptr<HorarioService>& horarioService;
+    const std::shared_ptr<AgendamentoService>& agendamentoService;
+    const std::shared_ptr<AlunoService>& alunoService;
+    const std::shared_ptr<ProfessorService>& professorService;
+    const std::shared_ptr<SessionService>& sessionService;
 
     // 3. Membros de nível superior (Controladores)
     AlunoController alunoController;
