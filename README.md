@@ -1,8 +1,8 @@
 <p align="center">
-  <span style="font-size: 80px;">⌚</span>
+  <img src="https://api.iconify.design/tabler/calendar-check.svg?color=%23C8102E" alt="Agenda com Check Vermelho UFMG" width="80" />
 </p>
 
-<h1 align="center"><strong>Sistema de Agendamento CLI 📅</strong></h1>
+<h1 align="center"><strong>Sistema de Agendamento CLI</strong></h1>
 
 <p align="center">
   <img src="https://img.shields.io/badge/C%2B%2B-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white" />
@@ -69,13 +69,16 @@ O projeto usa arquivos CSV na pasta `data/` como banco de dados mock. Para evita
 
 2.  **Configure o ambiente de dados:** 
     - **Linux/macOS:** Dê permissão de execução e execute:
-    `bash
-chmod +x setup.sh
-./setup.sh
-` 
+      
+    ```bash
+    chmod +x setup.sh
+    ./setup.sh
+    ``` 
     - **Windows:** Execute o script no diretório raiz:
-    `bash
-setup.bat`
+      
+    ```bash
+    setup.bat
+    ```
 
 > Este passo garante que suas modificações nos arquivos `data/*.csv` não serão rastreadas pelo Git, mantendo o repositório limpo.
 
@@ -228,9 +231,11 @@ start docs\html_doc\html\index.html
 
 <h2 id="colaboradores">🤝 Colaboradores</h2>
 
+<p align="center">
 Um grande obrigado a todas as pessoas que contribuíram para este projeto.
+</p>
 
-<table>
+<table align="center">
   <tr>
     <td align="center">
       <a href="https://github.com/alexbeldam">
