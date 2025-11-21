@@ -10,7 +10,7 @@ set FILES="data/agendamentos.csv" "data/alunos.csv" "data/horarios.csv" "data/pr
 FOR %%f IN (%FILES%) DO (
     IF EXIST %%f (
         git update-index --assume-unchanged %%f
-        echo  -> %%f: ignorando futuras modificacoes locais.
+        echo  -^> %%f: ignorando futuras modificacoes locais.
     ) ELSE (
         echo ERRO: Arquivo %%f nao encontrado. Verifique se voce clonou o repositorio corretamente.
     )
