@@ -49,7 +49,7 @@ A arquitetura do projeto é fortemente baseada em:
 Para compilar e executar o projeto, você precisará de:
 
 - **Compilador C++:** Suporte para **C++17** (G++, Clang, MSVC).
-- **Make:** Para utilizar o `Makefile`.
+- **Make:** Necessário para usar o `Makefile` — _requer ambiente compatível com POSIX_ (Linux, macOS ou Windows via MSYS2/Cygwin).
 - **Git:** Para clonar o repositório.
 
 ### ⚠️ Credenciais de Teste
@@ -67,15 +67,13 @@ O projeto usa arquivos CSV na pasta `data/` como banco de dados mock. Para evita
     cd PDS2-20252-TM1-RedeSocial
     ```
 
-2.  **Configure o ambiente de dados:** 
+2.  **Configure o ambiente de dados:**
     - **Linux/macOS:** Dê permissão de execução e execute:
-      
     ```bash
     chmod +x setup.sh
     ./setup.sh
-    ``` 
+    ```
     - **Windows:** Execute o script no diretório raiz:
-      
     ```bash
     ./setup.bat
     ```
