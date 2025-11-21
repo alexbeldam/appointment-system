@@ -6,77 +6,73 @@
 #include "service/professorService.hpp"
 
 /**
- * @brief Classe responsável por controlar o fluxo de autenticação (login) no
- * sistema.
- *
- * O LoginController recebe as credenciais brutas do usuário e delega a
- * validação do e-mail e senha para as camadas de serviço apropriadas
- * (AlunoService ou ProfessorService). É responsável por **criar uma cópia
- * dinâmica** do objeto autenticado e passá-lo para o SessionManager.
+ * @brief Controller para gerenciamento de autenticação (Login).
+ * * Esta classe atua como a camada de controle (Controller) do padrão MVC,
+ * responsável por receber requisições de login, delegar a lógica de negócio
+ * para as camadas de Service (AlunoService e ProfessorService) e, em caso
+ * de sucesso, notificar o sistema via EventBus.
  */
 class LoginController {
    private:
     /**
-     * @brief Referência constante para o Serviço de Aluno.
-     * * Usado para validar credenciais de login de Alunos.
+     * @brief Ponteiro inteligente para o serviço de alunos.
+     * * Usado para autenticar usuários do tipo Aluno.
      */
-    const AlunoService& alunoService;
+    const std::shared_ptr<AlunoService>& alunoService;
 
     /**
-     * @brief Referência constante para o Serviço de Professor.
-     * * Usado para validar credenciais de login de Professores.
+     * @brief Ponteiro inteligente para o serviço de professores.
+     * * Usado para autenticar usuários do tipo Professor.
      */
-    const ProfessorService& professorService;
+    const std::shared_ptr<ProfessorService>& professorService;
 
     /**
-     * @brief Referência ao EventBus.
-     *
-     * Usado para publicar o evento de login do usuário.
+     * @brief Referência ao barramento de eventos do sistema.
+     * * Usado para notificar eventos como login bem-sucedido.
      */
     EventBus& bus;
 
    public:
     /**
-     * @brief Construtor para injeção de dependência.
-     * * Recebe e inicializa os serviços necessários para autenticação.
-     * @param alunoService Referência para o AlunoService.
-     * @param professorService Referência para o ProfessorService.
-     * @param bus Referência ao EventBus do sistema.
+     * @brief Construtor da classe LoginController.
+     * * Os serviços e o barramento de eventos são injetados via dependência.
+     * * @param alunoService O serviço de alunos.
+     * @param professorService O serviço de professores.
+     * @param bus O barramento de eventos do sistema.
      */
-    LoginController(const AlunoService& alunoService,
-                    const ProfessorService& professorService, EventBus& bus);
+    LoginController(const std::shared_ptr<AlunoService>& alunoService,
+                    const std::shared_ptr<ProfessorService>& professorService,
+                    EventBus& bus);
 
     /**
-     * @brief Tenta autenticar um usuário como Aluno.
-     *
-     * O método busca o Aluno, verifica a senha e **cria uma cópia dinâmica**
-     * do objeto, compartilhando a posse com o SessionManager.
-     * @param email O e-mail fornecido pelo usuário.
-     * @param senha A senha fornecida em texto simples.
-     * @return Um **std::shared_ptr** para o objeto Aluno autenticado (objeto no
-     * heap).
-     * @throws std::invalid_argument Se o e-mail não for encontrado ou a senha
-     * for inválida.
-     * @throws std::runtime_error Em caso de falha crítica na camada de
-     * Serviço/DAL.
+     * @brief Destrutor padrão.
      */
-    Aluno loginAluno(std::string email, std::string senha) const;
+    ~LoginController() = default;
 
     /**
-     * @brief Tenta autenticar um usuário como Professor.
-     *
-     * O método busca o Professor, verifica a senha e **cria uma cópia
-     * dinâmica** do objeto, compartilhando a posse com o SessionManager.
-     * @param email O e-mail fornecido pelo usuário.
-     * @param senha A senha fornecida em texto simples.
-     * @return Um **std::shared_ptr** para o objeto Professor autenticado
-     * (objeto no heap).
-     * @throws std::invalid_argument Se o e-mail não for encontrado ou a senha
-     * for inválida.
-     * @throws std::runtime_error Em caso de falha crítica na camada de
-     * Serviço/DAL.
+     * @brief Tenta realizar o login de um Aluno.
+     * * Delega a autenticação para o AlunoService. Em caso de sucesso, notifica
+     * o EventBus.
+     * * @param email O email do aluno.
+     * @param senha A senha do aluno.
+     * @return std::shared_ptr<Aluno> O objeto Aluno autenticado se o login for
+     * bem-sucedido.
+     * @return nullptr Se o login falhar (ex: credenciais inválidas).
      */
-    Professor loginProfessor(std::string email, std::string senha) const;
+    std::shared_ptr<Aluno> loginAluno(std::string email, std::string senha);
+
+    /**
+     * @brief Tenta realizar o login de um Professor.
+     * * Delega a autenticação para o ProfessorService. Em caso de sucesso,
+     * notifica o EventBus.
+     * * @param email O email do professor.
+     * @param senha A senha do professor.
+     * @return std::shared_ptr<Professor> O objeto Professor autenticado se o
+     * login for bem-sucedido.
+     * @return nullptr Se o login falhar (ex: credenciais inválidas).
+     */
+    std::shared_ptr<Professor> loginProfessor(std::string email,
+                                              std::string senha);
 };
 
 #endif

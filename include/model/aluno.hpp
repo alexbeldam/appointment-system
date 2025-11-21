@@ -3,85 +3,87 @@
 
 #include <vector>
 
-#include "model/agendamento.hpp"
 #include "model/usuario.hpp"
 
+class Agendamento;  // Declaração forward
+
 /**
- * @brief Representa a entidade Aluno, que herda as propriedades básicas de
- * Usuario.
- * * Adiciona atributos específicos de domínio como o número de matrícula e uma
- * lista de agendamentos associados.
+ * @brief Representa a entidade Aluno, que é um tipo de Usuário.
+ * * Um Aluno possui uma matrícula e está associado a uma lista de Agendamentos.
+ * * A lista de agendamentos é carregada sob demanda (Lazy Loading) usando
+ * EntityList.
  */
 class Aluno : public Usuario {
    private:
-    long matricula;  ///< Número de matrícula único do Aluno.
-    std::vector<Agendamento>
-        agendamentos;  ///< Lista de Agendamentos associados a este Aluno.
+    long matricula; /**< O número de matrícula único do aluno. */
+
+    /**
+     * @brief Lista de agendamentos associados a este aluno.
+     * * Armazenada como EntityList para suportar carregamento preguiçoso.
+     */
+    EntityList<Agendamento> agendamentos;
 
    public:
     /**
-     * @brief Construtor padrão. Inicializa o objeto Aluno com valores default.
+     * @brief Alias para o tipo EntityList de Agendamento.
      */
-    Aluno();
+    using AgendamentoList = EntityList<Agendamento>;
 
     /**
-     * @brief Construtor completo do Aluno.
-     * * Inicializa os campos herdados (ID, nome, email, senha) e os campos
-     * específicos (matrícula, agendamentos).
-     * @param id O identificador único.
-     * @param nome O nome do Aluno.
-     * @param email O e-mail do Aluno.
-     * @param senha A senha do Aluno.
-     * @param matricula O número de matrícula do Aluno.
-     * @param agendamentos Uma lista de Agendamentos associados.
+     * @brief Alias para o vetor de ponteiros inteligentes de Agendamento.
+     */
+    using AgendamentoVector = AgendamentoList::EntityVector;
+
+    /**
+     * @brief Alias para a função de carregamento que fornece a lista de
+     * agendamentos.
+     */
+    using AgendamentosLoader = ListLoaderFunction<Agendamento>;
+
+    /**
+     * @brief Construtor da classe Aluno.
+     * * Inicializa os atributos do Usuário e do Aluno, e injeta a função de
+     * carregamento dos agendamentos.
+     * @param id O identificador único do usuário.
+     * @param nome O nome do aluno.
+     * @param email O email do aluno.
+     * @param senha A senha do aluno.
+     * @param matricula O número de matrícula do aluno.
+     * @param loader A função de carregamento para os agendamentos do aluno.
      */
     Aluno(long id, const std::string& nome, const std::string& email,
           const std::string& senha, long matricula,
-          const std::vector<Agendamento>& agendamentos);
+          const AgendamentosLoader& loader);
 
     /**
-     * @brief Obtém o número de matrícula do Aluno.
-     * * @return O número de matrícula.
+     * @brief Retorna o número de matrícula do aluno.
+     * @return long O número de matrícula.
      */
     long getMatricula() const;
 
     /**
-     * @brief Define o número de matrícula do Aluno.
-     * * @param matricula O novo número de matrícula.
+     * @brief Define um novo número de matrícula para o aluno.
+     * @param matricula O novo número de matrícula.
      */
     void setMatricula(long matricula);
 
     /**
-     * @brief Obtém a lista de Agendamentos associados a este Aluno.
-     * * @return Uma referência constante para o vetor de Agendamentos.
+     * @brief Retorna a lista de Agendamentos do aluno.
+     * * O carregamento dos agendamentos é disparado na primeira chamada a esta
+     * função ou se o EntityList for acessado.
+     * @return AgendamentoList& A referência para a lista de agendamentos.
      */
-    const std::vector<Agendamento>& getAgendamentos() const;
+    AgendamentoList& getAgendamentos();
 
     /**
-     * @brief Define a lista de Agendamentos.
-     * * * Nota: No contexto de mapeamento (mapper), esta lista é frequentemente
-     * preenchida pela camada de Serviço.
-     * * @param agendamentos O novo vetor de Agendamentos.
+     * @brief Retorna uma lista filtrada de Agendamentos que podem ser
+     * cancelados.
+     * * Esta função carrega todos os agendamentos e aplica a lógica de
+     * filtragem.
+     * @return AgendamentoVector Um vetor contendo apenas os agendamentos que
+     * satisfazem a regra de cancelamento.
      */
-    void setAgendamentos(const std::vector<Agendamento>& agendamentos);
-
-    /**
-     * @brief Adiciona um novo Agendamento à lista.
-     * @param agendamento O Agendamento a ser adicionado.
-     */
-    void addAgendamento(const Agendamento& agendamento);
-
-    /**
-     * @brief Atualiza um Agendamento existente na lista.
-     * @param agendamento O Agendamento com dados atualizados (busca por ID).
-     */
-    void updateAgendamento(const Agendamento& agendamento);
-
-    /**
-     * @brief Remove um Agendamento da lista.
-     * @param id O id do agendamento.
-     */
-    void removeAgendamento(long id);
+    AgendamentoVector getAgendamentosCancelaveis();
 };
 
 #endif

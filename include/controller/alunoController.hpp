@@ -4,52 +4,74 @@
 #include "service/alunoService.hpp"
 
 /**
- * @brief Classe responsável por controlar o fluxo de dados entre a camada de
- * apresentação (I/O) e a camada de serviço (lógica de negócio).
- *
+ * @brief Controller para gerenciamento de Alunos.
+ * * Esta classe atua como a camada de controle (Controller) do padrão MVC,
+ * responsável por receber requisições, delegar a lógica de negócio
+ * para a camada de Service e retornar o resultado.
  */
 class AlunoController {
    private:
-    const AlunoService& service;
+    /**
+     * @brief Ponteiro inteligente para o serviço de alunos.
+     * * Responsável por isolar a lógica de negócio e o acesso aos dados.
+     */
+    const std::shared_ptr<AlunoService>& service;
 
    public:
-    AlunoController(const AlunoService& service);
-
     /**
-     * @brief Cria um novo registro na tabela, após validações de formato.
-     * * @return O aluno criado
+     * @brief Construtor da classe AlunoController.
+     * * @param service O serviço de alunos injetado via dependência.
      */
-    Aluno create(const std::string& nome, const std::string& email,
-                 const std::string& senha, long matricula) const;
+    AlunoController(const std::shared_ptr<AlunoService>& service);
 
     /**
-     * @brief Lê o registro com o id passado.
-     * * @return O aluno com o id parametro
+     * @brief Destrutor padrão.
      */
-    Aluno read(long id) const;
+    ~AlunoController() = default;
 
     /**
-     * @brief Lista todos os alunos.
-     * * @return Um vetor com todos os alunos
+     * @brief Cria um novo recurso Aluno (Requisição POST).
+     * * Validações de formato e integridade são aplicadas antes da criação.
+     * * @param nome O nome completo do aluno.
+     * @param email O email único do aluno.
+     * @param senha A senha para acesso.
+     * @param matricula O número de matrícula único do aluno.
+     * @return std::shared_ptr<Aluno> O objeto Aluno criado.
      */
-    std::vector<Aluno> list() const;
+    std::shared_ptr<Aluno> create(const std::string& nome,
+                                  const std::string& email,
+                                  const std::string& senha, long matricula);
 
     /**
-     * @brief Atualiza o registro com o id parametro. Implementa lógica de
-     * 'patch': campos vazios ou inválidos são ignorados e o valor existente é
+     * @brief Recupera um recurso Aluno pelo seu ID (Requisição GET).
+     * * @param id O identificador único do aluno.
+     * @return std::shared_ptr<Aluno> O aluno com o ID especificado.
+     */
+    std::shared_ptr<Aluno> read(long id);
+
+    /**
+     * @brief Atualiza parcialmente um recurso Aluno (Requisição PATCH).
+     * * Implementa a lógica de atualização parcial (PATCH): campos vazios ou
+     * nulos no corpo da requisição são ignorados, e o valor existente é
      * mantido.
-     * * @return O aluno atualizado
+     * * @param id O identificador único do aluno a ser atualizado.
+     * @param nome O novo nome (opcional).
+     * @param email O novo email (opcional).
+     * @param senha A nova senha (opcional).
+     * @param matricula O novo número de matrícula (opcional).
+     * @return std::shared_ptr<Aluno> O objeto Aluno atualizado.
      */
-    Aluno update(long id, const std::string& nome, const std::string& email,
-                 const std::string& senha, long matricula) const;
+    std::shared_ptr<Aluno> update(long id, const std::string& nome,
+                                  const std::string& email,
+                                  const std::string& senha, long matricula);
 
     /**
-     * @brief Deleta o registro de id parametro.
-     * * @return true se a operação suceder e o registro for
-     * encontrado/deletado.
-     * @return false se a operação falhar (registro não encontrado).
+     * @brief Remove um recurso Aluno pelo seu ID (Requisição DELETE).
+     * * @param id O identificador único do aluno a ser deletado.
+     * @return true Se o aluno for encontrado e deletado com sucesso.
+     * @return false Se a operação falhar (ex: aluno não encontrado).
      */
-    bool destroy(long id) const;
+    bool destroy(long id);
 };
 
 #endif

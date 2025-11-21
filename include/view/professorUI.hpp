@@ -2,66 +2,111 @@
 #define PROFESSOR_UI_HPP
 
 #include "controller/agendamentoController.hpp"
+#include "controller/alunoController.hpp"
 #include "controller/horarioController.hpp"
 #include "controller/professorController.hpp"
-#include "controller/alunoController.hpp"
-#include "event/bus.hpp"
-#include "service/sessionManager.hpp"
+#include "service/sessionService.hpp"
 #include "view/consoleUI.hpp"
 
 /**
- * @brief Classe da Interface de Usuário (Presentation Layer) para Professores
- * via console.
- *
- * * Responsável por gerenciar toda a interação com o usuário (I/O via
- * cin/cout) relacionada às funcionalidades disponíveis para Professores,
- * como cadastro e gerenciamento de horários.
+ * @brief Gerencia a Interface de Usuário (UI) para um Professor logado.
+ * * Herda de ConsoleUI e implementa as funcionalidades específicas disponíveis
+ * para um usuário do tipo Professor (gerenciar horários, avaliar agendamentos,
+ * etc.).
  */
 class ProfessorUI : public ConsoleUI {
    private:
-    const ProfessorController& professorController;
-    const HorarioController& horarioController;
-    const AgendamentoController& agendamentoController;
-    const AlunoController& alunoController;
-
-    SessionManager& sessionManager;
+    /**
+     * @brief Referência ao Controller de Professor para operações CRUD no
+     * perfil.
+     */
+    ProfessorController& professorController;
 
     /**
-     * @brief Gerencia o fluxo de I/O e delega o cadastro de um novo horário
-     * disponível.
+     * @brief Referência ao Controller de Horário para gerenciar a
+     * disponibilidade do professor.
      */
-    void cadastro_horario() const;
+    HorarioController& horarioController;
 
     /**
-     * @brief Gerencia o fluxo de I/O e delega a listagem de horários.
+     * @brief Referência ao Controller de Agendamento para listar e avaliar
+     * agendamentos pendentes.
      */
-    void listar_horarios() const;
+    AgendamentoController& agendamentoController;
 
     /**
-     * @brief Gerencia o fluxo de I/O e delega a exclusão de um horário.
+     * @brief Permite ao professor cadastrar um novo horário de disponibilidade.
      */
-    void excluir_horario() const;
+    void cadastro_horario();
 
     /**
-     * @brief Gerencia o fluxo de I/O e delega a exclusão de todos os horários
-     * do professor logado.
+     * @brief Lista todos os horários de disponibilidade cadastrados pelo
+     * professor.
      */
-    void excluir_todos_horarios() const;
+    void listar_horarios();
 
     /**
-     * @brief Atualiza o perfil do professor logado.
+     * @brief Permite ao professor selecionar e excluir um único horário.
      */
-    void atualizar_perfil() const;
+    void excluir_horario();
 
-    void deletar_perfil() const;
+    /**
+     * @brief Permite ao professor excluir todos os seus horários de
+     * disponibilidade de uma vez.
+     */
+    void excluir_todos_horarios();
 
-    void avaliar_agendamentos() const;
+    /**
+     * @brief Permite ao professor modificar seus dados cadastrais (nome, email,
+     * senha, disciplina).
+     */
+    void atualizar_perfil();
+
+    /**
+     * @brief Permite ao professor excluir permanentemente sua conta do sistema.
+     */
+    void deletar_perfil();
+
+    /**
+     * @brief Exibe o menu de agendamentos pendentes e verifica se há
+     * agendamentos para avaliar.
+     * @return bool Retorna true para continuar avaliando e false para voltar ao
+     * menu pincipal.
+     */
+    bool avaliar_agendamentos();
+
+    /**
+     * @brief Processa a avaliação (confirmação/recusa) dos agendamentos
+     * pendentes.
+     */
+    void fazer_avaliacoes();
+
+    /**
+     * @brief Permite ao professor selecionar e cancelar um agendamento
+     * confirmado.
+     */
+    void cancelar_agendamento();
 
    public:
-    ProfessorUI(const ProfessorController& pc, const HorarioController& hc,
-                const AgendamentoController& ac, const AlunoController& alc, SessionManager& sm);
+    /**
+     * @brief Construtor da classe ProfessorUI.
+     * * Injeta as dependências dos Controllers e o SessionService para
+     * gerenciar o estado do usuário logado.
+     * @param pc Referência para o ProfessorController.
+     * @param hc Referência para o HorarioController.
+     * @param ac Referência para o AgendamentoController.
+     * @param ss Ponteiro inteligente para o SessionService.
+     */
+    ProfessorUI(ProfessorController& pc, HorarioController& hc,
+                AgendamentoController& ac,
+                const std::shared_ptr<SessionService>& ss);
 
-    virtual bool show() const override;
+    /**
+     * @brief Exibe o menu principal do professor e processa as escolhas.
+     * * Implementação da interface virtual da classe base ConsoleUI.
+     * @return bool Retorna true se a UI deve continuar, false para sair.
+     */
+    virtual bool show() override;
 };
 
 #endif

@@ -2,56 +2,65 @@
 #define AGENDAMENTO_CONTROLLER_HPP
 
 #include "service/agendamentoService.hpp"
-#include "service/horarioService.hpp"
 
 /**
- * @brief Camada de Controle para o caso de uso "Agendar Horário".
- *
- * Recebe requisições da UI (ConsoleUI) e orquestra as chamadas
- * necessárias para a camada de serviço (AgendamentoService).
+ * @brief Controller para gerenciamento de Agendamentos.
+ * * Esta classe atua como a camada de controle (Controller) do padrão MVC,
+ * responsável por receber requisições, delegar a lógica de negócio
+ * para a camada de Service e retornar o resultado.
  */
 class AgendamentoController {
    private:
     /**
-     * @brief Referência constante ao serviço de agendamento.
+     * @brief Ponteiro inteligente para o serviço de agendamentos.
+     * * Responsável por isolar a lógica de negócio e o acesso aos dados.
      */
-    const AgendamentoService& agendamentoService;
-    const HorarioService& horarioService;
+    const std::shared_ptr<AgendamentoService>& agendamentoService;
 
    public:
     /**
-     * @brief Construtor para injeção de dependência.
-     * @param service Referência constante para o serviço de agendamento.
+     * @brief Construtor da classe AgendamentoController.
+     * * @param service O serviço de agendamentos injetado via dependência.
      */
-    AgendamentoController(const AgendamentoService& service, const HorarioService &horarioservice);
+    AgendamentoController(const std::shared_ptr<AgendamentoService>& service);
 
     /**
-     * @brief Orquestra a ação de agendar um horário.
-     *
-     * Esta função é chamada pela UI. A UI é responsável por fornecer
-     * tanto o ID do aluno logado quanto o ID do horário selecionado.
-     *
-     * A UI deve estar preparada para capturar (try/catch) exceções
-     * vindas deste método (ex: horário indisponível - AC 2).
-     *
-     * @param alunoID O ID do aluno (fornecido pela UI).
-     * @param horarioId O ID do horário que o usuário selecionou na UI.
+     * @brief Destrutor padrão.
      */
-    void agendarHorario(long alunoID, long horarioId) const;
+    ~AgendamentoController() = default;
 
-     /**
-     * @brief Cancela um agendamento existente e libera o horário correspondente.
-     * @param agendamentoId ID do agendamento a ser cancelado.
+    /**
+     * @brief Cria um novo agendamento (Requisição POST).
+     * * O agendamento é criado com o status inicial **PENDENTE**.
+     * * @param alunoID O identificador único do aluno que está agendando.
+     * @param horarioId O identificador único do horário desejado.
+     * @return std::shared_ptr<Agendamento> O objeto Agendamento recém-criado.
      */
-    void cancelar(long agendamentoId) const;
+    std::shared_ptr<Agendamento> agendarHorario(long alunoID, long horarioId);
 
-    void confirmar(long id) const;
+    /**
+     * @brief Altera o status do agendamento para CANCELADO.
+     * * Realiza uma atualização parcial (PATCH) no recurso, modificando apenas
+     * o campo status.
+     * * @param id O identificador único do agendamento a ser cancelado.
+     */
+    void cancelar(long id);
 
-    void recusar(long id) const;
+    /**
+     * @brief Altera o status do agendamento para CONFIRMADO.
+     * * Realiza uma atualização parcial (PATCH) no recurso, modificando apenas
+     * o campo status.
+     * * @param id O identificador único do agendamento a ser confirmado.
+     */
+    void confirmar(long id);
 
-    std::vector<Agendamento> listarAgendamentosPendentes(long professorID) const;
-
-
+    /**
+     * @brief Altera o status do agendamento para RECUSADO.
+     * * Realiza uma atualização parcial (PATCH) no recurso, modificando apenas
+     * o campo status.
+     * * @param id O identificador único do agendamento a ser recusado.
+     */
+    void recusar(long id);
 };
 
 #endif

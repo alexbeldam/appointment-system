@@ -1,67 +1,143 @@
 #ifndef PROFESSOR_SERVICE_HPP
 #define PROFESSOR_SERVICE_HPP
 
-#include <optional>
-
-#include "event/bus.hpp"
-#include "service/horarioService.hpp"
+#include "model/professor.hpp"
+#include "persistence/entityCache.hpp"
+#include "persistence/entityManager.hpp"
+#include "persistence/mockConnection.hpp"
 
 /**
- * @brief Camada de Serviço (Business Logic) para a entidade Professor.
- *
- * * Responsável por orquestrar a validação de regras de negócio (unicidade),
- * gerenciar a persistência de dados através do DAL (mock/arquivo) e montar o
- * Modelo de Domínio completo (injetando Horarios).
+ * @brief Alias de tipo para o cache de entidades Professor.
+ */
+using ProfessorCache = EntityCache<Professor>;
+
+/**
+ * @brief Serviço de negócio responsável pela lógica e manipulação de
+ * Professores.
+ * * Esta classe gerencia operações CRUD e validações de unicidade para a
+ * entidade Professor, utilizando cache e notificação de eventos.
  */
 class ProfessorService {
    private:
+    EntityManager* manager; /**< Ponteiro para o gerenciador de entidades (IoC
+                               Container). */
     const MockConnection&
-        connection;                 ///< Conexão simulada com o banco de dados
-    EventBus& bus;                  ///< Barramento de eventos
-    const HorarioService& service;  ///< Referência constante para o Serviço de
-                                    ///< Horarios (injeção de dependência).
+        connection;       /**< Referência para a conexão de persistência. */
+    EventBus& bus;        /**< Referência para o barramento de eventos. */
+    ProfessorCache cache; /**< Cache local para entidades Professor. */
 
-    Professor mapAndInjectHorarios(const std::string& csv_line) const;
+    /**
+     * @brief Converte uma linha de dados brutos (string) em um objeto
+     * Professor.
+     * @param line A string contendo os dados do professor.
+     * @return std::shared_ptr<Professor> O objeto Professor carregado.
+     */
+    std::shared_ptr<Professor> loadProfessor(const std::string& line);
 
-    std::vector<Professor> getByEmail(const std::string& email) const;
+    /**
+     * @brief Busca todos os professores que correspondem ao email fornecido.
+     * * Usado para validação e busca de login.
+     * @param email O email a ser buscado.
+     * @return std::vector<std::shared_ptr<Professor>> Lista de professores
+     * encontrados.
+     */
+    std::vector<std::shared_ptr<Professor>> getByEmail(
+        const std::string& email);
 
-    bool existsByEmail(std::string email) const;
+    /**
+     * @brief Verifica a existência de um professor com o email fornecido.
+     * @param email O email a ser verificado.
+     * @return bool True se existir um professor com o email.
+     */
+    bool existsByEmail(std::string email);
 
-    bool existsByEmailAndIdNot(std::string email, long id) const;
+    /**
+     * @brief Verifica a existência de um professor com o email fornecido,
+     * excluindo o ID.
+     * * Útil para validação de unicidade durante atualizações.
+     * @param email O email a ser verificado.
+     * @param id O ID do professor a ser ignorado na busca.
+     * @return bool True se existir outro professor com o mesmo email.
+     */
+    bool existsByEmailAndIdNot(std::string email, long id);
 
    public:
     /**
-     * @brief Construtor para injeção de dependência.
-     * @param connection Referência para a conexão com o banco de dados.
-     * @param bus Referência para o EventBus.
-     * @param service Referência para o HorarioService.
+     * @brief Construtor da classe ProfessorService.
+     * * Recebe suas dependências via injeção.
+     * @param manager O EntityManager que fornece acesso a outros serviços e
+     * loaders.
+     * @param connection A conexão de persistência.
+     * @param bus O barramento de eventos.
      */
-    ProfessorService(const MockConnection& connection, EventBus& bus,
-                     const HorarioService& service);
-
-    Professor save(const std::string& nome, const std::string& email,
-                   const std::string& senha,
-                   const std::string& disciplina) const;
-
-    std::optional<Professor> getById(long id) const;
-
-    std::optional<Professor> getOneByEmail(const std::string& email) const;
-
-    std::vector<Professor> listAll() const;
-
-    std::optional<Professor> updateById(long id, const std::string& nome,
-                                        const std::string& email,
-                                        const std::string& senha,
-                                        const std::string& disciplina) const;
+    ProfessorService(EntityManager* manager, const MockConnection& connection,
+                     EventBus& bus);
 
     /**
-     * @brief Deleta um registro de Professor pelo ID.
-     * * @param id O ID do Professor a ser deletado.
-     * @return true se o registro foi encontrado e deletado; false se o registro
-     * não foi encontrado.
-     * @throws std::runtime_error Em caso de falha crítica de I/O.
+     * @brief Destrutor padrão.
      */
-    bool deleteById(long id) const;
+    ~ProfessorService() = default;
+
+    /**
+     * @brief Cria e salva um novo Professor.
+     * * Executa validações de unicidade para email.
+     * @param nome O nome do professor.
+     * @param email O email único.
+     * @param senha A senha.
+     * @param disciplina A disciplina lecionada.
+     * @return std::shared_ptr<Professor> O Professor recém-criado.
+     */
+    std::shared_ptr<Professor> save(const std::string& nome,
+                                    const std::string& email,
+                                    const std::string& senha,
+                                    const std::string& disciplina);
+
+    /**
+     * @brief Busca um Professor pelo seu ID, utilizando o cache.
+     * @param id O ID único do professor.
+     * @return std::shared_ptr<Professor> O professor encontrado ou nullptr.
+     */
+    std::shared_ptr<Professor> getById(long id);
+
+    /**
+     * @brief Busca um único Professor pelo seu email (usado principalmente para
+     * login).
+     * @param email O email do professor.
+     * @return std::shared_ptr<Professor> O professor encontrado ou nullptr.
+     */
+    std::shared_ptr<Professor> getOneByEmail(const std::string& email);
+
+    /**
+     * @brief Lista todos os Professores cadastrados no sistema.
+     * @return std::vector<std::shared_ptr<Professor>> Uma lista de todos os
+     * professores.
+     */
+    std::vector<std::shared_ptr<Professor>> listAll();
+
+    /**
+     * @brief Atualiza as informações de um Professor existente.
+     * * Executa validações de unicidade para email, excluindo o próprio ID.
+     * @param id O ID do professor a ser atualizado.
+     * @param nome O novo nome.
+     * @param email O novo email.
+     * @param senha A nova senha.
+     * @param disciplina A nova disciplina.
+     * @return std::shared_ptr<Professor> O professor atualizado ou nullptr se o
+     * ID não for encontrado.
+     */
+    std::shared_ptr<Professor> updateById(long id, const std::string& nome,
+                                          const std::string& email,
+                                          const std::string& senha,
+                                          const std::string& disciplina);
+
+    /**
+     * @brief Exclui um Professor pelo seu ID.
+     * * Dispara a exclusão de todos os Horários e Agendamentos associados e
+     * notifica via EventBus (ProfessorDeletedEvent).
+     * @param id O ID do professor a ser excluído.
+     * @return bool True se a exclusão foi bem-sucedida.
+     */
+    bool deleteById(long id);
 };
 
 #endif

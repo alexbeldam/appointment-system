@@ -2,27 +2,20 @@
 #define UTILS_HPP
 
 #include <algorithm>
-#include <cctype>
 #include <ctime>
 #include <iostream>
-#include <stdexcept>
 #include <string>
 
-// Funções utilitárias
+/**
+ * @brief Alias de tipo para representar um ponto no tempo.
+ */
+using Timestamp = std::time_t;
 
 /**
- * @brief Padroniza o tratamento de exceções no Controller (Captura, Loga,
- * Relança).
- *
- * Esta função é utilizada para centralizar o tratamento de exceções,
- * registrando uma mensagem de erro no console (stderr) e relançando a exceção
- * original para que o tratamento de nível superior (p. ex., o Controller) possa
- * reagir ou encerrar a operação.
- *
- * @param e A exceção capturada (por referência constante).
- * @param acao Uma string que descreve a ação que falhou (ex: "salvar usuário",
- * "carregar dados").
- * @throws Relança a exceção 'e' capturada.
+ * @brief Função utilitária para lidar com exceções na camada Controller.
+ * * Imprime uma mensagem de erro formatada no stderr e relança a exceção.
+ * @param e A exceção capturada.
+ * @param acao Uma descrição da ação que falhou (ex: "realizar login").
  */
 inline void handle_controller_exception(const std::exception& e,
                                         const std::string& acao) {
@@ -31,15 +24,12 @@ inline void handle_controller_exception(const std::exception& e,
 }
 
 /**
- * @brief Verifica se a string contém apenas caracteres alfanuméricos.
- *
- * Esta é uma utilidade de saneamento de entrada. Uma string vazia
- * não é considerada alfanumérica.
- *
- * @param s A string de entrada a ser verificada.
- * @return true se a string não estiver vazia e contiver *apenas*
- * letras (a-z, A-Z) e dígitos (0-9).
- * @return false caso contrário (string vazia ou contém caracteres especiais).
+ * @brief Verifica se uma string contém apenas caracteres alfanuméricos (letras
+ * e números).
+ * * Retorna falso se a string for vazia.
+ * @param s A string a ser verificada.
+ * @return bool True se a string for não vazia e contiver apenas caracteres
+ * alfanuméricos.
  */
 inline bool is_alphanumeric(const std::string& s) {
     return !s.empty() && std::all_of(s.begin(), s.end(), [](char c) {
@@ -48,35 +38,54 @@ inline bool is_alphanumeric(const std::string& s) {
 }
 
 /**
- * @brief Criptografa uma string de texto.
- * * Utilizada para gerar uma representação segura de uma senha
- * de texto simples antes de armazená-la.
- * * @param pwd A string de texto simples a ser processada.
- * @return A string criptografada (cyphertext).
+ * @brief Simula o processo de hashing de senha no estilo bcrypt.
+ * * Implementado usando o std::hash
+ * @param pwd A senha em texto claro.
+ * @param cost_factor O fator de custo (simulado), padrão é 12.
+ * @return std::string A senha "hasheada" (cyphertext) simulada.
  */
-std::string encrypt(const std::string& pwd);
+std::string mock_bcrypt(const std::string& pwd, int cost_factor = 12);
 
 /**
- * @brief Verifica se uma string de texto simples corresponde a uma string
- * criptografada.
- * * Usada para autenticar o usuário, comparando a senha fornecida com o
- * cyphertext armazenado.
- * * @param cypher A string criptografada (cyphertext) armazenada.
- * @param pwd A string de texto simples fornecida pelo usuário.
- * @return true se as strings coincidirem após a aplicação da
- * criptografia/verificação.
- * @return false caso contrário.
+ * @brief Verifica se uma senha em texto claro corresponde a um hash simulado.
+ * * @param cypher O hash simulado.
+ * @param pwd A senha em texto claro (fornecida pelo usuário).
+ * @return bool True se a senha corresponder ao hash simulado.
  */
-inline bool check(const std::string& cypher, const std::string& pwd) {
-    return cypher == encrypt(pwd);
-}
+bool check(const std::string& cypher, const std::string& pwd);
 
+/**
+ * @brief Solicita ao usuário que insira um número inteiro dentro de um
+ * intervalo específico.
+ * * Lida com entrada inválida e garante que o valor esteja entre min_val e
+ * max_val.
+ * @param prompt A mensagem a ser exibida ao usuário.
+ * @param min_val O valor mínimo aceitável.
+ * @param max_val O valor máximo aceitável.
+ * @return int O valor inteiro válido inserido pelo usuário.
+ */
 int read_integer_range(const std::string& prompt, int min_val, int max_val);
 
+/**
+ * @brief Desenha um relógio no
+ * console.
+ */
 void desenhar_relogio();
 
-std::string time_to_string(std::time_t tt);
+/**
+ * @brief Converte um Timestamp (std::time_t) em uma string de data e hora
+ * formatada.
+ * @param tt O timestamp a ser formatado.
+ * @return std::string A representação do timestamp como string.
+ */
+std::string timestamp_to_string(Timestamp tt);
 
-std::time_t string_to_time(const std::string& date_str);
+/**
+ * @brief Converte uma string de data e hora em um Timestamp (std::time_t).
+ * * A string deve estar no formato esperado (dd/mm HH:MM).
+ * @param date_str A string de data e hora.
+ * @return Timestamp O valor de std::time_t correspondente.
+ */
+Timestamp string_to_timestamp(const std::string& date_str);
 
 #endif

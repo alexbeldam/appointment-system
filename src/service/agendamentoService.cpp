@@ -1,318 +1,262 @@
 #include "service/agendamentoService.hpp"
 
-#include <iostream>
-#include <optional>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
+#include <algorithm>
 
 #include "event/events.hpp"
+#include "service/alunoService.hpp"
+#include "service/horarioService.hpp"
 
-using std::getline;
 using std::invalid_argument;
+using std::make_shared;
 using std::runtime_error;
-using std::stol;
+using std::shared_ptr;
+using std::sort;
 using std::string;
 using std::stringstream;
 using std::to_string;
 using std::vector;
 
-// --- CONFIGURAÇÕES DE PERSISTÊNCIA ---
-#define AGENDAMENTO_TABLE "agendamentos"
 #define ID_ALUNO_COL_INDEX 1
 #define ID_HORARIO_COL_INDEX 2
 
-// --- CONSTRUTOR ---
-AgendamentoService::AgendamentoService(const MockConnection& connection,
-                                       EventBus& bus,
-                                       const HorarioService& horarioService)
-    : connection(connection), bus(bus), horarioService(horarioService) {
-    bus.subscribe<AlunoDeletedEvent>([this](const AlunoDeletedEvent& event) {
-        this->deleteByIdAluno(event.id);
-    });
+AgendamentoService::AgendamentoService(EntityManager* manager,
+                                       const MockConnection& connection,
+                                       EventBus& bus)
+    : manager(manager),
+      connection(connection),
+      bus(bus),
+      cache({AGENDAMENTO_TABLE, HORARIO_TABLE}) {}
 
-    bus.subscribe<HorarioDeletedEvent>(
-        [this](const HorarioDeletedEvent& event) {
-            this->deleteByIdHorario(event.id);
-        });
-}
+shared_ptr<Agendamento> AgendamentoService::save(long alunoId, long horarioId) {
+    auto horarioService = manager->getHorarioService();
 
-// --- MÉTODOS CRUD ---
-
-/**
- * @brief Salva um novo agendamento, aplicando as regras de negócio.
- */
-Agendamento AgendamentoService::save(long alunoId, long horarioId) const {
-    if (!horarioService.isDisponivelById(horarioId)) {
-        throw std::runtime_error(
+    if (!horarioService->isDisponivelById(horarioId)) {
+        throw invalid_argument(
             "Este horário não está aberto para agendamentos.");
     }
 
-    // AC 1 (Registro): Salvar o agendamento (com status "PENDENTE")
     stringstream dados;
     dados << alunoId << "," << horarioId << "," << "PENDENTE";
 
     long newId = connection.insert(AGENDAMENTO_TABLE, dados.str());
 
-    Agendamento salvo(newId, alunoId, horarioId, "PENDENTE");
+    string new_record_csv = to_string(newId) + "," + dados.str();
 
-    // AC 1 (Notificar)
-    this->bus.publish(AgendamentoCreatedEvent(salvo));
+    auto salvo = loadAgendamento(new_record_csv);
+
+    cache.put(newId, salvo);
 
     return salvo;
 }
 
-void AgendamentoService::cancelar(long agendamentoId) const {
-    try {
-        // 1️⃣ Busca o agendamento existente
-        auto optAgendamento = this->getById(agendamentoId);
-        if (!optAgendamento.has_value()) {
-            throw std::invalid_argument("Agendamento não encontrado.");
-        }
+shared_ptr<Agendamento> AgendamentoService::getById(long id) {
+    cache.invalidate();
 
-        Agendamento agendamento = optAgendamento.value();
+    if (cache.contains(id))
+        return cache.at(id);
 
-        // 2️⃣ Atualiza o status do agendamento para "CANCELADO"
-        stringstream dados;
-        dados << agendamento.getAlunoId() << "," << agendamento.getHorarioId()
-              << ","
-              << "CANCELADO";
+    string linha = connection.selectOne(AGENDAMENTO_TABLE, id);
 
-        connection.update(AGENDAMENTO_TABLE, agendamento.getId(), dados.str());
+    auto agendamento = loadAgendamento(linha);
 
-        // 4️⃣ Publica evento de atualização
-        this->bus.publish(AgendamentoUpdatedEvent(
-            Agendamento(agendamento.getId(), agendamento.getAlunoId(),
-                        agendamento.getHorarioId(), "CANCELADO")));
+    cache.put(id, agendamento);
 
-    } catch (const std::invalid_argument& e) {
-        std::cerr << "[ERRO] Falha ao cancelar agendamento: " << e.what()
-                  << std::endl;
-        throw;
-    } catch (const std::runtime_error& e) {
-        std::cerr << "[ERRO] Falha ao cancelar agendamento: " << e.what()
-                  << std::endl;
-        throw;
-    }
+    return agendamento;
 }
 
-std::optional<Agendamento> AgendamentoService::getById(long id) const {
-    try {
-        string linha = connection.selectOne(AGENDAMENTO_TABLE, id);
-        stringstream ss(linha);
-        string idStr, alunoIdStr, horarioIdStr, statusStr;
-        getline(ss, idStr, ',');
-        getline(ss, alunoIdStr, ',');
-        getline(ss, horarioIdStr, ',');
-        getline(ss, statusStr, ',');
+shared_ptr<Agendamento> AgendamentoService::updateById(long id, long alunoId,
+                                                       long horarioId,
+                                                       const Status& status) {
+    if (status == Status::CONFIRMADO) {
+        auto horarioService = manager->getHorarioService();
 
-        return Agendamento(stol(idStr), stol(alunoIdStr), stol(horarioIdStr),
-                           statusStr);
-
-    } catch (const invalid_argument& e) {
-        return std::nullopt;
-    } catch (const runtime_error& e) {
-        throw;
+        if (!horarioService->isDisponivelById(horarioId))
+            throw invalid_argument(
+                "Este horário não está aberto para agendamentos.");
     }
+
+    shared_ptr<Agendamento> late = getById(id);
+
+    if (!late)
+        return nullptr;
+
+    long lateHorarioId = late->getHorarioId();
+    Status lateStatus = late->getStatus();
+
+    stringstream dados;
+    dados << alunoId << "," << horarioId << "," << stringify(status);
+    connection.update(AGENDAMENTO_TABLE, id, dados.str());
+
+    if (lateStatus == Status::CONFIRMADO && status != Status::CONFIRMADO) {
+        this->bus.publish(HorarioLiberadoEvent(lateHorarioId));
+    } else if (lateStatus != Status::CONFIRMADO &&
+               status == Status::CONFIRMADO) {
+        this->bus.publish(HorarioOcupadoEvent(horarioId));
+    }
+
+    string updatedStr = to_string(id) + "," + dados.str();
+    auto updated = loadAgendamento(updatedStr);
+
+    cache.put(id, updated);
+
+    return updated;
 }
 
-vector<Agendamento> AgendamentoService::listAll() const {
-    vector<Agendamento> agendamentos;
-    try {
-        auto linhas = connection.selectAll(AGENDAMENTO_TABLE);
-        for (const auto& linha : linhas) {
-            stringstream ss(linha);
-            string idStr, alunoIdStr, horarioIdStr, statusStr;
-            getline(ss, idStr, ',');
-            getline(ss, alunoIdStr, ',');
-            getline(ss, horarioIdStr, ',');
-            getline(ss, statusStr, ',');
+shared_ptr<Agendamento> AgendamentoService::updateStatusById(
+    long id, const Status& status) {
+    auto agendamento = getById(id);
 
-            agendamentos.emplace_back(stol(idStr), stol(alunoIdStr),
-                                      stol(horarioIdStr), statusStr);
-        }
-        return agendamentos;
-    } catch (const runtime_error& e) {
-        throw;
-    }
+    if (!agendamento)
+        return nullptr;
+
+    return updateById(id, agendamento->getAlunoId(),
+                      agendamento->getHorarioId(), status);
 }
 
-std::optional<Agendamento> AgendamentoService::updateById(
-    long id, long alunoId, long horarioId, const std::string& status) const {
-    try {
-        stringstream dados;
-        dados << alunoId << "," << horarioId << "," << status;
+bool AgendamentoService::deleteById(long id) {
+    auto agendamento = getById(id);
 
-        connection.update(AGENDAMENTO_TABLE, id, dados.str());
-        Agendamento agendamentoAtualizado(id, alunoId, horarioId, status);
-        this->bus.publish(AgendamentoUpdatedEvent(agendamentoAtualizado));
-        return agendamentoAtualizado;
-    } catch (const invalid_argument& e) {
-        return std::nullopt;
-    } catch (const runtime_error& e) {
-        throw;
-    }
-}
-
-bool AgendamentoService::deleteById(long id) const {
-    try {
-        connection.deleteRecord(AGENDAMENTO_TABLE, id);
-        bus.publish(AgendamentoDeletedEvent(id));
-        return true;
-    } catch (...) {
+    if (!agendamento)
         return false;
+
+    Status statusOriginal = agendamento->getStatus();
+    long horarioId = agendamento->getHorarioId();
+
+    connection.deleteRecord(AGENDAMENTO_TABLE, id);
+
+    cache.erase(id);
+
+    if (statusOriginal == Status::CONFIRMADO) {
+        bus.publish(HorarioLiberadoEvent(horarioId));
     }
+
+    return true;
 }
 
-// --- MÉTODOS EXISTENTES ---
+vector<shared_ptr<Agendamento>> AgendamentoService::listByIdAluno(long id) {
+    cache.invalidate();
 
-vector<Agendamento> AgendamentoService::listByIdAluno(long id) const {
-    vector<Agendamento> agendamentos;
-    try {
-        auto linhas = connection.selectByColumn(
-            AGENDAMENTO_TABLE, ID_ALUNO_COL_INDEX, to_string(id));
-        for (const auto& linha : linhas) {
-            stringstream ss(linha);
-            string idStr, alunoIdStr, horarioIdStr, statusStr;
-            getline(ss, idStr, ',');
-            getline(ss, alunoIdStr, ',');
-            getline(ss, horarioIdStr, ',');
-            getline(ss, statusStr, ',');
+    vector<shared_ptr<Agendamento>> agendamentos;
+    auto linhas = connection.selectByColumn(AGENDAMENTO_TABLE,
+                                            ID_ALUNO_COL_INDEX, to_string(id));
+    for (const auto& linha : linhas) {
+        long id = getIdFromLine(linha);
 
-            agendamentos.emplace_back(stol(idStr), stol(alunoIdStr),
-                                      stol(horarioIdStr), statusStr);
-        }
-        return agendamentos;
-    } catch (const runtime_error& e) {
-        throw;
-    }
-}
-
-bool AgendamentoService::deleteByIdAluno(long id) const {
-    try {
-        vector<Agendamento> agendamentos = listByIdAluno(id);
-        if (agendamentos.empty())
-            return false;
-        connection.deleteByColumn(AGENDAMENTO_TABLE, ID_ALUNO_COL_INDEX,
-                                  to_string(id));
-        for (const auto& a : agendamentos)
-            bus.publish(AgendamentoDeletedEvent(a.getId()));
-        return true;
-    } catch (const invalid_argument& e) {
-        return false;
-    } catch (const runtime_error& e) {
-        throw;
-    }
-}
-
-bool AgendamentoService::deleteByIdHorario(long id) const {
-    try {
-        vector<Agendamento> agendamentos =
-            listByIdHorario(id);
-        if (agendamentos.empty())
-            return false;
-        connection.deleteByColumn(AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX,
-                                  to_string(id));
-        for (const auto& a : agendamentos)
-            bus.publish(AgendamentoDeletedEvent(a.getId()));
-        return true;
-    } catch (const invalid_argument& e) {
-        return false;
-    } catch (const runtime_error& e) {
-        throw;
-    }
-}
-
-// --- IMPLEMENTAÇÃO DA FUNÇÃO AUXILIAR ---
-
-/**
- * @brief Método auxiliar estático para listar agendamentos por ID_HORARIO.
- * @param connection Conexão com o banco de dados.
- * @param id O id do horario.
- * @return vector<Agendamento>
- */
-vector<Agendamento> AgendamentoService::listByIdHorario(long id) const {
-    vector<Agendamento> agendamentos;
-    try {
-        auto linhas = connection.selectByColumn(
-            AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX, to_string(id));
-        for (const auto& linha : linhas) {
-            stringstream ss(linha);
-            string idStr, alunoIdStr, horarioIdStr, statusStr;
-            getline(ss, idStr, ',');
-            getline(ss, alunoIdStr, ',');
-            getline(ss, horarioIdStr, ',');
-            getline(ss, statusStr, ',');
-
-            agendamentos.emplace_back(stol(idStr), stol(alunoIdStr),
-                                      stol(horarioIdStr), statusStr);
-        }
-        return agendamentos;
-    } catch (const runtime_error& e) {
-        throw;
-    }
-}
-
-vector<Agendamento> AgendamentoService::listPendenteByIdHorario(long id) const{
-    std::vector<Agendamento> todosAgendamentos = listByIdHorario(id);
-    std::vector<Agendamento> agendamentosPendentes;
-    for (const auto& agendamento : todosAgendamentos){
-        if (agendamento.getStatus() == "PENDENTE"){
-            agendamentosPendentes.push_back(agendamento);
+        if (cache.contains(id))
+            agendamentos.push_back(cache.at(id));
+        else {
+            auto agendamento = loadAgendamento(linha);
+            cache.put(id, agendamento);
+            agendamentos.push_back(agendamento);
         }
     }
-    return agendamentosPendentes;
-}
 
-vector<Agendamento> AgendamentoService::listPendenteByIdProfessor(long id) const {
-    vector<Horario> horarios = horarioService.listDisponivelByIdProfessor(id);
-    vector<Agendamento> agendamentos;
-
-    for (const auto& h : horarios) {
-        vector<Agendamento> buffer = listPendenteByIdHorario(h.getId());
-
-        agendamentos.insert(agendamentos.end(), buffer.begin(), buffer.end());        
-    }
+    sort(
+        agendamentos.begin(), agendamentos.end(),
+        [](const shared_ptr<Agendamento>& first,
+           const shared_ptr<Agendamento>& second) { return *first < *second; });
 
     return agendamentos;
 }
 
-bool AgendamentoService::atualizarRecusado(long id) const {
-    try{
-        const auto& agendamentoOpt = getById(id);
-        if (!agendamentoOpt.has_value()){
-            return false;
-        }
-        
-        auto& agendamento = agendamentoOpt.value();
-        updateById(id, agendamento.getAlunoId(), 
-        agendamento.getHorarioId(), "RECUSADO");
-        return true;
-    }
-    catch (const invalid_argument& e) {
+bool AgendamentoService::deleteByIdAluno(long idAluno) {
+    auto agendamentos = listByIdAluno(idAluno);
+
+    if (agendamentos.empty())
         return false;
-    } catch (const runtime_error& e) {
-        throw;
+
+    vector<long> horariosParaLiberar;
+
+    for (const auto& agendamento : agendamentos) {
+        if (agendamento->getStatus() == Status::CONFIRMADO) {
+            horariosParaLiberar.push_back(agendamento->getHorarioId());
+        }
+
+        cache.erase(agendamento->getId());
     }
+
+    connection.deleteByColumn(AGENDAMENTO_TABLE, ID_ALUNO_COL_INDEX,
+                              to_string(idAluno));
+
+    for (long horarioId : horariosParaLiberar) {
+        bus.publish(HorarioLiberadoEvent(horarioId));
+    }
+
+    return true;
 }
 
-bool AgendamentoService::atualizarConfirmado(long id) const {
-    try{
-        const auto& agendamentoOpt = getById(id);
-        if (!agendamentoOpt.has_value()){
-            return false;
-        }
-        
-        auto& agendamento = agendamentoOpt.value();
-        updateById(id, agendamento.getAlunoId(), 
-        agendamento.getHorarioId(), "CONFIRMADO");
-        return true;
-    }
-    catch (const invalid_argument& e) {
+bool AgendamentoService::deleteByIdHorario(long idHorario) {
+    auto agendamentos = listByIdHorario(idHorario);
+
+    if (agendamentos.empty())
         return false;
-    } catch (const runtime_error& e) {
-        throw;
+
+    connection.deleteByColumn(AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX,
+                              to_string(idHorario));
+
+    for (const auto& agendamento : agendamentos) {
+        cache.erase(agendamento->getId());
     }
+
+    return true;
 }
 
+vector<shared_ptr<Agendamento>> AgendamentoService::listByIdHorario(long id) {
+    cache.invalidate();
+
+    vector<shared_ptr<Agendamento>> agendamentos;
+    auto linhas = connection.selectByColumn(
+        AGENDAMENTO_TABLE, ID_HORARIO_COL_INDEX, to_string(id));
+    for (const auto& linha : linhas) {
+        long id = getIdFromLine(linha);
+
+        if (cache.contains(id))
+            agendamentos.push_back(cache.at(id));
+        else {
+            auto agendamento = loadAgendamento(linha);
+            cache.put(id, agendamento);
+            agendamentos.push_back(agendamento);
+        }
+    }
+
+    sort(
+        agendamentos.begin(), agendamentos.end(),
+        [](const shared_ptr<Agendamento>& first,
+           const shared_ptr<Agendamento>& second) { return *first < *second; });
+
+    return agendamentos;
+}
+
+shared_ptr<Agendamento> AgendamentoService::loadAgendamento(
+    const string& line) {
+    stringstream ss(line);
+    string idStr, alunoIdStr, horarioIdStr, statusStr;
+
+    getline(ss, idStr, ',');
+    getline(ss, alunoIdStr, ',');
+    getline(ss, horarioIdStr, ',');
+    getline(ss, statusStr, ',');
+
+    long id = stol(idStr);
+    long alunoId = stol(alunoIdStr);
+    long horarioId = stol(horarioIdStr);
+    Status status = parseStatus(statusStr);
+
+    auto horarioService = manager->getHorarioService();
+
+    auto& horarioLoader = manager->getHorarioLoader();
+    auto& alunoLoader = manager->getAlunoLoader();
+
+    auto horario = horarioService->getById(horarioId);
+
+    if (!horario) {
+        throw runtime_error("Falha ao carregar Horário associado (ID: " +
+                            to_string(horarioId) + ").");
+    }
+
+    auto agendamento = make_shared<Agendamento>(
+        id, alunoId, horarioId, status, alunoLoader, horarioLoader,
+        horario->getInicio(), horario->getFim());
+
+    return agendamento;
+}

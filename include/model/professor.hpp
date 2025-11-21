@@ -3,92 +3,102 @@
 
 #include <vector>
 
-#include "model/horario.hpp"
 #include "model/usuario.hpp"
 
+class Horario;  // Declaração forward
+
 /**
- * @brief Representa a entidade Professor, que herda as propriedades básicas de
- * Usuario.
- * * Adiciona atributos específicos de domínio como o número de matrícula e uma
- * lista de horarios associados.
+ * @brief Representa a entidade Professor, que é um tipo de Usuário.
+ * * Um Professor leciona uma disciplina e possui uma lista de Horários de
+ * disponibilidade para agendamento.
+ * * A lista de horários é carregada sob demanda (Lazy Loading) usando
+ * EntityList.
  */
 class Professor : public Usuario {
    private:
-    std::string disciplina;  ///< A dsiciplina do Professor.
-    std::vector<Horario>
-        horarios;  ///< Lista de Horarios associados a este Professor.
+    std::string
+        disciplina; /**< A disciplina principal lecionada pelo professor. */
+
+    /**
+     * @brief Lista de horários de disponibilidade associados a este professor.
+     * * Armazenada como EntityList para suportar carregamento preguiçoso.
+     */
+    EntityList<Horario> horarios;
 
    public:
     /**
-     * @brief Construtor padrão. Inicializa o objeto Professor com valores
-     * default.
+     * @brief Alias para o tipo EntityList de Horario.
      */
-    Professor();
+    using HorarioList = EntityList<Horario>;
 
     /**
-     * @brief Construtor completo do Professor.
-     * * Inicializa os campos herdados (ID, nome, email, disciplina) e os campos
-     * específicos (matrícula, horarios).
-     * @param id O identificador único.
-     * @param nome O nome do Professor.
-     * @param email O e-mail do Professor.
-     * @param disciplina A disciplina do Professor.
-     * @param disciplina A disciplina do Professor.
-     * @param horarios Uma lista de Horarios associados.
+     * @brief Alias para o vetor de ponteiros inteligentes de Horario.
+     */
+    using HorarioVector = HorarioList::EntityVector;
+
+    /**
+     * @brief Alias para a função de carregamento que fornece a lista de
+     * horários.
+     */
+    using HorariosLoader = ListLoaderFunction<Horario>;
+
+    /**
+     * @brief Construtor da classe Professor.
+     * * Inicializa os atributos do Usuário e do Professor, e injeta a função de
+     * carregamento dos horários.
+     * @param id O identificador único do usuário.
+     * @param nome O nome do professor.
+     * @param email O email do professor.
+     * @param senha A senha do professor.
+     * @param disciplina A disciplina lecionada.
+     * @param loader A função de carregamento para os horários do professor.
      */
     Professor(long id, const std::string& nome, const std::string& email,
               const std::string& senha, std::string disciplina,
-              const std::vector<Horario>& horarios);
+              const HorariosLoader& loader);
 
     /**
-     * @brief Obtém a disciplina do Usuário.
-     * * @return Uma referência constante para a string da disciplina.
+     * @brief Retorna a disciplina lecionada pelo professor.
+     * @return const std::string& A string contendo o nome da disciplina.
      */
     const std::string& getDisciplina() const;
 
     /**
-     * @brief Define a disciplina do Usuário.
-     * * @param disciplina A nova disciplina.
+     * @brief Define uma nova disciplina para o professor.
+     * @param disciplina A nova disciplina.
      */
     void setDisciplina(const std::string& disciplina);
 
     /**
-     * @brief Obtém a lista de Horarios associados a este Professor.
-     * * @return Uma referência constante para o vetor de Horarios.
+     * @brief Retorna a lista de Horários de disponibilidade do professor.
+     * * O carregamento dos horários é disparado na primeira chamada a esta
+     * função ou se o EntityList for acessado.
+     * @return HorarioList& A referência para a lista de horários.
      */
-    const std::vector<Horario>& getHorarios() const;
+    HorarioList& getHorarios();
 
     /**
-     * @brief Obtém a lista de Horarios disponíveis associados a este Professor.
-     * * @return Uma referência constante para o vetor de Horarios disponíveis.
+     * @brief Retorna uma lista filtrada de Horários que estão disponíveis.
+     * * Carrega a lista completa de horários e aplica a lógica de filtragem.
+     * @return HorarioVector Um vetor contendo apenas os horários disponíveis.
      */
-    const std::vector<Horario>& getHorariosDisponiveis() const;
+    HorarioVector getHorariosDisponiveis();
 
     /**
-     * @brief Define a lista de Horarios.
-     * * * Nota: No contexto de mapeamento (mapper), esta lista é frequentemente
-     * preenchida pela camada de Serviço.
-     * * @param horarios O novo vetor de Horarios.
+     * @brief Retorna uma lista filtrada de Horários que estão ocupados.
+     * * Carrega a lista completa de horários e aplica a lógica de filtragem.
+     * @return HorarioVector Um vetor contendo apenas os horários ocupados.
      */
-    void setHorarios(const std::vector<Horario>& horarios);
+    HorarioVector getHorariosOcupados();
 
     /**
-     * @brief Adiciona um novo Horario à lista.
-     * @param horario O Horario a ser adicionado.
+     * @brief Operador de comparação para ordenação.
+     * * Útil para ordenar professores com base no nome.
+     * @param other O outro objeto Professor a ser comparado.
+     * @return true Se este professor for considerado "menor" (deve vir antes)
+     * que o outro.
      */
-    void addHorario(const Horario& horario);
-
-    /**
-     * @brief Atualiza um Horario existente na lista.
-     * @param horario O Horario com dados atualizados (busca por ID).
-     */
-    void updateHorario(const Horario& horario);
-
-    /**
-     * @brief Remove um Horario da lista.
-     * @param id O id do horario.
-     */
-    void removeHorario(long id);
+    bool operator<(const Professor& other) const;
 };
 
 #endif

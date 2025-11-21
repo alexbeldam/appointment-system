@@ -1,0 +1,11 @@
+id,nome,email,senha,disciplina
+1,Ricardo Alves,ricardoalves@escola.com,$mk$12$eEnGTb06ivq97MMu/2oTZWlpXA2,Cálculo Numérico
+2,Sofia Mendes,sofiamendes@escola.com,$mk$12$PgqaA6FNw1Cq.N2y8PsCYhqfHBw,Introdução à Programação
+3,Marcelo Vieira,marcelovieira@escola.com,$mk$12$VJypKbR1WVaILQVK.KbJfM3jyE8,Física Experimental I
+4,Laura Santos,laurasantos@escola.com,$mk$12$PoCVApzm0x/TdJ5457hph4xua/3,Álgebra Linear
+5,Eduardo Costa,eduardocosta@escola.com,$mk$12$RnDt99GvyOLFibP7AEV0TQarsrq,Cálculo III
+6,Patrícia Lima,patricialima@escola.com,$mk$12$T7lG5N3X3AslEHegBw0z23Tdr8i,Estatística e Probabilidade
+7,Felipe Rocha,feliperocha@escola.com,$mk$12$hvkCc5NAybgR3c.uAdbHweJ/aa6,Química Aplicada
+8,Juliana Silva,julianasilva@escola.com,$mk$12$qLRt4AAIR9ppKhpy7vWc1asaGqb,Fundamentos da Mecânica
+9,Thiago Nogueira,thiagonogueira@escola.com,$mk$12$iH8gXDyn/j9sSqK3CFIN/VhLAB0,Porgramação Orientada a Objetos
+10,Helena Dias,helenadias@escola.com,$mk$12$V/7KxGn.qU24MQTN2qdlcGD/qrz,Circuitos Lógicos

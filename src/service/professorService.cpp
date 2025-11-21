@@ -1,166 +1,110 @@
 #include "service/professorService.hpp"
 
 #include <algorithm>
-#include <iostream>
-#include <memory>
-#include <sstream>
-#include <stdexcept>
-#include <utility>
 
 #include "event/events.hpp"
-using namespace std;
+#include "service/horarioService.hpp"
 
-// --- CONFIGURAÇÕES DE PERSISTÊNCIA ---
+using std::invalid_argument;
+using std::make_shared;
+using std::runtime_error;
+using std::shared_ptr;
+using std::sort;
+using std::string;
+using std::stringstream;
+using std::to_string;
+using std::vector;
 
-// Define o nome da "tabela" (arquivo CSV) gerenciada por este Service.
-#define PROFESSOR_TABLE "professores"
-// Índices das colunas usados para buscas específicas.
 #define EMAIL_COL_INDEX 2
 
-// Construtor: Inicializa todas as dependências de forma segura (Injeção de
-// Dependência).
-ProfessorService::ProfessorService(const MockConnection& connection,
-                                   EventBus& bus, const HorarioService& service)
-    : connection(connection), bus(bus), service(service) {}
+ProfessorService::ProfessorService(EntityManager* manager,
+                                   const MockConnection& connection,
+                                   EventBus& bus)
+    : manager(manager),
+      connection(connection),
+      bus(bus),
+      cache({PROFESSOR_TABLE, HORARIO_TABLE, AGENDAMENTO_TABLE}) {}
 
-// --- MÉTODOS PRIVADOS/AUXILIARES ---
+vector<shared_ptr<Professor>> ProfessorService::getByEmail(
+    const string& email) {
+    cache.invalidate();
 
-// Helper: Converte CSV em Model e injeta Horarios disponíveis (Responsabilidade
-// do Service)
-Professor ProfessorService::mapAndInjectHorarios(const string& csv_line) const {
-    Professor professor;
+    vector<shared_ptr<Professor>> professores;
+    auto linhas =
+        connection.selectByColumn(PROFESSOR_TABLE, EMAIL_COL_INDEX, email);
 
-    stringstream ss(csv_line);
-    string item;
-    vector<string> tokens;
+    for (const auto& linha : linhas) {
+        long id = getIdFromLine(linha);
 
-    while (getline(ss, item, ',')) {
-        tokens.push_back(item);
-    }
-
-    if (tokens.size() < 5) {
-        throw runtime_error("Registro CSV inválido: " + csv_line);
-    }
-
-    professor.setId(stol(tokens[0]));
-    professor.setNome(tokens[1]);
-    professor.setEmail(tokens[2]);
-    professor.setSenha(tokens[3]);
-    professor.setDisciplina(tokens[4]);
-
-    vector<Horario> horarios = service.listByIdProfessor(professor.getId());
-
-    professor.setHorarios(move(horarios));
-
-    return professor;
-}
-
-// Helper: Busca todos os Professors por Email (usa o DAL e mapeia o resultado).
-vector<Professor> ProfessorService::getByEmail(const string& email) const {
-    vector<string> csv_matches;
-    vector<Professor> professors;
-
-    try {
-        // Chamada ao DAL (MockConnection) para buscar na tabela
-        // PROFESSOR_TABLE.
-        csv_matches =
-            connection.selectByColumn(PROFESSOR_TABLE, EMAIL_COL_INDEX, email);
-    } catch (const invalid_argument& e) {
-        // Captura "Nenhum registro encontrado" do DAL e traduz para um vetor
-        // vazio.
-        return {};
-    } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O críticos.
-    }
-
-    // Mapeia todas as linhas CSV válidas para Model.
-    for (const string& csv_line : csv_matches) {
-        try {
-            professors.push_back(mapAndInjectHorarios(csv_line));
-        } catch (const runtime_error& e) {
-            // Logs e ignora registros malformados encontrados no arquivo.
-            cerr << "Aviso: Pulando registro malformado durante getByEmail: "
-                 << csv_line << " (" << e.what() << ")" << endl;
+        if (cache.contains(id))
+            professores.push_back(cache.at(id));
+        else {
+            auto professor = loadProfessor(linha);
+            cache.put(id, professor);
+            professores.push_back(professor);
         }
     }
 
-    return professors;
+    return professores;
 }
 
-// --- MÉTODOS DE VALIDAÇÃO DE NEGÓCIO ---
-
-bool ProfessorService::existsByEmail(string email) const {
-    // Verifica se a lista retornada por getByEmail não está vazia.
+bool ProfessorService::existsByEmail(string email) {
     return !getByEmail(email).empty();
 }
 
-bool ProfessorService::existsByEmailAndIdNot(string email, long id) const {
-    vector<Professor> email_matches = getByEmail(email);
+bool ProfessorService::existsByEmailAndIdNot(string email, long id) {
+    auto email_matches = getByEmail(email);
 
-    // Itera os Models para verificar se o email pertence a um ID diferente.
-    for (const Professor& professor : email_matches) {
-        if (professor.getId() != id) {
-            return true;  // Encontrado outro professor com o mesmo email.
+    for (const auto& professor : email_matches) {
+        if (professor->getId() != id) {
+            return true;
         }
     }
 
     return false;
 }
 
-// --- MÉTODOS PÚBLICOS (CRUD) ---
-
-// CREATE
-Professor ProfessorService::save(const string& nome, const string& email,
-                                 const string& senha,
-                                 const string& disciplina) const {
-    // 1. VALIDAÇÃO DE NEGÓCIO (Unicidade de Email)
+shared_ptr<Professor> ProfessorService::save(const string& nome,
+                                             const string& email,
+                                             const string& senha,
+                                             const string& disciplina) {
     if (existsByEmail(email)) {
         throw invalid_argument("O email '" + email +
                                "' já está em uso por outro professor.");
     }
 
-    // 2. DAL WRITE
     stringstream dados;
     dados << nome << "," << email << "," << senha << "," << disciplina;
     string data_csv = dados.str();
-    // Persiste os dados e obtém o novo ID (lança runtime_error em I/O).
     long id = connection.insert(PROFESSOR_TABLE, data_csv);
 
-    // 3. MONTAGEM DO MODELO (Evita leitura desnecessária do DB)
     string new_record_csv = to_string(id) + "," + data_csv;
 
-    try {
-        // Mapeia, injeta Horarios e retorna o Model completo.
-        return mapAndInjectHorarios(new_record_csv);
-    } catch (const runtime_error& e) {
-        // Erro crítico após sucesso na escrita: relança com contexto.
-        throw runtime_error(
-            "Inserção bem-sucedida (ID: " + to_string(id) +
-            "), mas falha ao processar o registro: " + string(e.what()));
-    }
+    auto salvo = loadProfessor(new_record_csv);
+
+    cache.put(id, salvo);
+
+    return salvo;
 }
 
-// READ BY ID
-optional<Professor> ProfessorService::getById(long id) const {
-    try {
-        // selectOne lança invalid_argument se ID não existe.
-        string csv_line = connection.selectOne(PROFESSOR_TABLE, id);
+shared_ptr<Professor> ProfessorService::getById(long id) {
+    cache.invalidate();
 
-        // Se encontrou, mapeia e retorna o optional<Professor> com valor.
-        return mapAndInjectHorarios(csv_line);
-    } catch (const invalid_argument& e) {
-        // Captura "ID não existe" e retorna optional vazio.
-        return nullopt;
-    } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O.
-    }
+    if (cache.contains(id))
+        return cache.at(id);
+
+    string linha = connection.selectOne(PROFESSOR_TABLE, id);
+
+    auto professor = loadProfessor(linha);
+
+    cache.put(id, professor);
+
+    return professor;
 }
 
-// READ BY EMAIL
-optional<Professor> ProfessorService::getOneByEmail(const string& email) const {
-    vector<Professor> results = getByEmail(email);
+shared_ptr<Professor> ProfessorService::getOneByEmail(const string& email) {
+    auto results = getByEmail(email);
     if (results.size() > 1) {
-        // ERRO CRÍTICO: Integridade violada!
         throw runtime_error(
             "Falha de integridade: Múltiplos registros encontrados para o "
             "email: " +
@@ -168,87 +112,100 @@ optional<Professor> ProfessorService::getOneByEmail(const string& email) const {
     }
 
     if (results.empty()) {
-        return nullopt;
+        return nullptr;
     }
 
     return results.front();
 }
 
-// LIST ALL
-vector<Professor> ProfessorService::listAll() const {
-    // Pega todas as linhas de dados da tabela Professores.
-    vector<string> csv_records = connection.selectAll(PROFESSOR_TABLE);
-    vector<Professor> professors;
+vector<shared_ptr<Professor>> ProfessorService::listAll() {
+    cache.invalidate();
 
-    // Mapeia e injeta Horarios para todos os registros.
+    vector<string> csv_records = connection.selectAll(PROFESSOR_TABLE);
+    vector<shared_ptr<Professor>> professors;
+
     for (const string& csv_line : csv_records) {
-        try {
-            professors.push_back(mapAndInjectHorarios(csv_line));
-        } catch (const runtime_error& e) {
-            // Logs e ignora registros malformados.
-            cerr << "Aviso: Pulando registro malformado durante listAll: "
-                 << csv_line << " (" << e.what() << ")" << endl;
+        long id = getIdFromLine(csv_line);
+
+        if (cache.contains(id))
+            professors.push_back(cache.at(id));
+        else {
+            auto professor = loadProfessor(csv_line);
+            cache.put(id, professor);
+            professors.push_back(professor);
         }
     }
+
+    sort(professors.begin(), professors.end(),
+         [](const shared_ptr<Professor>& first,
+            const shared_ptr<Professor>& second) { return *first < *second; });
 
     return professors;
 }
 
-// UPDATE
-optional<Professor> ProfessorService::updateById(
-    long id, const string& nome, const string& email, const string& senha,
-    const string& disciplina) const {
-    // 1. VALIDAÇÃO DE NEGÓCIO (Unicidade para UPDATE, excluindo o próprio ID)
+shared_ptr<Professor> ProfessorService::updateById(long id, const string& nome,
+                                                   const string& email,
+                                                   const string& senha,
+                                                   const string& disciplina) {
     if (existsByEmailAndIdNot(email, id)) {
         throw invalid_argument("O email '" + email +
                                "' já está em uso por outro professor.");
     }
 
-    // 2. DAL WRITE (Atualiza a linha no arquivo)
+    auto late = getById(id);
+
+    if (!late)
+        return nullptr;
+
     stringstream dados;
     dados << nome << "," << email << "," << senha << "," << disciplina;
     string data_csv = dados.str();
-    string updated_csv;
 
-    try {
-        // update() lança invalid_argument se ID não existe.
-        connection.update(PROFESSOR_TABLE, id, data_csv);
+    connection.update(PROFESSOR_TABLE, id, data_csv);
 
-        // Constrói a linha CSV completa do registro atualizado.
-        updated_csv = to_string(id) + "," + data_csv;
-    } catch (const invalid_argument& e) {
-        // Captura "ID não existe" e retorna optional vazio.
-        return nullopt;
-    } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O.
-    }
+    string updatedStr = to_string(id) + "," + data_csv;
+    auto updated = loadProfessor(updatedStr);
 
-    // 3. MONTAGEM DO MODELO
-    Professor updated_professor = mapAndInjectHorarios(updated_csv);
+    cache.put(id, updated);
 
-    // 4. PUBLICAÇÃO DE EVENTO (Sucesso no Update)
-    // Cria o shared_ptr para o objeto e publica.
-    shared_ptr<Usuario> user_ptr = make_shared<Professor>(updated_professor);
-    bus.publish(UsuarioUpdatedEvent(user_ptr));
-
-    return updated_professor;
+    return updated;
 }
 
-// DELETE
-bool ProfessorService::deleteById(long id) const {
-    try {
-        // 1. DAL WRITE
-        // deleteRecord() lança invalid_argument se ID não existe.
-        connection.deleteRecord(PROFESSOR_TABLE, id);
+bool ProfessorService::deleteById(long id) {
+    auto professor = getById(id);
 
-        // 2. PUBLICAÇÃO DE EVENTO (Sucesso no Delete)
-        // Publica o ID do usuário deletado.
-        bus.publish(ProfessorDeletedEvent(id));
+    if (!professor)
+        return false;
 
-        return true;  // Sucesso na remoção.
-    } catch (const invalid_argument& e) {
-        return false;  // ID não encontrado.
-    } catch (const runtime_error& e) {
-        throw;  // Relança erros de I/O.
-    }
+    const auto& horarioService = manager->getHorarioService();
+
+    horarioService->deleteByIdProfessor(id);
+
+    connection.deleteRecord(PROFESSOR_TABLE, id);
+
+    cache.erase(id);
+
+    bus.publish(ProfessorDeletedEvent(id));
+
+    return true;
+}
+
+shared_ptr<Professor> ProfessorService::loadProfessor(const string& line) {
+    stringstream ss(line);
+    string idStr, nome, email, senha, disciplina;
+
+    getline(ss, idStr, ',');
+    getline(ss, nome, ',');
+    getline(ss, email, ',');
+    getline(ss, senha, ',');
+    getline(ss, disciplina, ',');
+
+    long id = stol(idStr);
+
+    auto& horariosLoader = manager->getHorarioListLoader();
+
+    auto professor = make_shared<Professor>(id, nome, email, senha, disciplina,
+                                            horariosLoader);
+
+    return professor;
 }

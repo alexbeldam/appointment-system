@@ -1,17 +1,19 @@
 #include "model/aluno.hpp"
 
 #include <algorithm>
-using namespace std;
 
-Aluno::Aluno() {}
+#include "model/agendamento.hpp"
+
+using std::remove_if;
+using std::shared_ptr;
+using std::string;
 
 Aluno::Aluno(long id, const string& nome, const string& email,
              const string& senha, long matricula,
-             const vector<Agendamento>& agendamentos)
-    : Usuario(id, nome, email, senha) {
-    setMatricula(matricula);
-    setAgendamentos(agendamentos);
-}
+             const AgendamentosLoader& loader)
+    : Usuario(id, nome, email, senha),
+      matricula(matricula),
+      agendamentos(loader, id) {}
 
 long Aluno::getMatricula() const {
     return matricula;
@@ -21,30 +23,21 @@ void Aluno::setMatricula(long matricula) {
     this->matricula = matricula;
 }
 
-const vector<Agendamento>& Aluno::getAgendamentos() const {
+Aluno::AgendamentoList& Aluno::getAgendamentos() {
     return agendamentos;
 }
 
-void Aluno::setAgendamentos(const vector<Agendamento>& agendamentos) {
-    this->agendamentos = agendamentos;
-}
+Aluno::AgendamentoVector Aluno::getAgendamentosCancelaveis() {
+    AgendamentoVector cancelaveis(agendamentos.begin(), agendamentos.end());
 
-void Aluno::addAgendamento(const Agendamento& agendamento) {
-    this->agendamentos.push_back(agendamento);
-}
+    cancelaveis.erase(remove_if(cancelaveis.begin(), cancelaveis.end(),
+                                [](shared_ptr<Agendamento> agendamento) {
+                                    auto stts = agendamento->getStatus();
 
-void Aluno::updateAgendamento(const Agendamento& agendamento) {
-    for (Agendamento& a : this->agendamentos) {
-        if (a.getId() == agendamento.getId()) {
-            a = agendamento;
-            return;
-        }
-    }
-}
+                                    return stts != Status::PENDENTE &&
+                                           stts != Status::CONFIRMADO;
+                                }),
+                      cancelaveis.end());
 
-void Aluno::removeAgendamento(long id) {
-    this->agendamentos.erase(
-        remove_if(this->agendamentos.begin(), this->agendamentos.end(),
-                  [id](const Agendamento& a) { return a.getId() == id; }),
-        this->agendamentos.end());
+    return cancelaveis;
 }

@@ -1,8 +1,6 @@
 #include "model/usuario.hpp"
 
-using namespace std;
-
-Usuario::Usuario() {}
+using std::string;
 
 Usuario::Usuario(long id, const string& nome, const string& email,
                  const string& senha) {

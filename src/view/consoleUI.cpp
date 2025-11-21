@@ -3,9 +3,13 @@
 #include <iostream>
 
 #include "util/utils.hpp"
-using namespace std;
 
-ConsoleUI::ConsoleUI(SessionManager& sm) : sessionManager(sm) {}
+using std::cout;
+using std::endl;
+using std::shared_ptr;
+
+ConsoleUI::ConsoleUI(const shared_ptr<SessionService>& ss)
+    : sessionService(ss) {}
 
 static void imprimir_menu() {
     cout << "\nMENU DE OPCOES:" << endl;
@@ -13,8 +17,8 @@ static void imprimir_menu() {
     cout << "0 - Deslogar" << endl;
 }
 
-void ConsoleUI::fazer_logout() const {
-    if (!sessionManager.isLogged())
+void ConsoleUI::fazer_logout() {
+    if (!sessionService->isLogged())
         return;
 
     imprimir_menu();
@@ -22,7 +26,7 @@ void ConsoleUI::fazer_logout() const {
     int opcao = read_integer_range("Escolha uma opcao: ", 0, 1);
 
     if (opcao == 0) {
-        sessionManager.logout();
+        sessionService->logout();
         cout << "\n==================================================" << endl;
         cout << "✅ SUCESSO! Logout realizado." << endl;
         cout << "==================================================" << endl;

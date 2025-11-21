@@ -4,54 +4,85 @@
 #include "service/professorService.hpp"
 
 /**
- * @brief Classe responsável por controlar o fluxo de dados entre a camada de
- * apresentação (I/O) e a camada de serviço (lógica de negócio).
- *
+ * @brief Controller para gerenciamento de entidades Professor.
+ * * Esta classe atua como a camada de controle (Controller) do padrão MVC,
+ * responsável por receber requisições, delegar a lógica de negócio
+ * para a camada de ProfessorService e retornar o resultado.
  */
 class ProfessorController {
    private:
-    const ProfessorService& service;
+    /**
+     * @brief Ponteiro inteligente para o serviço de professores.
+     * * Responsável por isolar a lógica de negócio e o acesso aos dados
+     * relacionados a Professor.
+     */
+    const std::shared_ptr<ProfessorService>& service;
 
    public:
-    ProfessorController(const ProfessorService& service);
+    /**
+     * @brief Construtor da classe ProfessorController.
+     * * Realiza a injeção de dependência do ProfessorService.
+     * * @param service O serviço de professores injetado.
+     */
+    ProfessorController(const std::shared_ptr<ProfessorService>& service);
 
     /**
-     * @brief Cria um novo registro na tabela, após validações de formato.
-     * * @return O professor criado
+     * @brief Destrutor padrão.
      */
-    Professor create(const std::string& nome, const std::string& email,
-                     const std::string& senha,
-                     const std::string& disciplina) const;
+    ~ProfessorController() = default;
 
     /**
-     * @brief Lê o registro com o id passado.
-     * * @return O professor com o id parametro
+     * @brief Cria e cadastra um novo Professor (Requisição POST).
+     * * Delega a criação do novo recurso ao ProfessorService.
+     * * @param nome O nome completo do professor.
+     * @param email O email único do professor, usado para login.
+     * @param senha A senha do professor.
+     * @param disciplina A disciplina principal lecionada pelo professor.
+     * @return std::shared_ptr<Professor> O objeto Professor recém-criado.
      */
-    Professor read(long id) const;
+    std::shared_ptr<Professor> create(const std::string& nome,
+                                      const std::string& email,
+                                      const std::string& senha,
+                                      const std::string& disciplina);
 
     /**
-     * @brief Lista todos os professors.
-     * * @return Um vetor com todos os professors
+     * @brief Busca um Professor pelo seu ID (Requisição GET).
+     * * @param id O identificador único do professor.
+     * @return std::shared_ptr<Professor> O objeto Professor encontrado.
+     * @return nullptr Se nenhum professor for encontrado com o ID fornecido.
      */
-    std::vector<Professor> list() const;
+    std::shared_ptr<Professor> read(long id);
 
     /**
-     * @brief Atualiza o registro com o id parametro. Implementa lógica de
-     * 'patch': campos vazios ou inválidos são ignorados e o valor existente é
-     * mantido.
-     * * @return O professor atualizado
+     * @brief Lista todos os Professores cadastrados (Requisição GET).
+     * * @return std::vector<std::shared_ptr<Professor>> Uma lista contendo
+     * todos os objetos Professor.
      */
-    Professor update(long id, const std::string& nome, const std::string& email,
-                     const std::string& senha,
-                     const std::string& disciplina) const;
+    std::vector<std::shared_ptr<Professor>> list();
 
     /**
-     * @brief Deleta o registro de id parametro.
-     * * @return true se a operação suceder e o registro for
-     * encontrado/deletado.
-     * @return false se a operação falhar (registro não encontrado).
+     * @brief Atualiza as informações de um Professor (Requisição PUT).
+     * * @param id O identificador único do professor a ser atualizado.
+     * @param nome O novo nome.
+     * @param email O novo email.
+     * @param senha A nova senha.
+     * @param disciplina A nova disciplina.
+     * @return std::shared_ptr<Professor> O objeto Professor atualizado.
+     * @return nullptr Se o professor não for encontrado ou a atualização
+     * falhar.
      */
-    bool destroy(long id) const;
+    std::shared_ptr<Professor> update(long id, const std::string& nome,
+                                      const std::string& email,
+                                      const std::string& senha,
+                                      const std::string& disciplina);
+
+    /**
+     * @brief Exclui um Professor pelo seu ID (Requisição DELETE).
+     * * @param id O identificador único do professor a ser excluído.
+     * @return true Se o professor foi encontrado e deletado com sucesso.
+     * @return false Se a operação falhar (ex: professor não encontrado).
+     */
+    bool destroy(long id);
 };
 
 #endif
