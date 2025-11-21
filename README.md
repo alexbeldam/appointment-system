@@ -77,7 +77,7 @@ O projeto usa arquivos CSV na pasta `data/` como banco de dados mock. Para evita
     - **Windows:** Execute o script no diretório raiz:
       
     ```bash
-    setup.bat
+    ./setup.bat
     ```
 
 > Este passo garante que suas modificações nos arquivos `data/*.csv` não serão rastreadas pelo Git, mantendo o repositório limpo.
