@@ -1,13 +1,12 @@
 #include "service/sessionService.hpp"
 
-#include <algorithm>
 #include <stdexcept>
 
 #include "event/events.hpp"
 
-using namespace std;
+using std::runtime_error;
+using std::shared_ptr;
 
-// O Construtor é onde o SessionService se inscreve nos eventos.
 SessionService::SessionService(EntityManager* manager, EventBus& bus)
     : manager(manager),
       bus(bus),
@@ -38,14 +37,10 @@ SessionService::SessionService(EntityManager* manager, EventBus& bus)
         });
 }
 
-// --- Métodos de Gerenciamento de Sessão ---
-
 void SessionService::logout() {
     type = UserType::NONE;
     userId = 0;
 }
-
-// --- Métodos de Consulta ---
 
 bool SessionService::isLogged() const {
     return type != UserType::NONE && userId > 0;

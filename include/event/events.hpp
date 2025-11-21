@@ -4,11 +4,6 @@
 #include <memory>
 #include <string>
 
-#include "model/agendamento.hpp"
-#include "model/aluno.hpp"
-#include "model/horario.hpp"
-#include "model/professor.hpp"
-
 /**
  * @brief Template base para todas as estruturas de eventos.
  *
@@ -40,26 +35,17 @@ struct Event {
  * @param ... A lista de membros (para a declaração) e parâmetros (para o
  * construtor).
  */
-#define DEFINE_EVENT(EventName, MemberTypeAndName, MemberName)                 \
-    struct EventName : public Event<EventName> {                               \
-        MemberTypeAndName; /* Ex: std::shared_ptr<Usuario> usuario; */         \
-        /* Construtor que usa a lista de inicialização para evitar nullptr. */ \
-        EventName(MemberTypeAndName) : MemberName(MemberName) {}               \
+#define DEFINE_EVENT(EventName, MemberTypeAndName, MemberName)   \
+    struct EventName : public Event<EventName> {                 \
+        MemberTypeAndName;                                       \
+        EventName(MemberTypeAndName) : MemberName(MemberName) {} \
     };
-
-// --- DEFINIÇÕES CONSOLIDADAS DE EVENTOS ---
-
-// --- EVENTOS DE GESTÃO DE SESSÃO (Login e Reset) ---
 
 DEFINE_EVENT(ProfessorLoggedInEvent, long professorId, professorId)
 DEFINE_EVENT(AlunoLoggedInEvent, long alunoId, alunoId)
 
-// --- EVENTOS DE DELEÇÃO EM CASCATA ---
-
 DEFINE_EVENT(ProfessorDeletedEvent, long professorId, professorId)
 DEFINE_EVENT(AlunoDeletedEvent, long alunoId, alunoId)
-
-// --- EVENTOS DE MUDANÇA DE ESTADO ---
 
 DEFINE_EVENT(HorarioOcupadoEvent, long horarioId, horarioId)
 DEFINE_EVENT(HorarioLiberadoEvent, long horarioId, horarioId)

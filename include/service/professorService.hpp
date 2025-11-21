@@ -18,9 +18,8 @@ using ProfessorCache = EntityCache<Professor>;
 class ProfessorService {
    private:
     EntityManager* manager;
-    const MockConnection&
-        connection;  ///< Conexão simulada com o banco de dados
-    EventBus& bus;   ///< Barramento de eventos
+    const MockConnection& connection;
+    EventBus& bus;
     ProfessorCache cache;
 
     std::shared_ptr<Professor> loadProfessor(const std::string& line);

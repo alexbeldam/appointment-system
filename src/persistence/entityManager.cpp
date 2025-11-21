@@ -6,7 +6,8 @@
 #include "service/professorService.hpp"
 #include "service/sessionService.hpp"
 
-using namespace std;
+using std::make_shared;
+using std::shared_ptr;
 
 EntityManager::EntityManager(const MockConnection& conn, EventBus& bus) {
     alunoService = make_shared<AlunoService>(this, conn, bus);

@@ -1,15 +1,16 @@
 #include "service/alunoService.hpp"
 
-#include <algorithm>
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
-#include <utility>
-
 #include "event/events.hpp"
 #include "service/agendamentoService.hpp"
 
-using namespace std;
+using std::invalid_argument;
+using std::make_shared;
+using std::runtime_error;
+using std::shared_ptr;
+using std::string;
+using std::stringstream;
+using std::to_string;
+using std::vector;
 
 #define EMAIL_COL_INDEX 2
 #define MATRICULA_COL_INDEX 4
@@ -43,7 +44,6 @@ vector<shared_ptr<Aluno>> AlunoService::getByEmail(const string& email) {
     return alunos;
 }
 
-// Helper: Busca todos os Alunos por Matrícula.
 vector<shared_ptr<Aluno>> AlunoService::getByMatricula(long matricula) {
     cache.invalidate();
 
@@ -66,17 +66,13 @@ vector<shared_ptr<Aluno>> AlunoService::getByMatricula(long matricula) {
     return alunos;
 }
 
-// --- MÉTODOS DE VALIDAÇÃO DE NEGÓCIO (Unicidade) ---
-
 bool AlunoService::existsByEmail(string email) {
-    // Verifica se a busca retorna algum resultado.
     return !getByEmail(email).empty();
 }
 
 bool AlunoService::existsByEmailAndIdNot(string email, long id) {
     auto email_matches = getByEmail(email);
 
-    // Itera os Models para verificar se o email pertence a um ID diferente.
     for (const auto& aluno : email_matches) {
         if (aluno->getId() != id) {
             return true;
@@ -87,14 +83,12 @@ bool AlunoService::existsByEmailAndIdNot(string email, long id) {
 }
 
 bool AlunoService::existsByMatricula(long matricula) {
-    // Verifica se a busca retorna algum resultado.
     return !getByMatricula(matricula).empty();
 }
 
 bool AlunoService::existsByMatriculaAndIdNot(long matricula, long id) {
     auto matricula_matches = getByMatricula(matricula);
 
-    // Itera os Models para verificar se a matrícula pertence a um ID diferente.
     for (const auto& aluno : matricula_matches) {
         if (aluno->getId() != id) {
             return true;
@@ -104,9 +98,6 @@ bool AlunoService::existsByMatriculaAndIdNot(long matricula, long id) {
     return false;
 }
 
-// --- MÉTODOS PÚBLICOS (CRUD) ---
-
-// CREATE
 shared_ptr<Aluno> AlunoService::save(const string& nome, const string& email,
                                      const string& senha, long matricula) {
     if (existsByEmail(email)) {
@@ -131,7 +122,6 @@ shared_ptr<Aluno> AlunoService::save(const string& nome, const string& email,
     return salvo;
 }
 
-// READ BY ID
 shared_ptr<Aluno> AlunoService::getById(long id) {
     cache.invalidate();
 
@@ -147,12 +137,10 @@ shared_ptr<Aluno> AlunoService::getById(long id) {
     return aluno;
 }
 
-// READ BY EMAIL
 shared_ptr<Aluno> AlunoService::getOneByEmail(const string& email) {
     auto results = getByEmail(email);
 
     if (results.size() > 1) {
-        // ERRO CRÍTICO: Integridade violada!
         throw runtime_error(
             "Falha de integridade: Múltiplos registros encontrados para o "
             "email: " +
@@ -166,12 +154,10 @@ shared_ptr<Aluno> AlunoService::getOneByEmail(const string& email) {
     return results.front();
 }
 
-// UPDATE
 shared_ptr<Aluno> AlunoService::updateById(long id, const string& nome,
                                            const string& email,
                                            const string& senha,
                                            long matricula) {
-    // 1. VALIDAÇÃO DE NEGÓCIO (Unicidade para UPDATE, excluindo o próprio ID)
     if (existsByEmailAndIdNot(email, id)) {
         throw invalid_argument("O email '" + email +
                                "' já está em uso por outro aluno.");
@@ -186,7 +172,6 @@ shared_ptr<Aluno> AlunoService::updateById(long id, const string& nome,
     if (!late)
         return nullptr;
 
-    // 2. DAL WRITE (Atualiza a linha no arquivo)
     stringstream dados;
     dados << nome << "," << email << "," << senha << "," << matricula;
 
@@ -200,7 +185,6 @@ shared_ptr<Aluno> AlunoService::updateById(long id, const string& nome,
     return updated;
 }
 
-// DELETE
 bool AlunoService::deleteById(long id) {
     auto aluno = getById(id);
 

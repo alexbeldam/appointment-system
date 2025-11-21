@@ -5,7 +5,6 @@
 #include <mutex>
 #include <typeindex>
 #include <unordered_map>
-#include <vector>
 
 /**
  * @brief Um barramento de eventos thread-safe para comunicação desacoplada.

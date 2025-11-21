@@ -108,14 +108,6 @@ class Agendamento {
 
     std::shared_ptr<Horario> getHorario();
 
-    // --- NÃO APAGAR ---
-
-    /**
-     * @brief Construtor de cópia (copy constructor).
-     */
-
-    Agendamento(const Agendamento& other) = default;
-
     bool operator<(const Agendamento& other) const;
 };
 

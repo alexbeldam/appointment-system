@@ -1,10 +1,18 @@
 #include "view/authUI.hpp"
 
 #include <iostream>
-#include <stdexcept>
 
 #include "util/utils.hpp"
-using namespace std;
+
+using std::cin;
+using std::cout;
+using std::endl;
+using std::invalid_argument;
+using std::numeric_limits;
+using std::runtime_error;
+using std::shared_ptr;
+using std::streamsize;
+using std::string;
 
 static void imprimir_menu();
 static void imprimir_menu_login();

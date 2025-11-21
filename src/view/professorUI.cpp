@@ -1,11 +1,17 @@
 #include "view/professorUI.hpp"
 
 #include <iostream>
-#include <stdexcept>
 
-#include "event/events.hpp"
 #include "util/utils.hpp"
-using namespace std;
+
+using std::cin;
+using std::cout;
+using std::endl;
+using std::exception;
+using std::invalid_argument;
+using std::runtime_error;
+using std::shared_ptr;
+using std::string;
 
 static void imprimir_menu();
 static void imprimir_opcoes();
@@ -199,25 +205,21 @@ void ProfessorUI::atualizar_perfil() {
         cout << "\n--- Atualizar Perfil (Professor) ---" << endl;
         cout << "Deixe em branco para manter o valor atual." << endl;
 
-        // Nome
         cout << "Nome atual: " << current->getNome() << endl;
         cout << "Novo nome: ";
         string novoNome;
         getline(cin, novoNome);
 
-        // Email
         cout << "Email atual: " << current->getEmail() << endl;
         cout << "Novo email: ";
         string novoEmail;
         getline(cin, novoEmail);
 
-        // Disciplina
         cout << "Disciplina atual: " << current->getDisciplina() << endl;
         cout << "Nova disciplina: ";
         string novaDisciplina;
         getline(cin, novaDisciplina);
 
-        // Senha
         cout << "Nova senha: ";
         string novaSenha;
         getline(cin, novaSenha);

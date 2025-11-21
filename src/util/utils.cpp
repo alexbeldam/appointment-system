@@ -1,14 +1,27 @@
 #include "util/utils.hpp"
 
-#include <algorithm>
-#include <functional>
 #include <iomanip>
-#include <iostream>
-#include <limits>
 #include <random>
-#include <sstream>
-#include <string>
-using namespace std;
+
+using std::cin;
+using std::cout;
+using std::endl;
+using std::get_time;
+using std::hash;
+using std::istringstream;
+using std::mt19937;
+using std::numeric_limits;
+using std::ostringstream;
+using std::put_time;
+using std::random_device;
+using std::setfill;
+using std::setw;
+using std::streamsize;
+using std::string;
+using std::stringstream;
+using std::to_string;
+using std::uniform_int_distribution;
+using std::vector;
 
 const string CHARSET =
     "./"

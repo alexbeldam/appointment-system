@@ -3,7 +3,10 @@
 #include <algorithm>
 
 #include "model/horario.hpp"
-using namespace std;
+
+using std::remove_if;
+using std::shared_ptr;
+using std::string;
 
 Professor::Professor(long id, const string& nome, const string& email,
                      const string& senha, string disciplina,

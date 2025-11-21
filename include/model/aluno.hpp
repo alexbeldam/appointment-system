@@ -15,9 +15,8 @@ class Agendamento;
  */
 class Aluno : public Usuario {
    private:
-    long matricula;  ///< Número de matrícula único do Aluno.
-    EntityList<Agendamento>
-        agendamentos;  ///< Lista de Agendamentos associados a este Aluno.
+    long matricula;
+    EntityList<Agendamento> agendamentos;
 
    public:
     using AgendamentoList = EntityList<Agendamento>;

@@ -1,7 +1,6 @@
 #ifndef ENTITY_CACHE_HPP
 #define ENTITY_CACHE_HPP
 
-#include <concepts>
 #include <map>
 #include <memory>
 

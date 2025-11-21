@@ -2,15 +2,11 @@
 #define UTILS_HPP
 
 #include <algorithm>
-#include <cctype>
 #include <ctime>
 #include <iostream>
-#include <stdexcept>
 #include <string>
 
 using Timestamp = std::time_t;
-
-// Funções utilitárias
 
 /**
  * @brief Padroniza o tratamento de exceções no Controller (Captura, Loga,

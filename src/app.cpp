@@ -2,16 +2,8 @@
 
 #include <iostream>
 
-#include "view/alunoUI.hpp"
-#include "view/authUI.hpp"
-#include "view/professorUI.hpp"
 using std::cout;
 
-/**
- * @brief Construtor do App.
- * Inicializa todos os membros na ordem exata em que foram declarados no
- * app.hpp.
- */
 App::App()
     : connection(),
       bus(),

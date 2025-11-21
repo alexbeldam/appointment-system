@@ -1,5 +1,7 @@
 #include "controller/horarioController.hpp"
 
+#include "util/utils.hpp"
+
 using std::exception;
 using std::shared_ptr;
 

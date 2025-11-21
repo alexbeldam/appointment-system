@@ -1,6 +1,6 @@
 #include "model/usuario.hpp"
 
-using namespace std;
+using std::string;
 
 Usuario::Usuario() {}
 

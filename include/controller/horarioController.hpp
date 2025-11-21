@@ -2,7 +2,6 @@
 #define HORARIO_CONTROLLER_HPP
 
 #include "service/horarioService.hpp"
-#include "util/utils.hpp"
 
 /**
  * @brief Controlador responsável por mediar a criação e listagem de horários.

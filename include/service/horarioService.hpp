@@ -55,8 +55,6 @@ class HorarioService {
     std::shared_ptr<Horario> save(long idProfessor, Timestamp inicio,
                                   Timestamp fim);
 
-    // --- MÉTODOS ADICIONADOS PARA SUPORTE AO AGENDAMENTO ---
-
     /**
      * @brief Busca um horário específico pelo seu ID.
      * Necessário para AgendamentoService verificar a disponibilidade (AC 2).

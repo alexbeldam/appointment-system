@@ -18,9 +18,8 @@ using AlunoCache = EntityCache<Aluno>;
 class AlunoService {
    private:
     EntityManager* manager;
-    const MockConnection&
-        connection;  ///< Conexão simulada com o banco de dados
-    EventBus& bus;   ///< Barramento de eventos;
+    const MockConnection& connection;
+    EventBus& bus;
     AlunoCache cache;
 
     std::shared_ptr<Aluno> loadAluno(const std::string& line);

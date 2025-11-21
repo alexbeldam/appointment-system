@@ -1,8 +1,7 @@
 #include "util/fileObserver.hpp"
 
-#include <algorithm>
-#include <iostream>
-using namespace std;
+using std::string;
+using std::vector;
 
 FileObserver::FileObserver(const vector<string>& filenames) {
     for (const auto& filename : filenames) {

@@ -5,7 +5,6 @@
 #include "controller/alunoController.hpp"
 #include "controller/horarioController.hpp"
 #include "controller/professorController.hpp"
-#include "event/bus.hpp"  // EventBus
 #include "service/sessionService.hpp"
 #include "view/consoleUI.hpp"
 

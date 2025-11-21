@@ -1,13 +1,18 @@
 #include "view/alunoUI.hpp"
 
 #include <iostream>
-#include <stdexcept>
-#include <unordered_map>
-#include <vector>
 
-#include "event/events.hpp"
 #include "util/utils.hpp"
-using namespace std;
+
+using std::cin;
+using std::cout;
+using std::endl;
+using std::exception;
+using std::invalid_argument;
+using std::runtime_error;
+using std::shared_ptr;
+using std::string;
+using std::vector;
 
 static void imprimir_menu();
 static void imprimir_confirmacao();
@@ -107,19 +112,16 @@ void AlunoUI::atualizar_perfil() {
         cout << "\n--- Atualizar Perfil ---" << endl;
         cout << "Deixe em branco para manter o valor atual." << endl;
 
-        // Nome
         cout << "Nome atual: " << current->getNome() << endl;
         cout << "Novo nome: ";
         string novoNome;
         getline(cin, novoNome);
 
-        // Email
         cout << "Email atual: " << current->getEmail() << endl;
         cout << "Novo email: ";
         string novoEmail;
         getline(cin, novoEmail);
 
-        // Matrícula
         cout << "Matrícula atual: " << current->getMatricula() << endl;
         cout << "Nova matrícula (0 para manter): ";
         string matriculaInput;
@@ -135,12 +137,10 @@ void AlunoUI::atualizar_perfil() {
             }
         }
 
-        // Senha
         cout << "Nova senha: ";
         string novaSenha;
         getline(cin, novaSenha);
 
-        // Chama o controller para atualizar (fará validações)
         auto updated = alunoController.update(alunoId, novoNome, novoEmail,
                                               novaSenha, novaMatricula);
 

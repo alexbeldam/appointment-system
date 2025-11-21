@@ -1,8 +1,6 @@
 #include "service/horarioService.hpp"
 
 #include <algorithm>
-#include <sstream>
-#include <stdexcept>
 
 #include "event/events.hpp"
 #include "service/agendamentoService.hpp"
@@ -130,11 +128,6 @@ vector<shared_ptr<Horario>> HorarioService::listByIdProfessor(long id) {
     return horarios;
 }
 
-// --- MÉTODOS ADICIONADOS PARA SUPORTE AO AGENDAMENTO ---
-
-/**
- * @brief Busca um horário específico pelo seu ID.
- */
 shared_ptr<Horario> HorarioService::getById(long id) {
     cache.invalidate();
 

@@ -13,10 +13,6 @@
  * que o Service especifique a tabela (arquivo CSV) em cada operação.
  */
 class MockConnection {
-   private:
-    // Não há membros privados (como 'filename'), pois a tabela é decidida por
-    // método.
-
    public:
     /**
      * @brief [SQL: INSERT] Insere um novo registro na tabela (arquivo CSV)

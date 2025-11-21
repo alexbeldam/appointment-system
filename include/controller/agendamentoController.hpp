@@ -2,7 +2,6 @@
 #define AGENDAMENTO_CONTROLLER_HPP
 
 #include "service/agendamentoService.hpp"
-#include "service/horarioService.hpp"
 
 /**
  * @brief Camada de Controle para o caso de uso "Agendar Horário".

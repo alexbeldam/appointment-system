@@ -1,24 +1,24 @@
 #include "service/agendamentoService.hpp"
 
 #include <algorithm>
-#include <iostream>
-#include <optional>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
 
 #include "event/events.hpp"
 #include "service/alunoService.hpp"
 #include "service/horarioService.hpp"
 
-using namespace std;
+using std::invalid_argument;
+using std::make_shared;
+using std::runtime_error;
+using std::shared_ptr;
+using std::sort;
+using std::string;
+using std::stringstream;
+using std::to_string;
+using std::vector;
 
-// --- CONFIGURAÇÕES DE PERSISTÊNCIA ---
 #define ID_ALUNO_COL_INDEX 1
 #define ID_HORARIO_COL_INDEX 2
 
-// --- CONSTRUTOR ---
 AgendamentoService::AgendamentoService(EntityManager* manager,
                                        const MockConnection& connection,
                                        EventBus& bus)
@@ -27,11 +27,6 @@ AgendamentoService::AgendamentoService(EntityManager* manager,
       bus(bus),
       cache({AGENDAMENTO_TABLE, HORARIO_TABLE}) {}
 
-// --- MÉTODOS CRUD ---
-
-/**
- * @brief Salva um novo agendamento, aplicando as regras de negócio.
- */
 shared_ptr<Agendamento> AgendamentoService::save(long alunoId, long horarioId) {
     auto horarioService = manager->getHorarioService();
 
@@ -138,8 +133,6 @@ bool AgendamentoService::deleteById(long id) {
     return true;
 }
 
-// --- MÉTODOS EXISTENTES ---
-
 vector<shared_ptr<Agendamento>> AgendamentoService::listByIdAluno(long id) {
     cache.invalidate();
 
@@ -208,14 +201,6 @@ bool AgendamentoService::deleteByIdHorario(long idHorario) {
     return true;
 }
 
-// --- IMPLEMENTAÇÃO DA FUNÇÃO AUXILIAR ---
-
-/**
- * @brief Método auxiliar estático para listar agendamentos por ID_HORARIO.
- * @param connection Conexão com o banco de dados.
- * @param id O id do horario.
- * @return vector<Agendamento>
- */
 vector<shared_ptr<Agendamento>> AgendamentoService::listByIdHorario(long id) {
     cache.invalidate();
 

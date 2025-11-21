@@ -12,10 +12,10 @@
  */
 class Usuario {
    private:
-    long id;            ///< Identificador único do Usuário.
-    std::string nome;   ///< Nome do Usuário.
-    std::string email;  ///< Endereço de e-mail do Usuário.
-    std::string senha;  ///< Senha do Usuário.
+    long id;
+    std::string nome;
+    std::string email;
+    std::string senha;
 
    public:
     /**

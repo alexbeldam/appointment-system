@@ -1,10 +1,10 @@
 #include "model/horario.hpp"
 
-#include <string>
-
 #include "model/agendamento.hpp"
 #include "util/utils.hpp"
-using namespace std;
+
+using std::shared_ptr;
+using std::string;
 
 Horario::Horario(long id, long idProfessor, Timestamp inicio, Timestamp fim,
                  bool disponivel, const ProfessorLoader& profLoader,
@@ -20,15 +20,19 @@ Horario::Horario(long id, long idProfessor, Timestamp inicio, Timestamp fim,
 long Horario::getId() const {
     return id;
 }
+
 long Horario::getProfessorId() const {
     return idProfessor;
 }
+
 Timestamp Horario::getInicio() const {
     return inicio;
 }
+
 Timestamp Horario::getFim() const {
     return fim;
 }
+
 bool Horario::isDisponivel() const {
     return disponivel;
 }
@@ -75,15 +79,19 @@ Horario::AgendamentoVector Horario::getAgendamentosConfirmados() {
 void Horario::setId(long id) {
     this->id = id;
 }
+
 void Horario::setProfessorId(long idProfessor) {
     this->idProfessor = idProfessor;
 }
+
 void Horario::setInicio(Timestamp inicio) {
     this->inicio = inicio;
 }
+
 void Horario::setFim(Timestamp fim) {
     this->fim = fim;
 }
+
 void Horario::setDisponivel(bool disponivel) {
     this->disponivel = disponivel;
 }

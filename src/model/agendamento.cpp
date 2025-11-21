@@ -15,10 +15,6 @@ Status parseStatus(const string& str) {
     return Status::PENDENTE;
 }
 
-/**
- * @brief Construtor para carregar um agendamento do DB (já com ID).
- */
-
 Agendamento::Agendamento(long id, long alunoId, long horarioId,
                          const Status& status,
                          const LoadFunction<Aluno>& alunoLoader,
@@ -33,17 +29,9 @@ Agendamento::Agendamento(long id, long alunoId, long horarioId,
       horarioInicio(horarioInicio),
       horarioFim(horarioFim) {}
 
-/**
- * @brief Obtém o identificador único (ID) do Agendamento.
- */
-
 long Agendamento::getId() const {
     return this->id;
 }
-
-/**
- * @brief Obtém o ID do Aluno associado a este agendamento.
- */
 
 long Agendamento::getAlunoId() const {
     return this->alunoId;
@@ -61,17 +49,9 @@ shared_ptr<Horario> Agendamento::getHorario() {
     return nullptr;
 }
 
-/**
- * @brief Obtém o ID do Horário associado a este agendamento.
- */
-
 long Agendamento::getHorarioId() const {
     return this->horarioId;
 }
-
-/**
- * @brief Obtém o status deste agendamento.
- */
 
 const Status& Agendamento::getStatus() const {
     return this->status;

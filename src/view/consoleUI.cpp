@@ -3,7 +3,10 @@
 #include <iostream>
 
 #include "util/utils.hpp"
-using namespace std;
+
+using std::cout;
+using std::endl;
+using std::shared_ptr;
 
 ConsoleUI::ConsoleUI(const shared_ptr<SessionService>& ss)
     : sessionService(ss) {}

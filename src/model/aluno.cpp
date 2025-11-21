@@ -3,7 +3,10 @@
 #include <algorithm>
 
 #include "model/agendamento.hpp"
-using namespace std;
+
+using std::remove_if;
+using std::shared_ptr;
+using std::string;
 
 Aluno::Aluno(long id, const string& nome, const string& email,
              const string& senha, long matricula,

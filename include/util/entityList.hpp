@@ -2,9 +2,7 @@
 #define ENTITY_LIST_HPP
 
 #include <functional>
-#include <iostream>
 #include <memory>
-#include <stdexcept>
 #include <vector>
 
 template <typename T>

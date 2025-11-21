@@ -15,9 +15,8 @@ class Horario;
  */
 class Professor : public Usuario {
    private:
-    std::string disciplina;  ///< A dsiciplina do Professor.
-    EntityList<Horario>
-        horarios;  ///< Lista de Horarios associados a este Professor.
+    std::string disciplina;
+    EntityList<Horario> horarios;
 
    public:
     using HorarioList = EntityList<Horario>;
