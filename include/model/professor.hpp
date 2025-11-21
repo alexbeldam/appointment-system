@@ -5,61 +5,99 @@
 
 #include "model/usuario.hpp"
 
-class Horario;
+class Horario;  // Declaração forward
 
 /**
- * @brief Representa a entidade Professor, que herda as propriedades básicas de
- * Usuario.
- * * Adiciona atributos específicos de domínio como o número de matrícula e uma
- * lista de horarios associados.
+ * @brief Representa a entidade Professor, que é um tipo de Usuário.
+ * * Um Professor leciona uma disciplina e possui uma lista de Horários de
+ * disponibilidade para agendamento.
+ * * A lista de horários é carregada sob demanda (Lazy Loading) usando
+ * EntityList.
  */
 class Professor : public Usuario {
    private:
-    std::string disciplina;
+    std::string
+        disciplina; /**< A disciplina principal lecionada pelo professor. */
+
+    /**
+     * @brief Lista de horários de disponibilidade associados a este professor.
+     * * Armazenada como EntityList para suportar carregamento preguiçoso.
+     */
     EntityList<Horario> horarios;
 
    public:
+    /**
+     * @brief Alias para o tipo EntityList de Horario.
+     */
     using HorarioList = EntityList<Horario>;
+
+    /**
+     * @brief Alias para o vetor de ponteiros inteligentes de Horario.
+     */
     using HorarioVector = HorarioList::EntityVector;
+
+    /**
+     * @brief Alias para a função de carregamento que fornece a lista de
+     * horários.
+     */
     using HorariosLoader = ListLoaderFunction<Horario>;
 
     /**
-     * @brief Construtor completo do Professor.
-     * * Inicializa os campos herdados (ID, nome, email, disciplina) e os campos
-     * específicos (matrícula, horarios).
-     * @param id O identificador único.
-     * @param nome O nome do Professor.
-     * @param email O e-mail do Professor.
-     * @param disciplina A disciplina do Professor.
-     * @param disciplina A disciplina do Professor.
-     * @param horarios Uma lista de Horarios associados.
+     * @brief Construtor da classe Professor.
+     * * Inicializa os atributos do Usuário e do Professor, e injeta a função de
+     * carregamento dos horários.
+     * @param id O identificador único do usuário.
+     * @param nome O nome do professor.
+     * @param email O email do professor.
+     * @param senha A senha do professor.
+     * @param disciplina A disciplina lecionada.
+     * @param loader A função de carregamento para os horários do professor.
      */
     Professor(long id, const std::string& nome, const std::string& email,
               const std::string& senha, std::string disciplina,
               const HorariosLoader& loader);
 
     /**
-     * @brief Obtém a disciplina do Usuário.
-     * * @return Uma referência constante para a string da disciplina.
+     * @brief Retorna a disciplina lecionada pelo professor.
+     * @return const std::string& A string contendo o nome da disciplina.
      */
     const std::string& getDisciplina() const;
 
     /**
-     * @brief Define a disciplina do Usuário.
-     * * @param disciplina A nova disciplina.
+     * @brief Define uma nova disciplina para o professor.
+     * @param disciplina A nova disciplina.
      */
     void setDisciplina(const std::string& disciplina);
 
+    /**
+     * @brief Retorna a lista de Horários de disponibilidade do professor.
+     * * O carregamento dos horários é disparado na primeira chamada a esta
+     * função ou se o EntityList for acessado.
+     * @return HorarioList& A referência para a lista de horários.
+     */
     HorarioList& getHorarios();
 
     /**
-     * @brief Obtém a lista de Horarios disponíveis associados a este Professor.
-     * * @return Uma referência constante para o vetor de Horarios disponíveis.
+     * @brief Retorna uma lista filtrada de Horários que estão disponíveis.
+     * * Carrega a lista completa de horários e aplica a lógica de filtragem.
+     * @return HorarioVector Um vetor contendo apenas os horários disponíveis.
      */
     HorarioVector getHorariosDisponiveis();
 
+    /**
+     * @brief Retorna uma lista filtrada de Horários que estão ocupados.
+     * * Carrega a lista completa de horários e aplica a lógica de filtragem.
+     * @return HorarioVector Um vetor contendo apenas os horários ocupados.
+     */
     HorarioVector getHorariosOcupados();
 
+    /**
+     * @brief Operador de comparação para ordenação.
+     * * Útil para ordenar professores com base no nome.
+     * @param other O outro objeto Professor a ser comparado.
+     * @return true Se este professor for considerado "menor" (deve vir antes)
+     * que o outro.
+     */
     bool operator<(const Professor& other) const;
 };
 

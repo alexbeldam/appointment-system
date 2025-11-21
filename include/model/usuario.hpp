@@ -6,83 +6,78 @@
 #include "util/entityList.hpp"
 
 /**
- * @brief Classe base que representa um usuário genérico no sistema.
- * * * Contém os atributos fundamentais de identificação e autenticação comuns
- * a todas as entidades derivadas, como ID, nome, email e senha.
+ * @brief Representa a classe base abstrata para todos os
+ * usuários do sistema (ex: Aluno, Professor).
+ * * Contém os atributos básicos de identificação e autenticação.
  */
 class Usuario {
    private:
-    long id;
-    std::string nome;
-    std::string email;
-    std::string senha;
+    long id;           /**< O identificador único do usuário. */
+    std::string nome;  /**< O nome completo do usuário. */
+    std::string email; /**< O endereço de email, usado como login. */
+    std::string senha; /**< A senha do usuário. */
 
    public:
     /**
-     * @brief Construtor padrão. Inicializa o objeto com valores default.
-     */
-    Usuario();
-
-    /**
-     * @brief Construtor completo.
-     * * @param id O identificador único.
-     * @param nome O nome do Usuário.
-     * @param email O e-mail do Usuário.
-     * @param senha A senha do Usuário.
+     * @brief Construtor da classe Usuario.
+     * @param id O identificador único.
+     * @param nome O nome do usuário.
+     * @param email O email do usuário.
+     * @param senha A senha do usuário.
      */
     Usuario(long id, const std::string& nome, const std::string& email,
             const std::string& senha);
 
     /**
-     * @brief Destrutor virtual.
+     * @brief Destrutor virtual padrão.
      */
     virtual ~Usuario();
 
     /**
-     * @brief Obtém o identificador único (ID) do Usuário.
-     * * @return O ID do Usuário.
+     * @brief Retorna o ID único do usuário.
+     * @return long O ID.
      */
     long getId() const;
 
     /**
-     * @brief Define o identificador único (ID) do Usuário.
-     * * @param id O novo ID.
+     * @brief Define um novo ID para o usuário.
+     * @param id O novo ID.
      */
     void setId(long id);
 
     /**
-     * @brief Obtém o nome do Usuário.
-     * * @return Uma referência constante para a string do nome.
+     * @brief Retorna o nome do usuário.
+     * @return const std::string& O nome.
      */
     const std::string& getNome() const;
 
     /**
-     * @brief Define o nome do Usuário.
-     * * @param nome O novo nome.
+     * @brief Define um novo nome para o usuário.
+     * @param nome O novo nome.
      */
     void setNome(const std::string& nome);
 
     /**
-     * @brief Obtém o e-mail do Usuário.
-     * * @return Uma referência constante para a string do e-mail.
+     * @brief Retorna o email do usuário.
+     * @return const std::string& O email.
      */
     const std::string& getEmail() const;
 
     /**
-     * @brief Define o e-mail do Usuário.
-     * * @param email O novo e-mail.
+     * @brief Define um novo email para o usuário.
+     * @param email O novo email.
      */
     void setEmail(const std::string& email);
 
     /**
-     * @brief Obtém a senha do Usuário.
-     * * @return Uma referência constante para a string da senha.
+     * @brief Retorna a senha do usuário.
+     * @return const std::string& A senha.
      */
     const std::string& getSenha() const;
 
     /**
-     * @brief Define a senha do Usuário.
-     * * @param senha A nova senha.
+     * @brief Define uma nova senha para o usuário.
+     * @param senha A nova senha.
      */
     void setSenha(const std::string& senha);
 };

@@ -2,8 +2,6 @@
 
 using std::string;
 
-Usuario::Usuario() {}
-
 Usuario::Usuario(long id, const string& nome, const string& email,
                  const string& senha) {
     setId(id);
