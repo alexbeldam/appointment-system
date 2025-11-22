@@ -14,7 +14,8 @@
 
 <p align="center">
   <a href="#sobre">Sobre</a> • 
-  <a href="#primeiros-passos">Primeiros Passos</a> • 
+  <a href="#releases">Download</a> •
+  <a href="#primeiros-passos">Compilar</a> •
   <a href="#demonstracao-cli">Demonstração CLI</a> •
   <a href="#uso-e-funcionalidades">Uso e Funcionalidades</a> • 
   <a href="#documentacao">Documentação</a> •
@@ -40,9 +41,42 @@ A arquitetura do projeto é fortemente baseada em:
 - **Barramento de Eventos (`EventBus`):** Permite a comunicação assíncrona/desacoplada entre os componentes (ex: o login de um usuário notifica outros serviços).
 - **Persistência Mock:** Os dados são armazenados em arquivos `.csv` (simulando um banco de dados simples) com um mecanismo de **Cache** e **Invalidação** (via `FileObserver`).
 
+### ⚠️ Credenciais de Teste
+
+> A senha padrão para **TODOS** os usuários (Alunos e Professores) cadastrados nos arquivos CSV iniciais do repositório é: **`senha`**
+
 ---
 
-<h2 id="primeiros-passos">🚀 Primeiros Passos</h2>
+<h2 id="releases">🏁 Rodar sem compilar</h2>
+
+Se você não quer compilar o projeto manualmente, pode usar os arquivos pré-gerados disponíveis no último release:
+
+👉 **[Baixar o último release](https://github.com/julia-alessandra/PDS2-20252-TM1-RedeSocial/releases/latest)**
+
+No release você encontrará:
+
+### 📌 Executáveis prontos
+
+Para usuários que não querem compilar:
+
+- **Linux:** `programa`
+- **Windows:** `programa.exe`
+
+Basta baixar o executável correspondente ao seu sistema, torná-lo executável (no Linux: `chmod +x programa`) e rodar. Coloque no mesmo diretório que contém a pasta `data/` para funcionar.
+
+### 📄 Documentação offline (`docs.zip`)
+
+Usuários sem Doxygen instalado podem visualizar a documentação offline:
+
+1. Baixe o arquivo **`docs.zip`** no último release.
+2. Extraia o arquivo.
+3. Abra o arquivo **`index.html`** em seu navegador.
+
+Isso permite visualizar toda a documentação gerada sem precisar instalar Doxygen.
+
+---
+
+<h2 id="primeiros-passos">🛠️ Compilar a Partir do Código-Fonte</h2>
 
 ### Pré-requisitos
 
@@ -51,10 +85,6 @@ Para compilar e executar o projeto, você precisará de:
 - **Compilador C++:** Suporte para **C++17** (G++, Clang, MSVC).
 - **Make:** Necessário para usar o `Makefile` — _requer ambiente compatível com POSIX_ (Linux, macOS ou Windows via MSYS2/Cygwin).
 - **Git:** Para clonar o repositório.
-
-### ⚠️ Credenciais de Teste
-
-> A senha padrão para **TODOS** os usuários (Alunos e Professores) cadastrados nos arquivos CSV iniciais do repositório é: **`senha`**
 
 ### ⚙️ Configuração Inicial (Setup)
 
@@ -92,7 +122,11 @@ O projeto usa um `Makefile` para gerenciar a compilação:
 
 2.  **Executar:**
     - **Linux/macOS:** `./programa`
-    - **Windows:** `programa.exe`
+    - **Windows:** `./programa.exe`
+
+> 💡 **Observação:**  
+> Se o `make` não for compatível com o seu ambiente Windows, consulte a seção  
+> **[Download](#releases)** para baixar executáveis prontos e a documentação offline.
 
 ---
 
