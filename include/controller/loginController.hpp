@@ -51,8 +51,8 @@ class LoginController {
 
     /**
      * @brief Tenta realizar o login de um Aluno.
-     * * Delega a autenticação para o AlunoService. Em caso de sucesso, notifica
-     * o EventBus.
+     * * Usa AlunoService para resgatar o usuário e conferir a senha. Em caso de
+     * sucesso, notifica o EventBus.
      * * @param email O email do aluno.
      * @param senha A senha do aluno.
      * @return std::shared_ptr<Aluno> O objeto Aluno autenticado se o login for
@@ -63,8 +63,8 @@ class LoginController {
 
     /**
      * @brief Tenta realizar o login de um Professor.
-     * * Delega a autenticação para o ProfessorService. Em caso de sucesso,
-     * notifica o EventBus.
+     * * Usa ProfessorService para resgatar o usuário e conferir a senha. Em
+     * caso de sucesso, notifica o EventBus.
      * * @param email O email do professor.
      * @param senha A senha do professor.
      * @return std::shared_ptr<Professor> O objeto Professor autenticado se o
