@@ -51,7 +51,7 @@ A arquitetura do projeto é fortemente baseada em:
 
 Se você não quer compilar o projeto manualmente, pode usar os arquivos pré-gerados disponíveis no último release:
 
-👉 **[Baixar o último release](https://github.com/julia-alessandra/PDS2-20252-TM1-RedeSocial/releases/latest)**
+👉 **[Baixar o último release](https://github.com/alexbeldam/appointment-system/releases/latest)**
 
 No release você encontrará:
 
@@ -93,8 +93,8 @@ O projeto usa arquivos CSV na pasta `data/` como banco de dados mock. Para evita
 1.  **Clone o repositório:**
 
     ```bash
-    git clone https://github.com/julia-alessandra/PDS2-20252-TM1-RedeSocial.git
-    cd PDS2-20252-TM1-RedeSocial
+    git clone https://github.com/alexbeldam/appointment-system.git
+    cd appointment-system
     ```
 
 2.  **Configure o ambiente de dados:**
